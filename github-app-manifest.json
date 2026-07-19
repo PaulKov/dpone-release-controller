@@ -1,0 +1,25 @@
+{
+  "name": "dpone-release-controller",
+  "url": "https://github.com/PaulKov/dpone-release-controller",
+  "hook_attributes": {
+    "url": "https://example.com/github/hooks/unused-scaffold",
+    "active": false
+  },
+  "redirect_url": "https://github.com/PaulKov/dpone-release-controller",
+  "callback_urls": [
+    "https://github.com/PaulKov/dpone-release-controller"
+  ],
+  "setup_url": "https://github.com/PaulKov/dpone-release-controller",
+  "description": "Least-privilege App for dpone shape B release controller (scaffold). Not activated until GO review.",
+  "public": false,
+  "default_events": [],
+  "default_permissions": {
+    "metadata": "read",
+    "contents": "write",
+    "actions": "read",
+    "checks": "read",
+    "statuses": "read",
+    "administration": "write",
+    "attestations": "write"
+  }
+}

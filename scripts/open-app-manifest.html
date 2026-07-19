@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Create dpone-release-controller GitHub App</title></head>
+<body>
+  <h1>Create GitHub App from manifest</h1>
+  <p>Must be logged in as <code>PaulKov</code>. This only registers the App; it does not activate ADR 0028.</p>
+  <form action="https://github.com/settings/apps/new" method="post">
+    <input type="hidden" name="manifest" id="manifest">
+    <button type="submit">Create GitHub App on GitHub</button>
+  </form>
+  <script>
+    document.getElementById('manifest').value = "{\n  \"name\": \"dpone-release-controller\",\n  \"url\": \"https://github.com/PaulKov/dpone-release-controller\",\n  \"hook_attributes\": {\n    \"url\": \"https://example.com/github/hooks/unused-scaffold\",\n    \"active\": false\n  },\n  \"redirect_url\": \"https://github.com/PaulKov/dpone-release-controller\",\n  \"callback_urls\": [\n    \"https://github.com/PaulKov/dpone-release-controller\"\n  ],\n  \"setup_url\": \"https://github.com/PaulKov/dpone-release-controller\",\n  \"description\": \"Least-privilege App for dpone shape B release controller (scaffold). Not activated until GO review.\",\n  \"public\": false,\n  \"default_events\": [],\n  \"default_permissions\": {\n    \"metadata\": \"read\",\n    \"contents\": \"write\",\n    \"actions\": \"read\",\n    \"checks\": \"read\",\n    \"statuses\": \"read\",\n    \"administration\": \"write\",\n    \"attestations\": \"write\"\n  }\n}\n";
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "schema": "dpone.release-evidence-store.bootstrap.v1",
+  "provider": "backblaze_b2",
+  "status": "UNVERIFIED",
+  "store_id": "b2://dpone-release-evidence-v1?object_lock=compliance&retention_days_pre_mutation=365&retention_days_closed=2557",
+  "bucket": "dpone-release-evidence-v1",
+  "object_lock": "compliance",
+  "notes": "Fill account_id/key_id only in local secrets or GitHub environment secrets on the controller — never commit."
+}
