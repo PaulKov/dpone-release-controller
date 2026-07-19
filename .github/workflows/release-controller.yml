@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag to lease (bootstrap / dry path)
-        required: true
-        default: v0.0.0-shape-b-bootstrap
+        description: Release tag to lease (empty = per-run bootstrap tag)
+        required: false
+        default: ""
       ttl_seconds:
         description: Lease TTL seconds
         required: true
@@ -35,8 +35,13 @@ jobs:
       - name: Acquire publication lease in B2 WORM store
         run: |
           set -euo pipefail
+          TAG='${{ inputs.tag }}'
+          if [ -z "$TAG" ]; then
+            TAG="v0.0.0-shape-b-bootstrap-${GITHUB_RUN_ID}"
+          fi
+          echo "leasing tag=$TAG"
           python3 tools/evidence/release_evidence_cli.py acquire-lease \
-            --tag "${{ inputs.tag }}" \
+            --tag "$TAG" \
             --repository-id 1255975556 \
             --ttl-seconds "${{ inputs.ttl_seconds }}" \
             --retention-days 365 \
