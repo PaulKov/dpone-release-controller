@@ -25,6 +25,10 @@ Target repository: `PaulKov/dpone` (id `1255975556`).
 ## Non-goals (current scaffold)
 
 - No candidate checkout of `PaulKov/dpone` on mutation jobs.
-- No PyPI upload, attestation, or GitHub Release mutation until GO.
+- No PyPI upload, Trusted Publisher rebind, draft **publish**, or policy v2
+  cutover until GO.
+- Bootstrap `mode=live` may create **draft** releases and bootstrap tags on
+  `PaulKov/dpone` under an active evidence lease; that is not production
+  publication authority.
 - Current `PaulKov/dpone` `.github/workflows/release.yml` remains the live
   publisher until cutover.

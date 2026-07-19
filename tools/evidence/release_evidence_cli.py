@@ -1,8 +1,9 @@
-"""CLI for shape-B evidence store lease + attest/draft dry-run."""
+"""CLI for shape-B evidence store lease + attest/draft staging."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -29,6 +30,8 @@ canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py
 lease = _load_sibling("dpone_agent_release_lease_service", "release_lease_service.py")
 store_mod = _load_sibling("dpone_agent_release_evidence_store_b2", "release_evidence_store_b2.py")
 attest = _load_sibling("dpone_agent_release_attest_draft", "release_attest_draft.py")
+stage = _load_sibling("dpone_agent_release_stage_draft", "release_stage_draft.py")
+github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -48,6 +51,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Use one synthetic wheel subject for bootstrap (no real artifacts)",
     )
+
+    live = sub.add_parser(
+        "stage-draft-live",
+        help="Attest metadata + create real GitHub draft (no PyPI publish)",
+    )
+    _add_common_args(live)
+    live.add_argument("--owner", default="PaulKov")
+    live.add_argument("--repo", default="dpone")
+    live.add_argument("--subject-file", required=True, type=Path)
+    live.add_argument("--attestation-bundle", required=True, type=Path)
+    live.add_argument("--attestation-url", default="")
+    live.add_argument("--github-token-env", default="GITHUB_TOKEN")
 
     args = parser.parse_args(argv)
     store = _build_store(args)
@@ -104,6 +119,50 @@ def main(argv: list[str] | None = None) -> int:
         except attest.StreamPrerequisiteError as exc:
             print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
             return 4
+        print(json.dumps(result, sort_keys=True))
+        return 0
+
+    if args.command == "stage-draft-live":
+        subject_path: Path = args.subject_file
+        bundle_path: Path = args.attestation_bundle
+        if not subject_path.is_file():
+            parser.error(f"subject file not found: {subject_path}")
+        if not bundle_path.is_file():
+            parser.error(f"attestation bundle not found: {bundle_path}")
+        subject_bytes = subject_path.read_bytes()
+        bundle_bytes = bundle_path.read_bytes()
+        token = _require_env(args.github_token_env)
+        api = github.GitHubApi(token=token)
+        attestation = {
+            "digest": "sha256:" + hashlib.sha256(bundle_bytes).hexdigest(),
+            "bundle_sha256": "sha256:" + hashlib.sha256(bundle_bytes).hexdigest(),
+            "bundle_bytes": len(bundle_bytes),
+            "url": args.attestation_url,
+            "predicate_type": "https://slsa.dev/provenance/v1",
+        }
+        try:
+            result = stage.run_stage_draft_live(
+                store,
+                api,
+                owner=args.owner,
+                repo=args.repo,
+                release_identity_id=ids["release_identity_id"],
+                release_authority_id=ids["release_authority_id"],
+                repository_id=args.repository_id,
+                tag_ref=ids["tag_ref"],
+                producer=producer,
+                now_utc=now,
+                subject_filename=subject_path.name,
+                subject_bytes=subject_bytes,
+                attestation=attestation,
+                retention_days=args.retention_days,
+            )
+        except stage.StreamPrerequisiteError as exc:
+            print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
+            return 4
+        except stage.GitHubApiError as exc:
+            print(json.dumps({"status": "GITHUB_ERROR", "error": str(exc)}, sort_keys=True))
+            return 5
         print(json.dumps(result, sort_keys=True))
         return 0
 

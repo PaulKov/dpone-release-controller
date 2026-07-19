@@ -11,6 +11,14 @@ on:
         description: Lease TTL seconds
         required: true
         default: "300"
+      mode:
+        description: attest/draft mode
+        required: true
+        default: live
+        type: choice
+        options:
+          - dry-run
+          - live
 
 permissions: {}
 
@@ -60,7 +68,7 @@ jobs:
           path: lease-receipt.json
 
   attest-and-draft:
-    name: Attest and draft (dry-run receipts)
+    name: Attest and draft
     needs: admit-and-lease
     runs-on: ubuntu-latest
     environment: release-attest
@@ -81,18 +89,73 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Record attest/bundle/draft dry-run receipts
+
+      - name: Dry-run receipts only
+        if: ${{ inputs.mode == 'dry-run' }}
         run: |
           set -euo pipefail
-          # Dry-run only: no GitHub attestation API mutation and no draft Release.
           python3 tools/evidence/release_evidence_cli.py attest-draft-dry-run \
             --tag "${{ needs.admit-and-lease.outputs.tag }}" \
             --repository-id 1255975556 \
             --retention-days 365 \
             --bootstrap-dist \
             | tee attest-draft-receipt.json
+
+      - name: Build bootstrap subject
+        if: ${{ inputs.mode == 'live' }}
+        id: subject
+        run: |
+          set -euo pipefail
+          TAG='${{ needs.admit-and-lease.outputs.tag }}'
+          mkdir -p dist
+          SUBJECT="dist/dpone-${TAG}-shape-b-bootstrap.bin"
+          printf 'dpone-shape-b-bootstrap\ntag=%s\nrun=%s\n' "$TAG" "${GITHUB_RUN_ID}" > "$SUBJECT"
+          echo "path=$SUBJECT" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$SUBJECT")" >> "$GITHUB_OUTPUT"
+
+      - name: Attest bootstrap subject
+        if: ${{ inputs.mode == 'live' }}
+        id: attest
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.subject.outputs.path }}
+
+      - name: Mint target App token
+        if: ${{ inputs.mode == 'live' }}
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DPONE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DPONE_RELEASE_APP_PRIVATE_KEY }}
+          owner: PaulKov
+          repositories: dpone
+
+      - name: Stage live draft + LIVE receipts
+        if: ${{ inputs.mode == 'live' }}
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          BUNDLE='${{ steps.attest.outputs.bundle-path }}'
+          if [ -z "$BUNDLE" ] || [ ! -f "$BUNDLE" ]; then
+            echo "attestation bundle missing" >&2
+            exit 1
+          fi
+          python3 tools/evidence/release_evidence_cli.py stage-draft-live \
+            --tag "${{ needs.admit-and-lease.outputs.tag }}" \
+            --repository-id 1255975556 \
+            --retention-days 365 \
+            --owner PaulKov \
+            --repo dpone \
+            --subject-file "${{ steps.subject.outputs.path }}" \
+            --attestation-bundle "$BUNDLE" \
+            --attestation-url "${{ steps.attest.outputs.attestation-url }}" \
+            | tee attest-draft-receipt.json
+
       - name: Upload attest-draft receipt artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: attest-draft-receipt
           path: attest-draft-receipt.json
+          if-no-files-found: ignore
