@@ -1,0 +1,46 @@
+# Scaffold only — no provider mutation authority.
+# Activation requires GO review + Trusted Publisher + evidence store binding.
+name: Release controller (scaffold)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Inventory-only dry run (required true until activation)
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+
+permissions: {}
+
+jobs:
+  admit-dry-run:
+    name: Admit dry-run (no mutation)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Reject non-dry-run until activation
+        run: |
+          if [ "${{ inputs.dry_run }}" != "true" ]; then
+            echo "Controller is scaffold-only; dry_run must be true"
+            exit 1
+          fi
+      - name: Record controller identity
+        run: |
+          set -euo pipefail
+          cat <<JSON
+          {
+            "status": "SCAFFOLD_NOT_ACTIVATED",
+            "controller_repository": "${{ github.repository }}",
+            "controller_repository_id": "${{ github.repository_id }}",
+            "workflow": "${{ github.workflow }}",
+            "workflow_ref": "${{ github.workflow_ref }}",
+            "run_id": "${{ github.run_id }}",
+            "sha": "${{ github.sha }}",
+            "target_repository": "PaulKov/dpone",
+            "target_repository_id": 1255975556
+          }
+          JSON
