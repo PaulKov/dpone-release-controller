@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 
 def _load_sibling(module_name: str, filename: str) -> Any:
@@ -23,9 +24,7 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-envelope_mod = _load_sibling(
-    "dpone_agent_release_receipt_envelope", "release_receipt_envelope.py"
-)
+envelope_mod = _load_sibling("dpone_agent_release_receipt_envelope", "release_receipt_envelope.py")
 
 
 class LeaseConflictError(RuntimeError):

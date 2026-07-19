@@ -133,16 +133,12 @@ class BackblazeB2EvidenceStore:
             sequence=sequence,
             receipt_id=str(envelope["receipt_id"]),
         )
-        body = json.dumps(envelope, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
-            "utf-8"
-        )
+        body = json.dumps(envelope, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
         upload = self._json_post(
             f"{self._api_url}/b2api/v2/b2_get_upload_url",
             {"bucketId": self._credentials.bucket_id},
         )
-        retain_until = int(
-            (datetime.now(UTC) + timedelta(days=max(1, retention_days))).timestamp() * 1000
-        )
+        retain_until = int((datetime.now(UTC) + timedelta(days=max(1, retention_days))).timestamp() * 1000)
         headers = {
             "Authorization": str(upload["authorizationToken"]),
             "X-Bz-File-Name": urllib.parse.quote(key),
@@ -152,9 +148,7 @@ class BackblazeB2EvidenceStore:
             "X-Bz-File-Retention-Mode": "compliance",
             "X-Bz-File-Retention-Retain-Until-Timestamp": str(retain_until),
         }
-        request = urllib.request.Request(
-            str(upload["uploadUrl"]), data=body, method="POST", headers=headers
-        )
+        request = urllib.request.Request(str(upload["uploadUrl"]), data=body, method="POST", headers=headers)
         with self._opener(request) as response:
             result = json.load(response)
         return {
@@ -165,9 +159,7 @@ class BackblazeB2EvidenceStore:
         }
 
     def _authorize(self) -> None:
-        token = base64.b64encode(
-            f"{self._credentials.key_id}:{self._credentials.application_key}".encode()
-        ).decode()
+        token = base64.b64encode(f"{self._credentials.key_id}:{self._credentials.application_key}".encode()).decode()
         request = urllib.request.Request(
             "https://api.backblazeb2.com/b2api/v2/b2_authorize_account",
             headers={"Authorization": f"Basic {token}"},

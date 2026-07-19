@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def canonical_json_bytes(payload: Mapping[str, Any]) -> bytes:
     """Return compact UTF-8 JSON with sorted keys (RFC 8785-compatible subset)."""
 
-    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
-        "utf-8"
-    )
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
 def sha256_hex(payload: Mapping[str, Any]) -> str:

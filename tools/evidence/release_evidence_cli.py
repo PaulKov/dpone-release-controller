@@ -27,9 +27,7 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
 lease = _load_sibling("dpone_agent_release_lease_service", "release_lease_service.py")
-store_mod = _load_sibling(
-    "dpone_agent_release_evidence_store_b2", "release_evidence_store_b2.py"
-)
+store_mod = _load_sibling("dpone_agent_release_evidence_store_b2", "release_evidence_store_b2.py")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -82,9 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     workflow_path = ".github/workflows/release-controller.yml"
     workflow_ref = os.environ.get("GITHUB_WORKFLOW_REF", "")
     if "/.github/workflows/" in workflow_ref:
-        workflow_path = ".github/workflows/" + workflow_ref.split("/.github/workflows/", 1)[1].split(
-            "@", 1
-        )[0]
+        workflow_path = ".github/workflows/" + workflow_ref.split("/.github/workflows/", 1)[1].split("@", 1)[0]
     producer = {
         "kind": "github_actions_job",
         "repository_id": os.environ.get("GITHUB_REPOSITORY_ID", "1305993853"),
