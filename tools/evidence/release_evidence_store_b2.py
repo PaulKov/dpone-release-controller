@@ -9,7 +9,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol
 
 
@@ -138,7 +138,12 @@ class BackblazeB2EvidenceStore:
             f"{self._api_url}/b2api/v2/b2_get_upload_url",
             {"bucketId": self._credentials.bucket_id},
         )
-        retain_until = int((datetime.now(UTC) + timedelta(days=max(1, retention_days))).timestamp() * 1000)
+        retain_until = int(
+            (
+                datetime.now(timezone.utc) + timedelta(days=max(1, retention_days))  # noqa: UP017
+            ).timestamp()
+            * 1000
+        )
         headers = {
             "Authorization": str(upload["authorizationToken"]),
             "X-Bz-File-Name": urllib.parse.quote(key),

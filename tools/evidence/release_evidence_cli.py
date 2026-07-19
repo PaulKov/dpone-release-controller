@@ -7,7 +7,7 @@ import importlib.util
 import json
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(f"unsupported command {args.command}")
         return 2
 
-    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: UP017
     tag_ref = args.tag if args.tag.startswith("refs/tags/") else f"refs/tags/{args.tag}"
     release_identity_id = canonical.sha256_id(
         "dpone.release.identity.v2",
@@ -114,8 +114,8 @@ def main(argv: list[str] | None = None) -> int:
             repository_id=args.repository_id,
             tag_ref=tag_ref,
             attempt_seed={
-                "run_id": int(producer["run_id"]),
-                "run_attempt": int(producer["run_attempt"]),
+                "run_id": int(str(producer["run_id"])),
+                "run_attempt": int(str(producer["run_attempt"])),
             },
             producer=producer,
             ttl_seconds=args.ttl_seconds,

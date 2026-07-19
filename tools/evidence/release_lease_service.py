@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 from collections.abc import Mapping
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -132,5 +132,5 @@ def _parse_utc(value: str) -> datetime:
         value = value[:-1] + "+00:00"
     parsed = datetime.fromisoformat(value)
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=UTC)
-    return parsed.astimezone(UTC)
+        return parsed.replace(tzinfo=timezone.utc)  # noqa: UP017
+    return parsed.astimezone(timezone.utc)  # noqa: UP017
