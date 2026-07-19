@@ -54,9 +54,9 @@ def acquire_publication_lease(
 
     if ttl_seconds <= 0:
         raise ValueError("ttl_seconds must be positive")
-    now = _parse_utc(now_utc)
+    now = parse_utc(now_utc)
     receipts = store.list_receipts(release_identity_id)
-    active = _active_lease(receipts, now=now)
+    active = active_lease(receipts, now=now)
     if active is not None:
         raise LeaseConflictError(
             f"ACTIVE_LEASE fencing_token={active['lease']['fencing_token']} "
@@ -103,12 +103,14 @@ def acquire_publication_lease(
     return built
 
 
-def _active_lease(receipts: list[dict[str, Any]], *, now: datetime) -> dict[str, Any] | None:
+def active_lease(receipts: list[dict[str, Any]], *, now: datetime) -> dict[str, Any] | None:
+    """Return the unexpired ``LEASE_ACQUIRED`` receipt, if any."""
+
     active: dict[str, Any] | None = None
     for receipt in receipts:
         kind = str((receipt.get("payload") or {}).get("kind") or "")
         if kind == "LEASE_ACQUIRED":
-            expires = _parse_utc(str(receipt["payload"]["expires_at"]))
+            expires = parse_utc(str(receipt["payload"]["expires_at"]))
             if expires > now:
                 active = receipt
             else:
@@ -127,7 +129,9 @@ def _next_fencing_token(receipts: list[dict[str, Any]]) -> int:
     return highest + 1
 
 
-def _parse_utc(value: str) -> datetime:
+def parse_utc(value: str) -> datetime:
+    """Parse an ISO-8601 UTC timestamp (``Z`` or offset)."""
+
     if value.endswith("Z"):
         value = value[:-1] + "+00:00"
     parsed = datetime.fromisoformat(value)
