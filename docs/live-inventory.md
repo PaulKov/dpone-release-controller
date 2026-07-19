@@ -35,3 +35,9 @@ Status: **PARTIAL — App installed + B2 WORM smoke verified. Mutation jobs / TP
 - No PyPI Trusted Publisher rebind yet.
 - No mutation jobs yet.
 - Rotate `B2_APPLICATION_KEY` after chat exposure when convenient.
+
+## Evidence tooling (2026-07-19)
+
+Mirrored from `PaulKov/dpone` `tools/agent_policy/release_*.py` into
+`tools/evidence/`. Workflow job `admit-and-lease` appends `LEASE_ACQUIRED` to
+B2 only — no PyPI / GitHub Release mutation and no policy v2 cutover.

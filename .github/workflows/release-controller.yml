@@ -2,29 +2,47 @@ name: Release controller scaffold
 
 on:
   workflow_dispatch:
-  push:
-    branches: [master]
+    inputs:
+      tag:
+        description: Release tag to lease (bootstrap / dry path)
+        required: true
+        default: v0.0.0-shape-b-bootstrap
+      ttl_seconds:
+        description: Lease TTL seconds
+        required: true
+        default: "300"
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
-  admit-dry-run:
-    name: Admit dry-run (no mutation)
+  admit-and-lease:
+    name: Admit and lease (evidence store only)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      B2_APPLICATION_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
+      B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+      B2_BUCKET_ID: ${{ secrets.B2_BUCKET_ID }}
+      B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+      DPONE_CONTROLLER_WORKFLOW_ID: "316322127"
+      GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
     steps:
-      - name: Record controller identity
+      - name: Checkout controller only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Acquire publication lease in B2 WORM store
         run: |
           set -euo pipefail
-          cat <<JSON
-          {
-            "status": "SCAFFOLD_NOT_ACTIVATED",
-            "controller_repository": "${{ github.repository }}",
-            "controller_repository_id": "${{ github.repository_id }}",
-            "workflow": "${{ github.workflow }}",
-            "run_id": "${{ github.run_id }}",
-            "sha": "${{ github.sha }}",
-            "target_repository": "PaulKov/dpone",
-            "target_repository_id": 1255975556
-          }
-          JSON
+          python3 tools/evidence/release_evidence_cli.py acquire-lease \
+            --tag "${{ inputs.tag }}" \
+            --repository-id 1255975556 \
+            --ttl-seconds "${{ inputs.ttl_seconds }}" \
+            --retention-days 365 \
+            | tee lease-receipt.json
+      - name: Upload lease receipt artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lease-receipt
+          path: lease-receipt.json
