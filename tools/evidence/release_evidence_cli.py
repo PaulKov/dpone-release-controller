@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import importlib.util
-import json
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,19 +23,15 @@ def _load_sibling(module_name: str, filename: str) -> Any:
     return module
 
 
-canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-lease = _load_sibling("dpone_agent_release_lease_service", "release_lease_service.py")
-store_mod = _load_sibling("dpone_agent_release_evidence_store_b2", "release_evidence_store_b2.py")
-attest = _load_sibling("dpone_agent_release_attest_draft", "release_attest_draft.py")
-stage = _load_sibling("dpone_agent_release_stage_draft", "release_stage_draft.py")
-authorize = _load_sibling("dpone_agent_release_authorize", "release_authorize.py")
-github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
+support = _load_sibling("dpone_agent_release_evidence_cli_support", "release_evidence_cli_support.py")
 
 _DEFAULT_JOBS = {
     "acquire-lease": "admit-and-lease",
+    "capture-snapshot-a": "admit-and-lease",
     "attest-draft-dry-run": "attest-and-draft",
     "stage-draft-live": "attest-and-draft",
     "authorize-publication": "authorize-publication",
+    "release-lease": "release-lease",
 }
 
 
@@ -48,6 +41,13 @@ def main(argv: list[str] | None = None) -> int:
 
     acquire = sub.add_parser("acquire-lease", help="Append LEASE_ACQUIRED to the B2 stream")
     _add_common_args(acquire)
+
+    snap_a = sub.add_parser("capture-snapshot-a", help="Append bootstrap GOVERNANCE_SNAPSHOT A")
+    _add_common_args(snap_a)
+    snap_a.add_argument("--owner", default="PaulKov")
+    snap_a.add_argument("--repo", default="dpone")
+    snap_a.add_argument("--github-token-env", default="GITHUB_TOKEN")
+    snap_a.add_argument("--snapshot-gap-seconds", type=float, default=5.0)
 
     flow = sub.add_parser(
         "attest-draft-dry-run",
@@ -82,140 +82,32 @@ def main(argv: list[str] | None = None) -> int:
     authz.add_argument("--github-token-env", default="GITHUB_TOKEN")
     authz.add_argument("--snapshot-gap-seconds", type=float, default=5.0)
 
+    release_lease = sub.add_parser("release-lease", help="Append LEASE_RELEASED (no public delete)")
+    _add_common_args(release_lease)
+    release_lease.add_argument("--reason", default="BOOTSTRAP_COMPLETE")
+
     args = parser.parse_args(argv)
-    store = _build_store(args)
-    ids = _release_ids(args)
-    producer = _producer(default_job=_DEFAULT_JOBS.get(args.command, args.command))
+    if args.command == "attest-draft-dry-run" and not args.bootstrap_dist:
+        parser.error("--bootstrap-dist is required until real candidate inventory wiring exists")
+
+    store = support.build_store(args)
+    ids = support.release_ids(args)
+    prod = support.producer(default_job=_DEFAULT_JOBS.get(args.command, args.command))
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: UP017
 
-    if args.command == "acquire-lease":
-        try:
-            receipt = lease.acquire_publication_lease(
-                store,
-                release_identity_id=ids["release_identity_id"],
-                release_authority_id=ids["release_authority_id"],
-                repository_id=args.repository_id,
-                tag_ref=ids["tag_ref"],
-                attempt_seed={
-                    "run_id": int(str(producer["run_id"])),
-                    "run_attempt": int(str(producer["run_attempt"])),
-                },
-                producer=producer,
-                ttl_seconds=args.ttl_seconds,
-                now_utc=now,
-                retention_days=args.retention_days,
-            )
-        except lease.LeaseConflictError as exc:
-            print(json.dumps({"status": "CONFLICT", "error": str(exc)}, sort_keys=True))
-            return 3
-        print(json.dumps({"status": "LEASE_ACQUIRED", "receipt": receipt}, sort_keys=True))
-        return 0
-
-    if args.command == "attest-draft-dry-run":
-        if not args.bootstrap_dist:
-            parser.error("--bootstrap-dist is required until real candidate inventory wiring exists")
-        distributions = [
-            {
-                "project": "dpone",
-                "filename": f"dpone-{args.tag.removeprefix('refs/tags/')}-py3-none-any.whl",
-                "size": 1,
-                "sha256": "d" * 64,
-            }
-        ]
-        try:
-            result = attest.run_attest_and_draft_dry_run(
-                store,
-                release_identity_id=ids["release_identity_id"],
-                release_authority_id=ids["release_authority_id"],
-                repository_id=args.repository_id,
-                tag_ref=ids["tag_ref"],
-                producer=producer,
-                now_utc=now,
-                distributions=distributions,
-                retention_days=args.retention_days,
-            )
-        except attest.StreamPrerequisiteError as exc:
-            print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
-            return 4
-        print(json.dumps(result, sort_keys=True))
-        return 0
-
-    if args.command == "stage-draft-live":
-        subject_path: Path = args.subject_file
-        bundle_path: Path = args.attestation_bundle
-        if not subject_path.is_file():
-            parser.error(f"subject file not found: {subject_path}")
-        if not bundle_path.is_file():
-            parser.error(f"attestation bundle not found: {bundle_path}")
-        subject_bytes = subject_path.read_bytes()
-        bundle_bytes = bundle_path.read_bytes()
-        token = _require_env(args.github_token_env)
-        api = github.GitHubApi(token=token)
-        attestation = {
-            "digest": "sha256:" + hashlib.sha256(bundle_bytes).hexdigest(),
-            "bundle_sha256": "sha256:" + hashlib.sha256(bundle_bytes).hexdigest(),
-            "bundle_bytes": len(bundle_bytes),
-            "url": args.attestation_url,
-            "predicate_type": "https://slsa.dev/provenance/v1",
-        }
-        try:
-            result = stage.run_stage_draft_live(
-                store,
-                api,
-                owner=args.owner,
-                repo=args.repo,
-                release_identity_id=ids["release_identity_id"],
-                release_authority_id=ids["release_authority_id"],
-                repository_id=args.repository_id,
-                tag_ref=ids["tag_ref"],
-                producer=producer,
-                now_utc=now,
-                subject_filename=subject_path.name,
-                subject_bytes=subject_bytes,
-                attestation=attestation,
-                retention_days=args.retention_days,
-            )
-        except stage.StreamPrerequisiteError as exc:
-            print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
-            return 4
-        except stage.GitHubApiError as exc:
-            print(json.dumps({"status": "GITHUB_ERROR", "error": str(exc)}, sort_keys=True))
-            return 5
-        print(json.dumps(result, sort_keys=True))
-        return 0
-
-    if args.command == "authorize-publication":
-        token = _require_env(args.github_token_env)
-        api = github.GitHubApi(token=token)
-        try:
-            result = authorize.run_authorize_publication(
-                store,
-                api,
-                owner=args.owner,
-                repo=args.repo,
-                release_identity_id=ids["release_identity_id"],
-                release_authority_id=ids["release_authority_id"],
-                repository_id=args.repository_id,
-                tag_ref=ids["tag_ref"],
-                producer=producer,
-                now_utc=now,
-                retention_days=args.retention_days,
-                snapshot_gap_seconds=args.snapshot_gap_seconds,
-            )
-        except authorize.StreamPrerequisiteError as exc:
-            print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
-            return 4
-        except authorize.AuthorizationError as exc:
-            print(json.dumps({"status": "AUTHORIZATION_ERROR", "error": str(exc)}, sort_keys=True))
-            return 6
-        except authorize.GitHubApiError as exc:
-            print(json.dumps({"status": "GITHUB_ERROR", "error": str(exc)}, sort_keys=True))
-            return 5
-        print(json.dumps(result, sort_keys=True))
-        return 0
-
-    parser.error(f"unsupported command {args.command}")
-    return 2
+    runners = {
+        "acquire-lease": support.run_acquire_lease,
+        "capture-snapshot-a": support.run_capture_snapshot_a,
+        "attest-draft-dry-run": support.run_attest_draft_dry_run,
+        "stage-draft-live": support.run_stage_draft_live,
+        "authorize-publication": support.run_authorize_publication,
+        "release-lease": support.run_release_lease,
+    }
+    runner = runners.get(args.command)
+    if runner is None:
+        parser.error(f"unsupported command {args.command}")
+        return 2
+    return int(runner(store, ids, args, prod, now))
 
 
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
@@ -231,76 +123,6 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--tag-object-sha", default="0" * 40)
     parser.add_argument("--peeled-commit-sha", default="0" * 40)
     parser.add_argument("--dry-memory", action="store_true", help="Use in-memory store")
-
-
-def _release_ids(args: argparse.Namespace) -> dict[str, Any]:
-    tag_ref = args.tag if args.tag.startswith("refs/tags/") else f"refs/tags/{args.tag}"
-    release_identity_id = canonical.sha256_id(
-        "dpone.release.identity.v2",
-        {
-            "repository_id": args.repository_id,
-            "tag": args.tag.removeprefix("refs/tags/"),
-            "projects": [
-                "dpone",
-                "dpone-native-accel",
-                "dpone-airflow-pack",
-                "apache-airflow-providers-dpone",
-            ],
-        },
-    )
-    release_authority_id = canonical.sha256_id(
-        "dpone.release.authority.v2",
-        {
-            "release_id": release_identity_id,
-            "tag_object_sha": args.tag_object_sha,
-            "peeled_commit_sha": args.peeled_commit_sha,
-            "policy_sha256": args.policy_sha256,
-            "protected_base_ref": "refs/heads/master",
-        },
-    )
-    return {
-        "tag_ref": tag_ref,
-        "release_identity_id": release_identity_id,
-        "release_authority_id": release_authority_id,
-    }
-
-
-def _build_store(args: argparse.Namespace) -> Any:
-    if args.dry_memory:
-        return store_mod.InMemoryEvidenceStore()
-    return store_mod.BackblazeB2EvidenceStore(
-        store_mod.B2Credentials(
-            key_id=_require_env("B2_APPLICATION_KEY_ID"),
-            application_key=_require_env("B2_APPLICATION_KEY"),
-            bucket_id=_require_env("B2_BUCKET_ID"),
-            bucket_name=_require_env("B2_BUCKET_NAME"),
-        )
-    )
-
-
-def _producer(*, default_job: str) -> dict[str, Any]:
-    workflow_path = ".github/workflows/release-controller.yml"
-    workflow_ref = os.environ.get("GITHUB_WORKFLOW_REF", "")
-    if "/.github/workflows/" in workflow_ref:
-        workflow_path = ".github/workflows/" + workflow_ref.split("/.github/workflows/", 1)[1].split("@", 1)[0]
-    return {
-        "kind": "github_actions_job",
-        "repository_id": os.environ.get("GITHUB_REPOSITORY_ID", "1305993853"),
-        "workflow_id": os.environ.get("DPONE_CONTROLLER_WORKFLOW_ID", "316322127"),
-        "workflow_path": workflow_path,
-        "workflow_sha": os.environ.get("GITHUB_SHA", "0" * 40),
-        "run_id": os.environ.get("GITHUB_RUN_ID", "0"),
-        "run_attempt": int(os.environ.get("GITHUB_RUN_ATTEMPT", "1")),
-        "job_name": os.environ.get("GITHUB_JOB", default_job),
-        "environment": os.environ.get("DPONE_CONTROLLER_ENVIRONMENT", "none"),
-    }
-
-
-def _require_env(name: str) -> str:
-    value = os.environ.get(name, "").strip()
-    if not value:
-        raise SystemExit(f"missing required environment variable: {name}")
-    return value
 
 
 if __name__ == "__main__":

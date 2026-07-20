@@ -61,11 +61,34 @@ jobs:
             --ttl-seconds "${{ inputs.ttl_seconds }}" \
             --retention-days 365 \
             | tee lease-receipt.json
+      - name: Mint target App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DPONE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DPONE_RELEASE_APP_PRIVATE_KEY }}
+          owner: PaulKov
+          repositories: dpone
+      - name: Capture bootstrap Snapshot A
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          python3 tools/evidence/release_evidence_cli.py capture-snapshot-a \
+            --tag "${{ steps.tag.outputs.tag }}" \
+            --repository-id 1255975556 \
+            --retention-days 365 \
+            --owner PaulKov \
+            --repo dpone \
+            --snapshot-gap-seconds 5 \
+            | tee snapshot-a-receipt.json
       - name: Upload lease receipt artifact
         uses: actions/upload-artifact@v4
         with:
           name: lease-receipt
-          path: lease-receipt.json
+          path: |
+            lease-receipt.json
+            snapshot-a-receipt.json
 
   attest-and-draft:
     name: Attest and draft
@@ -211,4 +234,44 @@ jobs:
         with:
           name: authorize-receipt
           path: authorize-receipt.json
+          if-no-files-found: ignore
+
+  release-lease:
+    name: Release lease (bootstrap cleanup)
+    needs:
+      - admit-and-lease
+      - authorize-publication
+    if: ${{ inputs.mode == 'live' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      B2_APPLICATION_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
+      B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+      B2_BUCKET_ID: ${{ secrets.B2_BUCKET_ID }}
+      B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+      DPONE_CONTROLLER_WORKFLOW_ID: "316322127"
+      DPONE_CONTROLLER_ENVIRONMENT: none
+      GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+    steps:
+      - name: Checkout controller only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Append LEASE_RELEASED
+        run: |
+          set -euo pipefail
+          # Ends the active lease without deleting drafts/tags/public state.
+          python3 tools/evidence/release_evidence_cli.py release-lease \
+            --tag "${{ needs.admit-and-lease.outputs.tag }}" \
+            --repository-id 1255975556 \
+            --retention-days 365 \
+            --reason BOOTSTRAP_COMPLETE \
+            | tee lease-release-receipt.json
+      - name: Upload lease-release receipt artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lease-release-receipt
+          path: lease-release-receipt.json
           if-no-files-found: ignore

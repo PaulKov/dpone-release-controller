@@ -103,6 +103,59 @@ def acquire_publication_lease(
     return built
 
 
+def release_publication_lease(
+    store: Any,
+    *,
+    release_identity_id: str,
+    release_authority_id: str,
+    repository_id: int,
+    tag_ref: str,
+    producer: Mapping[str, Any],
+    now_utc: str,
+    reason: str = "BOOTSTRAP_COMPLETE",
+    retention_days: int = 365,
+) -> dict[str, Any]:
+    """Append ``LEASE_RELEASED`` for the current active lease (no public delete)."""
+
+    now = parse_utc(now_utc)
+    receipts = store.list_receipts(release_identity_id)
+    active = active_lease(receipts, now=now)
+    if active is None:
+        raise LeaseConflictError("ACTIVE_LEASE_REQUIRED")
+    expected_lease_id = canonical.sha256_id(
+        "dpone.release.publication-lease.v2",
+        {"repository_id": repository_id, "tag_ref": tag_ref},
+    )
+    lease_id = str(active["lease"]["lease_id"])
+    if lease_id != expected_lease_id:
+        raise LeaseConflictError("LEASE_IDENTITY_MISMATCH")
+    fencing_token = int(active["lease"]["fencing_token"])
+    sequence = len(receipts)
+    previous = str(receipts[-1]["receipt_id"])
+    built = envelope_mod.build_receipt_envelope(
+        receipt_type="lease_released",
+        stream={
+            "release_identity_id": release_identity_id,
+            "release_authority_id": release_authority_id,
+            "sequence": sequence,
+            "previous": previous,
+        },
+        scope={"kind": "release", "release_identity_id": release_identity_id},
+        attempt=dict(active["attempt"]),
+        lease={"lease_id": lease_id, "fencing_token": fencing_token},
+        producer=dict(producer),
+        payload={
+            "kind": "LEASE_RELEASED",
+            "reason": reason,
+            "released_at": now_utc,
+        },
+        observed_at=now_utc,
+        committed_at=now_utc,
+    )
+    store.append_receipt(built, retention_days=retention_days)
+    return built
+
+
 def active_lease(receipts: list[dict[str, Any]], *, now: datetime) -> dict[str, Any] | None:
     """Return the unexpired ``LEASE_ACQUIRED`` receipt, if any."""
 
@@ -115,7 +168,7 @@ def active_lease(receipts: list[dict[str, Any]], *, now: datetime) -> dict[str, 
                 active = receipt
             else:
                 active = None
-        elif kind in {"LEASE_RELEASED", "CLOSED"}:
+        elif kind in {"LEASE_RELEASED", "CLOSED", "CANCELLATION"}:
             active = None
     return active
 
