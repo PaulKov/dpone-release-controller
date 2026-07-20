@@ -299,6 +299,21 @@ jobs:
             --repository-id 1255975556 \
             --retention-days 365 \
             | tee trusted-publisher-inventory-receipt.json
+            draft-inventory-receipt.json
+
+      - name: Draft inventory observe (never publish)
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          # Exact draft ID re-read only; never PATCH draft=false / publish.
+          python3 tools/evidence/release_evidence_cli.py draft-inventory-observe \
+            --tag "${{ needs.admit-and-lease.outputs.tag }}" \
+            --repository-id 1255975556 \
+            --retention-days 365 \
+            --owner PaulKov \
+            --repo dpone \
+            | tee draft-inventory-receipt.json
       - name: Upload observe receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -308,6 +323,7 @@ jobs:
             pypi-inventory-receipt.json
             immutable-inventory-receipt.json
             trusted-publisher-inventory-receipt.json
+            draft-inventory-receipt.json
           if-no-files-found: ignore
 
   release-lease:

@@ -35,6 +35,7 @@ _DEFAULT_JOBS = {
     "pypi-inventory-observe": "observe-publication",
     "immutable-inventory-observe": "observe-publication",
     "trusted-publisher-inventory-observe": "observe-publication",
+    "draft-inventory-observe": "observe-publication",
     "release-lease": "release-lease",
 }
 
@@ -110,6 +111,15 @@ def main(argv: list[str] | None = None) -> int:
     _add_common_args(tp_obs)
     tp_obs.add_argument("--index-url", default="https://pypi.org/")
 
+    draft_obs = sub.add_parser(
+        "draft-inventory-observe",
+        help="Re-read staged draft by exact release ID (never publish)",
+    )
+    _add_common_args(draft_obs)
+    draft_obs.add_argument("--owner", default="PaulKov")
+    draft_obs.add_argument("--repo", default="dpone")
+    draft_obs.add_argument("--github-token-env", default="GITHUB_TOKEN")
+
     release_lease = sub.add_parser("release-lease", help="Append LEASE_RELEASED (no public delete)")
     _add_common_args(release_lease)
     release_lease.add_argument("--reason", default="BOOTSTRAP_COMPLETE")
@@ -132,6 +142,7 @@ def main(argv: list[str] | None = None) -> int:
         "pypi-inventory-observe": observe.run_pypi_inventory_observe,
         "immutable-inventory-observe": observe.run_immutable_inventory_observe,
         "trusted-publisher-inventory-observe": observe.run_trusted_publisher_inventory_observe,
+        "draft-inventory-observe": observe.run_draft_inventory_observe,
         "release-lease": support.run_release_lease,
     }
     runner = runners.get(args.command)
