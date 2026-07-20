@@ -28,7 +28,8 @@ Target repository: `PaulKov/dpone` (id `1255975556`).
 - No PyPI upload, Trusted Publisher rebind, draft **publish**, or policy v2
   cutover until GO.
 - Bootstrap `mode=live` may create **draft** releases and bootstrap tags on
-  `PaulKov/dpone` under an active evidence lease; that is not production
-  publication authority.
+  `PaulKov/dpone` under an active evidence lease, then append Snapshot B /
+  `AUTHORIZED` receipts; that is not production publication authority and never
+  writes `PASS`/`GO`.
 - Current `PaulKov/dpone` `.github/workflows/release.yml` remains the live
   publisher until cutover.

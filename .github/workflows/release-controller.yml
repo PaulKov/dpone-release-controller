@@ -10,7 +10,7 @@ on:
       ttl_seconds:
         description: Lease TTL seconds
         required: true
-        default: "300"
+        default: "900"
       mode:
         description: attest/draft mode
         required: true
@@ -158,4 +158,57 @@ jobs:
         with:
           name: attest-draft-receipt
           path: attest-draft-receipt.json
+          if-no-files-found: ignore
+
+  authorize-publication:
+    name: Snapshot B + AUTHORIZED (bootstrap)
+    needs:
+      - admit-and-lease
+      - attest-and-draft
+    if: ${{ inputs.mode == 'live' }}
+    runs-on: ubuntu-latest
+    environment: release-attest
+    permissions:
+      contents: read
+    env:
+      B2_APPLICATION_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
+      B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+      B2_BUCKET_ID: ${{ secrets.B2_BUCKET_ID }}
+      B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+      DPONE_CONTROLLER_WORKFLOW_ID: "316322127"
+      DPONE_CONTROLLER_ENVIRONMENT: release-attest
+      GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+    steps:
+      - name: Checkout controller only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Mint target App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DPONE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DPONE_RELEASE_APP_PRIVATE_KEY }}
+          owner: PaulKov
+          repositories: dpone
+      - name: Authorize publication (bootstrap Snapshot B)
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          # Bootstrap only: two-read protected-base tip; no PASS/GO; no PyPI/publish.
+          python3 tools/evidence/release_evidence_cli.py authorize-publication \
+            --tag "${{ needs.admit-and-lease.outputs.tag }}" \
+            --repository-id 1255975556 \
+            --retention-days 365 \
+            --owner PaulKov \
+            --repo dpone \
+            --snapshot-gap-seconds 5 \
+            | tee authorize-receipt.json
+      - name: Upload authorize receipt artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: authorize-receipt
+          path: authorize-receipt.json
           if-no-files-found: ignore
