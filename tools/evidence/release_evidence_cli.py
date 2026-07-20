@@ -31,7 +31,15 @@ lease = _load_sibling("dpone_agent_release_lease_service", "release_lease_servic
 store_mod = _load_sibling("dpone_agent_release_evidence_store_b2", "release_evidence_store_b2.py")
 attest = _load_sibling("dpone_agent_release_attest_draft", "release_attest_draft.py")
 stage = _load_sibling("dpone_agent_release_stage_draft", "release_stage_draft.py")
+authorize = _load_sibling("dpone_agent_release_authorize", "release_authorize.py")
 github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
+
+_DEFAULT_JOBS = {
+    "acquire-lease": "admit-and-lease",
+    "attest-draft-dry-run": "attest-and-draft",
+    "stage-draft-live": "attest-and-draft",
+    "authorize-publication": "authorize-publication",
+}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -64,10 +72,20 @@ def main(argv: list[str] | None = None) -> int:
     live.add_argument("--attestation-url", default="")
     live.add_argument("--github-token-env", default="GITHUB_TOKEN")
 
+    authz = sub.add_parser(
+        "authorize-publication",
+        help="Snapshot B bootstrap + AUTHORIZED receipt (no publish/PyPI)",
+    )
+    _add_common_args(authz)
+    authz.add_argument("--owner", default="PaulKov")
+    authz.add_argument("--repo", default="dpone")
+    authz.add_argument("--github-token-env", default="GITHUB_TOKEN")
+    authz.add_argument("--snapshot-gap-seconds", type=float, default=5.0)
+
     args = parser.parse_args(argv)
     store = _build_store(args)
     ids = _release_ids(args)
-    producer = _producer(default_job="admit-and-lease" if args.command == "acquire-lease" else "attest-and-draft")
+    producer = _producer(default_job=_DEFAULT_JOBS.get(args.command, args.command))
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: UP017
 
     if args.command == "acquire-lease":
@@ -161,6 +179,36 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
             return 4
         except stage.GitHubApiError as exc:
+            print(json.dumps({"status": "GITHUB_ERROR", "error": str(exc)}, sort_keys=True))
+            return 5
+        print(json.dumps(result, sort_keys=True))
+        return 0
+
+    if args.command == "authorize-publication":
+        token = _require_env(args.github_token_env)
+        api = github.GitHubApi(token=token)
+        try:
+            result = authorize.run_authorize_publication(
+                store,
+                api,
+                owner=args.owner,
+                repo=args.repo,
+                release_identity_id=ids["release_identity_id"],
+                release_authority_id=ids["release_authority_id"],
+                repository_id=args.repository_id,
+                tag_ref=ids["tag_ref"],
+                producer=producer,
+                now_utc=now,
+                retention_days=args.retention_days,
+                snapshot_gap_seconds=args.snapshot_gap_seconds,
+            )
+        except authorize.StreamPrerequisiteError as exc:
+            print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
+            return 4
+        except authorize.AuthorizationError as exc:
+            print(json.dumps({"status": "AUTHORIZATION_ERROR", "error": str(exc)}, sort_keys=True))
+            return 6
+        except authorize.GitHubApiError as exc:
             print(json.dumps({"status": "GITHUB_ERROR", "error": str(exc)}, sort_keys=True))
             return 5
         print(json.dumps(result, sort_keys=True))

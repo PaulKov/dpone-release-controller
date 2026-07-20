@@ -98,6 +98,20 @@ def resolve_default_branch_sha(api: GitHubApi, *, owner: str, repo: str) -> tupl
     return branch, str(ref["object"]["sha"])
 
 
+def get_release(
+    api: GitHubApi,
+    *,
+    owner: str,
+    repo: str,
+    release_id: str | int,
+) -> dict[str, Any]:
+    """Return one release by exact provider ID."""
+
+    release = api.request("GET", f"/repos/{owner}/{repo}/releases/{int(release_id)}")
+    assert isinstance(release, dict)
+    return release
+
+
 def create_or_get_draft_release(
     api: GitHubApi,
     *,
