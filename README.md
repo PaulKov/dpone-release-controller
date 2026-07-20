@@ -29,7 +29,9 @@ Target repository: `PaulKov/dpone` (id `1255975556`).
   cutover until GO.
 - Bootstrap `mode=live` may create **draft** releases and bootstrap tags on
   `PaulKov/dpone` under an active evidence lease, capture Snapshot A/B,
-  append `AUTHORIZED`, then `LEASE_RELEASED`; that is not production
-  publication authority and never writes `PASS`/`GO`.
+  append `AUTHORIZED`, observe PyPI/immutable-release inventory (read-only),
+  then `LEASE_RELEASED`; that is not production publication authority and
+  never writes `PASS`/`GO`, never uploads to PyPI, and never enables
+  immutable releases.
 - Current `PaulKov/dpone` `.github/workflows/release.yml` remains the live
   publisher until cutover.

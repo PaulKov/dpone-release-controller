@@ -31,6 +31,8 @@ _DEFAULT_JOBS = {
     "attest-draft-dry-run": "attest-and-draft",
     "stage-draft-live": "attest-and-draft",
     "authorize-publication": "authorize-publication",
+    "pypi-inventory-observe": "observe-publication",
+    "immutable-inventory-observe": "observe-publication",
     "release-lease": "release-lease",
 }
 
@@ -82,6 +84,23 @@ def main(argv: list[str] | None = None) -> int:
     authz.add_argument("--github-token-env", default="GITHUB_TOKEN")
     authz.add_argument("--snapshot-gap-seconds", type=float, default=5.0)
 
+    pypi_obs = sub.add_parser(
+        "pypi-inventory-observe",
+        help="Read-only PyPI JSON inventory under AUTHORIZED (never upload)",
+    )
+    _add_common_args(pypi_obs)
+    pypi_obs.add_argument("--expected-json", type=Path, default=None)
+    pypi_obs.add_argument("--index-url", default="https://pypi.org/")
+
+    imm_obs = sub.add_parser(
+        "immutable-inventory-observe",
+        help="Observe GitHub immutable-releases setting (never enable/mutate)",
+    )
+    _add_common_args(imm_obs)
+    imm_obs.add_argument("--owner", default="PaulKov")
+    imm_obs.add_argument("--repo", default="dpone")
+    imm_obs.add_argument("--github-token-env", default="GITHUB_TOKEN")
+
     release_lease = sub.add_parser("release-lease", help="Append LEASE_RELEASED (no public delete)")
     _add_common_args(release_lease)
     release_lease.add_argument("--reason", default="BOOTSTRAP_COMPLETE")
@@ -101,6 +120,8 @@ def main(argv: list[str] | None = None) -> int:
         "attest-draft-dry-run": support.run_attest_draft_dry_run,
         "stage-draft-live": support.run_stage_draft_live,
         "authorize-publication": support.run_authorize_publication,
+        "pypi-inventory-observe": support.run_pypi_inventory_observe,
+        "immutable-inventory-observe": support.run_immutable_inventory_observe,
         "release-lease": support.run_release_lease,
     }
     runner = runners.get(args.command)

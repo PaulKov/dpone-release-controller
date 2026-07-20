@@ -236,11 +236,75 @@ jobs:
           path: authorize-receipt.json
           if-no-files-found: ignore
 
+  observe-publication:
+    name: Observe PyPI + immutable releases (no mutation)
+    needs:
+      - admit-and-lease
+      - authorize-publication
+    if: ${{ inputs.mode == 'live' }}
+    runs-on: ubuntu-latest
+    environment: release-attest
+    permissions:
+      contents: read
+    env:
+      B2_APPLICATION_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
+      B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+      B2_BUCKET_ID: ${{ secrets.B2_BUCKET_ID }}
+      B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+      DPONE_CONTROLLER_WORKFLOW_ID: "316322127"
+      DPONE_CONTROLLER_ENVIRONMENT: release-attest
+      GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+    steps:
+      - name: Checkout controller only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Mint target App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.DPONE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DPONE_RELEASE_APP_PRIVATE_KEY }}
+          owner: PaulKov
+          repositories: dpone
+      - name: PyPI inventory observe (never upload)
+        run: |
+          set -euo pipefail
+          # Read-only JSON classify; no Trusted Publisher; no twine/upload.
+          python3 tools/evidence/release_evidence_cli.py pypi-inventory-observe \
+            --tag "${{ needs.admit-and-lease.outputs.tag }}" \
+            --repository-id 1255975556 \
+            --retention-days 365 \
+            | tee pypi-inventory-receipt.json
+      - name: Immutable-release inventory observe (never enable)
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          # Org settings endpoint may 404 for user-owned accounts → UNVERIFIED.
+          python3 tools/evidence/release_evidence_cli.py immutable-inventory-observe \
+            --tag "${{ needs.admit-and-lease.outputs.tag }}" \
+            --repository-id 1255975556 \
+            --retention-days 365 \
+            --owner PaulKov \
+            --repo dpone \
+            | tee immutable-inventory-receipt.json
+      - name: Upload observe receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: observe-publication-receipts
+          path: |
+            pypi-inventory-receipt.json
+            immutable-inventory-receipt.json
+          if-no-files-found: ignore
+
   release-lease:
     name: Release lease (bootstrap cleanup)
     needs:
       - admit-and-lease
       - authorize-publication
+      - observe-publication
     if: ${{ inputs.mode == 'live' }}
     runs-on: ubuntu-latest
     permissions:
