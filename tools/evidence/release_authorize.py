@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
@@ -26,9 +25,11 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
 stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
 github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
+snapshots = _load_sibling("dpone_agent_release_governance_snapshot", "release_governance_snapshot.py")
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
 GitHubApiError = github.GitHubApiError
+SnapshotError = snapshots.SnapshotError
 
 
 class AuthorizationError(RuntimeError):
@@ -53,13 +54,16 @@ def run_authorize_publication(
 ) -> dict[str, Any]:
     """Verify the staged draft, capture bootstrap Snapshot B, append AUTHORIZED.
 
-    Bootstrap mode captures protected-base tip identity with two equal reads. It
-    does **not** claim full governance-policy v2 projection equality (blocked
-    until atomic cutover). Does **not** publish the draft or touch PyPI.
-    Explicitly never writes ``status: PASS`` or ``decision: GO``.
+    Requires a prior Snapshot A receipt. Bootstrap mode binds A→B by equal
+    protected-base tip (fast-forward under tip-only inventory). Does **not**
+    claim full governance-policy v2 projection equality. Does **not** publish
+    the draft or touch PyPI. Never writes ``status: PASS`` or ``decision: GO``.
     """
 
     receipts = store.list_receipts(release_identity_id)
+    snapshot_a = snapshots.latest_snapshot(receipts, label="A")
+    if snapshot_a is None:
+        raise AuthorizationError("SNAPSHOT_A_REQUIRED")
     draft = _require_latest_kind(receipts, "DRAFT_TRANSITION")
     if str(draft["payload"].get("mode")) != "LIVE":
         raise AuthorizationError("DRAFT_TRANSITION_NOT_LIVE")
@@ -82,32 +86,31 @@ def run_authorize_publication(
         if str(expected_asset_id) not in asset_ids:
             raise AuthorizationError("DRAFT_ASSET_ID_MISMATCH")
 
-    snapshot_b = _capture_bootstrap_snapshot_b(
-        api,
-        owner=owner,
-        repo=repo,
-        now_utc=now_utc,
-        gap_seconds=snapshot_gap_seconds,
-        sleeper=sleeper or time.sleep,
-    )
-    snapshot_receipt = stream.append_stream_receipt(
-        store,
-        release_identity_id=release_identity_id,
-        release_authority_id=release_authority_id,
-        repository_id=repository_id,
-        tag_ref=tag_ref,
-        producer=producer,
-        receipt_type="governance_snapshot",
-        payload={
-            "kind": "GOVERNANCE_SNAPSHOT",
-            "label": "B",
-            "mode": "BOOTSTRAP",
-            "snapshot": snapshot_b,
-        },
-        now_utc=now_utc,
-        retention_days=retention_days,
-        scope={"kind": "release", "release_identity_id": release_identity_id},
-    )
+    try:
+        snapshot_b_result = snapshots.append_governance_snapshot(
+            store,
+            api,
+            label="B",
+            owner=owner,
+            repo=repo,
+            release_identity_id=release_identity_id,
+            release_authority_id=release_authority_id,
+            repository_id=repository_id,
+            tag_ref=tag_ref,
+            producer=producer,
+            now_utc=now_utc,
+            retention_days=retention_days,
+            gap_seconds=snapshot_gap_seconds,
+            sleeper=sleeper,
+        )
+    except SnapshotError as exc:
+        raise AuthorizationError(str(exc)) from exc
+    snapshot_b = snapshot_b_result["snapshot"]
+    try:
+        snapshots.require_bootstrap_fast_forward(snapshot_a, snapshot_b)
+    except SnapshotError as exc:
+        raise AuthorizationError(str(exc)) from exc
+
     active = _require_active_lease_fields(store, release_identity_id=release_identity_id, now_utc=now_utc)
     authorization_id = canonical.sha256_id(
         "dpone.release.authorization.v2",
@@ -116,6 +119,7 @@ def run_authorize_publication(
             "candidate_id": candidate_id,
             "public_bundle_sha256": public_bundle_sha256,
             "draft_release_id": draft_release_id,
+            "snapshot_a_sha256": snapshot_a["snapshot_sha256"],
             "snapshot_b_sha256": snapshot_b["snapshot_sha256"],
             "lease_id": active["lease_id"],
             "fencing_token": active["fencing_token"],
@@ -139,6 +143,7 @@ def run_authorize_publication(
             "draft_release_id": draft_release_id,
             "lease_id": active["lease_id"],
             "fencing_token": active["fencing_token"],
+            "snapshot_a_sha256": snapshot_a["snapshot_sha256"],
             "snapshot_b_sha256": snapshot_b["snapshot_sha256"],
             "governance_projection": "BOOTSTRAP_BASE_TIP_ONLY",
         },
@@ -157,8 +162,9 @@ def run_authorize_publication(
         "authorization_id": authorization_id,
         "draft_release_id": draft_release_id,
         "candidate_id": candidate_id,
+        "snapshot_a": snapshot_a,
         "snapshot_b": snapshot_b,
-        "receipts": [snapshot_receipt, authorized],
+        "receipts": [snapshot_b_result["receipt"], authorized],
     }
 
 
@@ -184,32 +190,3 @@ def _require_active_lease_fields(
         "lease_id": str(active["lease"]["lease_id"]),
         "fencing_token": int(active["lease"]["fencing_token"]),
     }
-
-
-def _capture_bootstrap_snapshot_b(
-    api: Any,
-    *,
-    owner: str,
-    repo: str,
-    now_utc: str,
-    gap_seconds: float,
-    sleeper: Callable[[float], None],
-) -> dict[str, Any]:
-    branch, first = github.resolve_default_branch_sha(api, owner=owner, repo=repo)
-    if gap_seconds > 0:
-        sleeper(gap_seconds)
-    branch2, second = github.resolve_default_branch_sha(api, owner=owner, repo=repo)
-    if branch != branch2 or first != second:
-        raise AuthorizationError("SNAPSHOT_B_UNSTABLE")
-    body = {
-        "label": "B",
-        "mode": "BOOTSTRAP",
-        "protected_base_ref": f"refs/heads/{branch}",
-        "protected_base_sha": first,
-        "read_count": 2,
-        "started_at": now_utc,
-        "completed_at": now_utc,
-        "gap_seconds": gap_seconds,
-    }
-    body["snapshot_sha256"] = canonical.sha256_id("dpone.release.governance-snapshot.v2", body)
-    return body
