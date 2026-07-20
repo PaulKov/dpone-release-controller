@@ -160,9 +160,7 @@ def run_capture_snapshot_a(store: Any, ids: dict[str, Any], args: Namespace, pro
     return 0
 
 
-def run_attest_draft_dry_run(
-    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
-) -> int:
+def run_attest_draft_dry_run(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
     distributions = [
         {
             "project": "dpone",
@@ -234,9 +232,7 @@ def run_stage_draft_live(store: Any, ids: dict[str, Any], args: Namespace, prod:
     return 0
 
 
-def run_authorize_publication(
-    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
-) -> int:
+def run_authorize_publication(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
     api = github.GitHubApi(token=require_env(args.github_token_env))
     try:
         result = authorize.run_authorize_publication(
@@ -262,6 +258,9 @@ def run_authorize_publication(
     except authorize.GitHubApiError as exc:
         print(json.dumps({"status": "GITHUB_ERROR", "error": str(exc)}, sort_keys=True))
         return 5
+    except RuntimeError as exc:
+        print(json.dumps({"status": "STORE_ERROR", "error": str(exc)}, sort_keys=True))
+        return 7
     print(json.dumps(result, sort_keys=True))
     return 0
 

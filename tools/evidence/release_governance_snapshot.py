@@ -131,10 +131,26 @@ def latest_snapshot(receipts: list[dict[str, Any]], *, label: str) -> dict[str, 
     return None
 
 
-def require_bootstrap_fast_forward(snapshot_a: Mapping[str, Any], snapshot_b: Mapping[str, Any]) -> None:
-    """Bootstrap ancestry: identical protected-base tip (no divergence)."""
+def require_bootstrap_fast_forward(
+    api: Any,
+    *,
+    owner: str,
+    repo: str,
+    snapshot_a: Mapping[str, Any],
+    snapshot_b: Mapping[str, Any],
+) -> None:
+    """Bootstrap ancestry: B tip is identical to or ahead of A (fast-forward)."""
 
     if str(snapshot_a.get("protected_base_ref")) != str(snapshot_b.get("protected_base_ref")):
         raise SnapshotError("SNAPSHOT_BASE_REF_MISMATCH")
-    if str(snapshot_a.get("protected_base_sha")) != str(snapshot_b.get("protected_base_sha")):
-        raise SnapshotError("SNAPSHOT_BASE_NOT_FAST_FORWARD")
+    sha_a = str(snapshot_a.get("protected_base_sha") or "")
+    sha_b = str(snapshot_b.get("protected_base_sha") or "")
+    if not sha_a or not sha_b:
+        raise SnapshotError("SNAPSHOT_BASE_SHA_MISSING")
+    if sha_a == sha_b:
+        return
+    compare = api.request("GET", f"/repos/{owner}/{repo}/compare/{sha_a}...{sha_b}")
+    assert isinstance(compare, dict)
+    status = str(compare.get("status") or "")
+    if status not in {"identical", "ahead"}:
+        raise SnapshotError(f"SNAPSHOT_BASE_NOT_FAST_FORWARD:{status}")
