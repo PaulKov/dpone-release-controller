@@ -24,6 +24,7 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 support = _load_sibling("dpone_agent_release_evidence_cli_support", "release_evidence_cli_support.py")
+observe = _load_sibling("dpone_agent_release_evidence_cli_observe", "release_evidence_cli_observe.py")
 
 _DEFAULT_JOBS = {
     "acquire-lease": "admit-and-lease",
@@ -33,6 +34,7 @@ _DEFAULT_JOBS = {
     "authorize-publication": "authorize-publication",
     "pypi-inventory-observe": "observe-publication",
     "immutable-inventory-observe": "observe-publication",
+    "trusted-publisher-inventory-observe": "observe-publication",
     "release-lease": "release-lease",
 }
 
@@ -101,6 +103,13 @@ def main(argv: list[str] | None = None) -> int:
     imm_obs.add_argument("--repo", default="dpone")
     imm_obs.add_argument("--github-token-env", default="GITHUB_TOKEN")
 
+    tp_obs = sub.add_parser(
+        "trusted-publisher-inventory-observe",
+        help="Observe Integrity publisher claims / TP binding (never rebind)",
+    )
+    _add_common_args(tp_obs)
+    tp_obs.add_argument("--index-url", default="https://pypi.org/")
+
     release_lease = sub.add_parser("release-lease", help="Append LEASE_RELEASED (no public delete)")
     _add_common_args(release_lease)
     release_lease.add_argument("--reason", default="BOOTSTRAP_COMPLETE")
@@ -120,8 +129,9 @@ def main(argv: list[str] | None = None) -> int:
         "attest-draft-dry-run": support.run_attest_draft_dry_run,
         "stage-draft-live": support.run_stage_draft_live,
         "authorize-publication": support.run_authorize_publication,
-        "pypi-inventory-observe": support.run_pypi_inventory_observe,
-        "immutable-inventory-observe": support.run_immutable_inventory_observe,
+        "pypi-inventory-observe": observe.run_pypi_inventory_observe,
+        "immutable-inventory-observe": observe.run_immutable_inventory_observe,
+        "trusted-publisher-inventory-observe": observe.run_trusted_publisher_inventory_observe,
         "release-lease": support.run_release_lease,
     }
     runner = runners.get(args.command)

@@ -33,8 +33,6 @@ stage = _load_sibling("dpone_agent_release_stage_draft", "release_stage_draft.py
 authorize = _load_sibling("dpone_agent_release_authorize", "release_authorize.py")
 snapshots = _load_sibling("dpone_agent_release_governance_snapshot", "release_governance_snapshot.py")
 github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
-pypi_inv = _load_sibling("dpone_agent_release_pypi_inventory", "release_pypi_inventory.py")
-immutable_inv = _load_sibling("dpone_agent_release_immutable_inventory", "release_immutable_inventory.py")
 
 
 def require_env(name: str) -> str:
@@ -284,68 +282,4 @@ def run_release_lease(store: Any, ids: dict[str, Any], args: Namespace, prod: di
         print(json.dumps({"status": "CONFLICT", "error": str(exc)}, sort_keys=True))
         return 3
     print(json.dumps({"status": "LEASE_RELEASED", "receipt": receipt}, sort_keys=True))
-    return 0
-
-
-def run_pypi_inventory_observe(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
-    expected: list[dict[str, Any]] = []
-    if getattr(args, "expected_json", None):
-        expected = json.loads(Path(args.expected_json).read_text(encoding="utf-8"))
-        if not isinstance(expected, list):
-            print(json.dumps({"status": "USAGE", "error": "expected_json must be a list"}, sort_keys=True))
-            return 2
-    try:
-        result = pypi_inv.run_pypi_inventory_observe(
-            store,
-            release_identity_id=ids["release_identity_id"],
-            release_authority_id=ids["release_authority_id"],
-            repository_id=args.repository_id,
-            tag_ref=ids["tag_ref"],
-            producer=prod,
-            now_utc=now,
-            expected_distributions=expected,
-            retention_days=args.retention_days,
-            index_url=args.index_url,
-        )
-    except pypi_inv.InventoryError as exc:
-        print(json.dumps({"status": "INVENTORY_ERROR", "error": str(exc)}, sort_keys=True))
-        return 6
-    except pypi_inv.StreamPrerequisiteError as exc:
-        print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
-        return 4
-    except RuntimeError as exc:
-        print(json.dumps({"status": "STORE_ERROR", "error": str(exc)}, sort_keys=True))
-        return 7
-    print(json.dumps(result, sort_keys=True))
-    return 0
-
-
-def run_immutable_inventory_observe(
-    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
-) -> int:
-    api = github.GitHubApi(token=require_env(args.github_token_env))
-    try:
-        result = immutable_inv.run_immutable_inventory(
-            store,
-            api,
-            owner=args.owner,
-            repo=args.repo,
-            release_identity_id=ids["release_identity_id"],
-            release_authority_id=ids["release_authority_id"],
-            repository_id=args.repository_id,
-            tag_ref=ids["tag_ref"],
-            producer=prod,
-            now_utc=now,
-            retention_days=args.retention_days,
-        )
-    except immutable_inv.InventoryError as exc:
-        print(json.dumps({"status": "INVENTORY_ERROR", "error": str(exc)}, sort_keys=True))
-        return 6
-    except immutable_inv.StreamPrerequisiteError as exc:
-        print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
-        return 4
-    except RuntimeError as exc:
-        print(json.dumps({"status": "STORE_ERROR", "error": str(exc)}, sort_keys=True))
-        return 7
-    print(json.dumps(result, sort_keys=True))
     return 0
