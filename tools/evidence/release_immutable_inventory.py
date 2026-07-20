@@ -28,39 +28,74 @@ stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_ser
 StreamPrerequisiteError = stream.StreamPrerequisiteError
 
 
+def _http_status(exc: BaseException) -> int | None:
+    status = getattr(exc, "status", None)
+    return status if isinstance(status, int) else None
+
+
+def _observe_repo_immutable(api: Any, *, owner: str, repo: str) -> dict[str, Any]:
+    """Prefer repository setting (works for user-owned accounts)."""
+
+    path = f"/repos/{owner}/{repo}/immutable-releases"
+    payload = api.request("GET", path)
+    assert isinstance(payload, dict)
+    enabled = bool(payload.get("enabled"))
+    return {
+        "required": True,
+        "observed": "ENABLED" if enabled else "DISABLED",
+        "source": path.lstrip("/"),
+        "enforced_by_owner": bool(payload.get("enforced_by_owner")),
+        "raw_keys": sorted(payload.keys()),
+    }
+
+
+def _observe_org_immutable(api: Any, *, owner: str) -> dict[str, Any]:
+    """Fallback org policy path when repo endpoint is unavailable."""
+
+    path = f"/orgs/{owner}/settings/immutable-releases"
+    payload = api.request("GET", path)
+    assert isinstance(payload, dict)
+    enabled = bool(payload.get("enabled_for_new_repos") or payload.get("enabled") or False)
+    return {
+        "required": True,
+        "observed": "ENABLED" if enabled else "DISABLED",
+        "source": path.lstrip("/"),
+        "raw_keys": sorted(payload.keys()),
+    }
+
+
 def observe_immutable_releases(
     api: Any,
     *,
     owner: str,
     repo: str,
 ) -> dict[str, Any]:
-    """Return observed immutable-release inventory without changing settings."""
+    """Return observed immutable-release inventory without changing settings.
 
-    del repo  # repository-level endpoint not available; org/user path is authoritative today.
-    # GitHub documents org settings at /orgs/{org}/settings/immutable-releases.
-    # User-owned repositories and missing org endpoints remain UNVERIFIED.
+    Prefer ``GET /repos/{owner}/{repo}/immutable-releases`` (GA for repositories).
+    Fall back to the org settings endpoint. Never enable or mutate.
+    """
+
     try:
-        payload = api.request("GET", f"/orgs/{owner}/settings/immutable-releases")
-        assert isinstance(payload, dict)
-        enabled = bool(payload.get("enabled_for_new_repos") or payload.get("enabled") or False)
-        return {
-            "required": True,
-            "observed": "ENABLED" if enabled else "DISABLED",
-            "source": f"orgs/{owner}/settings/immutable-releases",
-            "raw_keys": sorted(payload.keys()),
-        }
-    except Exception as exc:
-        # Duck-type status: sibling importlib loads can fork GitHubApiError identity.
-        status = getattr(exc, "status", None)
-        if not isinstance(status, int):
+        return _observe_repo_immutable(api, owner=owner, repo=repo)
+    except Exception as repo_exc:
+        repo_status = _http_status(repo_exc)
+        if repo_status is None:
             raise
-        return {
-            "required": True,
-            "observed": "UNVERIFIED",
-            "source": f"orgs/{owner}/settings/immutable-releases",
-            "reason": f"HTTP_{status}",
-            "detail": str(exc)[:300],
-        }
+        try:
+            return _observe_org_immutable(api, owner=owner)
+        except Exception as org_exc:
+            org_status = _http_status(org_exc)
+            if org_status is None:
+                raise
+            return {
+                "required": True,
+                "observed": "UNVERIFIED",
+                "source": f"repos/{owner}/{repo}/immutable-releases",
+                "reason": f"HTTP_{repo_status}",
+                "fallback_org_reason": f"HTTP_{org_status}",
+                "detail": str(repo_exc)[:300],
+            }
 
 
 class InventoryError(RuntimeError):
