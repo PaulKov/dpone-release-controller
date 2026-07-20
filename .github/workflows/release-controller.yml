@@ -289,6 +289,16 @@ jobs:
             --owner PaulKov \
             --repo dpone \
             | tee immutable-inventory-receipt.json
+
+      - name: Trusted Publisher inventory observe (never rebind)
+        run: |
+          set -euo pipefail
+          # Integrity publisher claims only; no TP management API; no rebind.
+          python3 tools/evidence/release_evidence_cli.py trusted-publisher-inventory-observe \
+            --tag "${{ needs.admit-and-lease.outputs.tag }}" \
+            --repository-id 1255975556 \
+            --retention-days 365 \
+            | tee trusted-publisher-inventory-receipt.json
       - name: Upload observe receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -297,6 +307,7 @@ jobs:
           path: |
             pypi-inventory-receipt.json
             immutable-inventory-receipt.json
+            trusted-publisher-inventory-receipt.json
           if-no-files-found: ignore
 
   release-lease:
