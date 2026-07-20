@@ -299,7 +299,6 @@ jobs:
             --repository-id 1255975556 \
             --retention-days 365 \
             | tee trusted-publisher-inventory-receipt.json
-            draft-inventory-receipt.json
 
       - name: Draft inventory observe (never publish)
         env:
