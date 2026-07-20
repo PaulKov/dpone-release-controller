@@ -107,9 +107,17 @@ def run_authorize_publication(
         raise AuthorizationError(str(exc)) from exc
     snapshot_b = snapshot_b_result["snapshot"]
     try:
-        snapshots.require_bootstrap_fast_forward(snapshot_a, snapshot_b)
+        snapshots.require_bootstrap_fast_forward(
+            api,
+            owner=owner,
+            repo=repo,
+            snapshot_a=snapshot_a,
+            snapshot_b=snapshot_b,
+        )
     except SnapshotError as exc:
         raise AuthorizationError(str(exc)) from exc
+    except GitHubApiError as exc:
+        raise AuthorizationError(f"SNAPSHOT_COMPARE_FAILED:{exc}") from exc
 
     active = _require_active_lease_fields(store, release_identity_id=release_identity_id, now_utc=now_utc)
     authorization_id = canonical.sha256_id(

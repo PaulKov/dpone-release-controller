@@ -5,12 +5,15 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol
+
+_TRANSIENT_HTTP = frozenset({408, 429, 500, 502, 503, 504})
 
 
 class EvidenceStore(Protocol):
@@ -134,34 +137,53 @@ class BackblazeB2EvidenceStore:
             receipt_id=str(envelope["receipt_id"]),
         )
         body = json.dumps(envelope, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        upload = self._json_post(
-            f"{self._api_url}/b2api/v2/b2_get_upload_url",
-            {"bucketId": self._credentials.bucket_id},
-        )
         retain_until = int(
             (
                 datetime.now(timezone.utc) + timedelta(days=max(1, retention_days))  # noqa: UP017
             ).timestamp()
             * 1000
         )
-        headers = {
-            "Authorization": str(upload["authorizationToken"]),
-            "X-Bz-File-Name": urllib.parse.quote(key),
-            "Content-Type": "application/json",
-            "Content-Length": str(len(body)),
-            "X-Bz-Content-Sha1": hashlib.sha1(body).hexdigest(),
-            "X-Bz-File-Retention-Mode": "compliance",
-            "X-Bz-File-Retention-Retain-Until-Timestamp": str(retain_until),
-        }
-        request = urllib.request.Request(str(upload["uploadUrl"]), data=body, method="POST", headers=headers)
-        with self._opener(request) as response:
-            result = json.load(response)
-        return {
-            "object_key": key,
-            "file_id": result.get("fileId"),
-            "status": "APPENDED",
-            "file_retention": result.get("fileRetention"),
-        }
+        last_error: Exception | None = None
+        for attempt in range(5):
+            try:
+                upload = self._json_post(
+                    f"{self._api_url}/b2api/v2/b2_get_upload_url",
+                    {"bucketId": self._credentials.bucket_id},
+                )
+                headers = {
+                    "Authorization": str(upload["authorizationToken"]),
+                    "X-Bz-File-Name": urllib.parse.quote(key),
+                    "Content-Type": "application/json",
+                    "Content-Length": str(len(body)),
+                    "X-Bz-Content-Sha1": hashlib.sha1(body).hexdigest(),
+                    "X-Bz-File-Retention-Mode": "compliance",
+                    "X-Bz-File-Retention-Retain-Until-Timestamp": str(retain_until),
+                }
+                request = urllib.request.Request(str(upload["uploadUrl"]), data=body, method="POST", headers=headers)
+                with self._opener(request) as response:
+                    result = json.load(response)
+                return {
+                    "object_key": key,
+                    "file_id": result.get("fileId"),
+                    "status": "APPENDED",
+                    "file_retention": result.get("fileRetention"),
+                }
+            except urllib.error.HTTPError as exc:
+                last_error = exc
+                if int(exc.code) not in _TRANSIENT_HTTP or attempt == 4:
+                    detail = exc.read().decode("utf-8", errors="replace")
+                    raise RuntimeError(f"B2_HTTP_{exc.code}:{detail}") from exc
+                time.sleep(0.5 * (2**attempt))
+            except RuntimeError as exc:
+                last_error = exc
+                if "B2_HTTP_" not in str(exc) or attempt == 4:
+                    raise
+                code = int(str(exc).split("B2_HTTP_", 1)[1].split(":", 1)[0])
+                if code not in _TRANSIENT_HTTP:
+                    raise
+                time.sleep(0.5 * (2**attempt))
+        assert last_error is not None
+        raise last_error
 
     def _authorize(self) -> None:
         token = base64.b64encode(f"{self._credentials.key_id}:{self._credentials.application_key}".encode()).decode()
