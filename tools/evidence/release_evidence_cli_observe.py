@@ -31,6 +31,7 @@ tp_inv = _load_sibling(
     "dpone_agent_release_trusted_publisher_inventory",
     "release_trusted_publisher_inventory.py",
 )
+draft_inv = _load_sibling("dpone_agent_release_draft_inventory", "release_draft_inventory.py")
 
 
 def run_pypi_inventory_observe(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
@@ -116,6 +117,37 @@ def run_trusted_publisher_inventory_observe(
         print(json.dumps({"status": "INVENTORY_ERROR", "error": str(exc)}, sort_keys=True))
         return 6
     except tp_inv.StreamPrerequisiteError as exc:
+        print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
+        return 4
+    except RuntimeError as exc:
+        print(json.dumps({"status": "STORE_ERROR", "error": str(exc)}, sort_keys=True))
+        return 7
+    print(json.dumps(result, sort_keys=True))
+    return 0
+
+
+def run_draft_inventory_observe(
+    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
+) -> int:
+    api = github.GitHubApi(token=support.require_env(args.github_token_env))
+    try:
+        result = draft_inv.run_draft_inventory(
+            store,
+            api,
+            owner=args.owner,
+            repo=args.repo,
+            release_identity_id=ids["release_identity_id"],
+            release_authority_id=ids["release_authority_id"],
+            repository_id=args.repository_id,
+            tag_ref=ids["tag_ref"],
+            producer=prod,
+            now_utc=now,
+            retention_days=args.retention_days,
+        )
+    except draft_inv.InventoryError as exc:
+        print(json.dumps({"status": "INVENTORY_ERROR", "error": str(exc)}, sort_keys=True))
+        return 6
+    except draft_inv.StreamPrerequisiteError as exc:
         print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
         return 4
     except RuntimeError as exc:
