@@ -1,4 +1,10 @@
-"""CLI for shape-B evidence store lease + attest/draft staging."""
+"""DORMANT / NOT AN OPERATOR INTERFACE: retired Shape-B evidence CLI.
+
+Every command can mutate the evidence stream, and stage-draft-live can also
+mutate GitHub. The CLI therefore refuses to load its legacy runtime unless
+each invocation supplies the explicit forensic-compatibility flag. That
+opt-in does not activate a controller or authorize a release.
+"""
 
 from __future__ import annotations
 
@@ -23,8 +29,11 @@ def _load_sibling(module_name: str, filename: str) -> Any:
     return module
 
 
-support = _load_sibling("dpone_agent_release_evidence_cli_support", "release_evidence_cli_support.py")
-observe = _load_sibling("dpone_agent_release_evidence_cli_observe", "release_evidence_cli_observe.py")
+_DORMANT_ERROR = (
+    "DORMANT / NOT AN OPERATOR INTERFACE: "
+    "--allow-dormant-bootstrap-mutations is required; this explicit opt-in "
+    "does not activate a controller or authorize a release"
+)
 
 _DEFAULT_JOBS = {
     "acquire-lease": "admit-and-lease",
@@ -42,12 +51,24 @@ _DEFAULT_JOBS = {
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--allow-dormant-bootstrap-mutations",
+        action="store_true",
+        help=(
+            "Explicitly acknowledge retired bootstrap side effects for this "
+            "invocation only; does not grant release authority"
+        ),
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    acquire = sub.add_parser("acquire-lease", help="Append LEASE_ACQUIRED to the B2 stream")
+    acquire = sub.add_parser(
+        "acquire-lease", help="Append LEASE_ACQUIRED to the B2 stream"
+    )
     _add_common_args(acquire)
 
-    snap_a = sub.add_parser("capture-snapshot-a", help="Append bootstrap GOVERNANCE_SNAPSHOT A")
+    snap_a = sub.add_parser(
+        "capture-snapshot-a", help="Append bootstrap GOVERNANCE_SNAPSHOT A"
+    )
     _add_common_args(snap_a)
     snap_a.add_argument("--owner", default="PaulKov")
     snap_a.add_argument("--repo", default="dpone")
@@ -120,13 +141,21 @@ def main(argv: list[str] | None = None) -> int:
     draft_obs.add_argument("--repo", default="dpone")
     draft_obs.add_argument("--github-token-env", default="GITHUB_TOKEN")
 
-    release_lease = sub.add_parser("release-lease", help="Append LEASE_RELEASED (no public delete)")
+    release_lease = sub.add_parser(
+        "release-lease", help="Append LEASE_RELEASED (no public delete)"
+    )
     _add_common_args(release_lease)
     release_lease.add_argument("--reason", default="BOOTSTRAP_COMPLETE")
 
     args = parser.parse_args(argv)
+    if not args.allow_dormant_bootstrap_mutations:
+        parser.error(_DORMANT_ERROR)
+
+    support, observe = _load_runtime_modules()
     if args.command == "attest-draft-dry-run" and not args.bootstrap_dist:
-        parser.error("--bootstrap-dist is required until real candidate inventory wiring exists")
+        parser.error(
+            "--bootstrap-dist is required until real candidate inventory wiring exists"
+        )
 
     store = support.build_store(args)
     ids = support.release_ids(args)
@@ -152,8 +181,24 @@ def main(argv: list[str] | None = None) -> int:
     return int(runner(store, ids, args, prod, now))
 
 
+def _load_runtime_modules() -> tuple[Any, Any]:
+    """Load the retired mutation graph only after explicit acknowledgement."""
+
+    support = _load_sibling(
+        "dpone_agent_release_evidence_cli_support",
+        "release_evidence_cli_support.py",
+    )
+    observe = _load_sibling(
+        "dpone_agent_release_evidence_cli_observe",
+        "release_evidence_cli_observe.py",
+    )
+    return support, observe
+
+
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--tag", required=True, help="Canonical release tag, e.g. v0.73.2")
+    parser.add_argument(
+        "--tag", required=True, help="Canonical release tag, e.g. v0.73.2"
+    )
     parser.add_argument("--repository-id", required=True, type=int)
     parser.add_argument("--ttl-seconds", type=int, default=300)
     parser.add_argument("--retention-days", type=int, default=365)

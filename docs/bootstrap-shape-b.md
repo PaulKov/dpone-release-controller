@@ -1,42 +1,53 @@
-# Shape B bootstrap: GitHub App + Backblaze B2 WORM
+# Shape B bootstrap — retired provisioning guide
 
-Status: **PROVISIONING**. Does not activate ADR 0028 in `PaulKov/dpone`.
+Status: **RETIRED / DO NOT EXECUTE.** This document records why the historical
+scaffold was created; it is not an operator runbook and does not activate ADR
+0028 in `PaulKov/dpone`.
 
-## Chosen free WORM store
+The retained tools/evidence/release_evidence_cli.py entry point is likewise
+**DORMANT / NOT AN OPERATOR INTERFACE**. All of its subcommands can append
+evidence-store receipts, including commands named observe or dry-run, and
+stage-draft-live can mutate GitHub. It refuses normal execution before loading
+the legacy runtime unless a caller supplies the explicit global
+--allow-dormant-bootstrap-mutations acknowledgement before the subcommand.
 
-**Backblaze B2** with Object Lock (compliance mode), free tier ~10 GB.
+That per-invocation flag exists only for separately approved forensic
+compatibility. It neither activates a controller nor authorizes a release, and
+--dry-memory is not a substitute. The guard does not secure direct imports,
+historical refs, or provider-side re-runs; credential revocation and workflow
+disablement remain mandatory.
 
-Why not:
-- Cloudflare R2 — no Object Lock / WORM
-- Company AWS/GCP already logged in on workstation — wrong tenancy for public `dpone` release evidence
-- GitHub Actions artifacts — transport only, not receipt authority (ADR 0028)
+The historical bootstrap combined a broad GitHub App, long-lived B2
+credentials, mutable controller code, and direct provider mutation. A live run
+used that path. The exact observed objects and unresolved provider controls are
+recorded in [`live-inventory.md`](live-inventory.md).
 
-Canonical `store_id` format (after bucket exists):
+## GitHub App disposition
+
+The installed App must be suspended or reduced and its private key/client
+secret rotated before any controller work resumes. The checked-in
+[`github-app-manifest.json`](../github-app-manifest.json) now describes a
+read-only inspection shape only. Updating that file does not change the
+installed App. The historical one-click HTML form is intentionally disabled.
+
+Any future activation design must use job-specific credentials with the exact
+minimum repository permissions. No privileged job may checkout mutable
+controller or candidate code.
+
+## Evidence-store disposition
+
+Backblaze B2 Object Lock remains inventory evidence, not transaction authority.
+Object Lock alone cannot provide compare-and-swap, a unique lease sequence,
+fencing, renewal, one-use capabilities, or deterministic recovery. Revoke or
+rotate the historical application key. A future design requires a transactional
+coordinator plus an outbox that verifies the immutable B2 archive before any
+provider-mutation capability is issued.
+
+The historical `store_id` shape is retained only for forensic compatibility:
 
 ```text
 b2://<bucket-name>?region=<region>&object_lock=compliance&retention_days_pre_mutation=365&retention_days_closed=2557
 ```
 
-## GitHub App
-
-Manifest: [`github-app-manifest.json`](../github-app-manifest.json)
-
-One-click (while logged into GitHub as `PaulKov`):
-
-1. Open https://github.com/settings/apps/new
-2. Or run `scripts/open-app-manifest.html` locally and submit the form
-3. Install the App on `PaulKov/dpone` and `PaulKov/dpone-release-controller`
-4. Store App ID + installation ID in inventory (never commit private key)
-
-## B2 bucket
-
-```bash
-# after account + application key
-b2 bucket create dpone-release-evidence-v1 allPrivate \
-  --default-server-side-encryption SSE-B2 \
-  --file-lock-enabled
-```
-
-Set default retention to at least 2557 days for closed streams (or per-object
-on append). Writer credentials must be OIDC-exchanged or short-lived keys
-scoped to this bucket only — never long-lived admin keys in `dpone`.
+Do not create, delete, overwrite, publish, or reuse any historical bootstrap
+object without a separate evidence-preserving cleanup plan and approval.

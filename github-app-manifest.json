@@ -10,16 +10,14 @@
     "https://github.com/PaulKov/dpone-release-controller"
   ],
   "setup_url": "https://github.com/PaulKov/dpone-release-controller",
-  "description": "Least-privilege App for dpone shape B release controller (scaffold). Not activated until GO review.",
+  "description": "Quarantined read-only inspection manifest. Not release authority and not activated.",
   "public": false,
   "default_events": [],
   "default_permissions": {
     "metadata": "read",
-    "contents": "write",
+    "contents": "read",
     "actions": "read",
     "checks": "read",
-    "statuses": "read",
-    "administration": "write",
-    "attestations": "write"
+    "statuses": "read"
   }
 }
