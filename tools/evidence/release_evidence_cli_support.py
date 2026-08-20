@@ -26,12 +26,17 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
+identity = _load_sibling("dpone_agent_release_identity", "release_identity.py")
 lease = _load_sibling("dpone_agent_release_lease_service", "release_lease_service.py")
-store_mod = _load_sibling("dpone_agent_release_evidence_store_b2", "release_evidence_store_b2.py")
+store_mod = _load_sibling(
+    "dpone_agent_release_evidence_store_b2", "release_evidence_store_b2.py"
+)
 attest = _load_sibling("dpone_agent_release_attest_draft", "release_attest_draft.py")
 stage = _load_sibling("dpone_agent_release_stage_draft", "release_stage_draft.py")
 authorize = _load_sibling("dpone_agent_release_authorize", "release_authorize.py")
-snapshots = _load_sibling("dpone_agent_release_governance_snapshot", "release_governance_snapshot.py")
+snapshots = _load_sibling(
+    "dpone_agent_release_governance_snapshot", "release_governance_snapshot.py"
+)
 github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
 
 
@@ -43,29 +48,16 @@ def require_env(name: str) -> str:
 
 
 def release_ids(args: Namespace) -> dict[str, Any]:
-    tag_ref = args.tag if args.tag.startswith("refs/tags/") else f"refs/tags/{args.tag}"
-    release_identity_id = canonical.sha256_id(
-        "dpone.release.identity.v2",
-        {
-            "repository_id": args.repository_id,
-            "tag": args.tag.removeprefix("refs/tags/"),
-            "projects": [
-                "dpone",
-                "dpone-native-accel",
-                "dpone-airflow-pack",
-                "apache-airflow-providers-dpone",
-            ],
-        },
-    )
-    release_authority_id = canonical.sha256_id(
-        "dpone.release.authority.v2",
-        {
-            "release_id": release_identity_id,
-            "tag_object_sha": args.tag_object_sha,
-            "peeled_commit_sha": args.peeled_commit_sha,
-            "policy_sha256": args.policy_sha256,
-            "protected_base_ref": "refs/heads/master",
-        },
+    release = args.tag.removeprefix("refs/tags/")
+    if args.repository_id != identity.TARGET_REPOSITORY_ID:
+        raise ValueError("retired CLI target repository id is not canonical")
+    tag_ref = f"refs/tags/{release}"
+    release_identity_id = identity.release_identity_id(release)
+    release_authority_id = identity.release_authority_id(
+        release_identity_id=release_identity_id,
+        tag_object_sha=args.tag_object_sha,
+        peeled_commit_sha=args.peeled_commit_sha,
+        policy_sha256=args.policy_sha256,
     )
     return {
         "tag_ref": tag_ref,
@@ -91,11 +83,14 @@ def producer(*, default_job: str) -> dict[str, Any]:
     workflow_path = ".github/workflows/release-controller.yml"
     workflow_ref = os.environ.get("GITHUB_WORKFLOW_REF", "")
     if "/.github/workflows/" in workflow_ref:
-        workflow_path = ".github/workflows/" + workflow_ref.split("/.github/workflows/", 1)[1].split("@", 1)[0]
+        workflow_path = (
+            ".github/workflows/"
+            + workflow_ref.split("/.github/workflows/", 1)[1].split("@", 1)[0]
+        )
     return {
         "kind": "github_actions_job",
         "repository_id": os.environ.get("GITHUB_REPOSITORY_ID", "1305993853"),
-        "workflow_id": os.environ.get("DPONE_CONTROLLER_WORKFLOW_ID", "316322127"),
+        "workflow_id": int(require_env("DPONE_CONTROLLER_WORKFLOW_ID")),
         "workflow_path": workflow_path,
         "workflow_sha": os.environ.get("GITHUB_SHA", "0" * 40),
         "run_id": os.environ.get("GITHUB_RUN_ID", "0"),
@@ -105,7 +100,9 @@ def producer(*, default_job: str) -> dict[str, Any]:
     }
 
 
-def run_acquire_lease(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
+def run_acquire_lease(
+    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
+) -> int:
     try:
         receipt = lease.acquire_publication_lease(
             store,
@@ -113,10 +110,9 @@ def run_acquire_lease(store: Any, ids: dict[str, Any], args: Namespace, prod: di
             release_authority_id=ids["release_authority_id"],
             repository_id=args.repository_id,
             tag_ref=ids["tag_ref"],
-            attempt_seed={
-                "run_id": int(str(prod["run_id"])),
-                "run_attempt": int(str(prod["run_attempt"])),
-            },
+            controller_workflow_id=int(str(prod["workflow_id"])),
+            controller_run_id=int(str(prod["run_id"])),
+            controller_run_attempt=int(str(prod["run_attempt"])),
             producer=prod,
             ttl_seconds=args.ttl_seconds,
             now_utc=now,
@@ -129,7 +125,9 @@ def run_acquire_lease(store: Any, ids: dict[str, Any], args: Namespace, prod: di
     return 0
 
 
-def run_capture_snapshot_a(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
+def run_capture_snapshot_a(
+    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
+) -> int:
     api = github.GitHubApi(token=require_env(args.github_token_env))
     try:
         result = snapshots.append_governance_snapshot(
@@ -151,7 +149,9 @@ def run_capture_snapshot_a(store: Any, ids: dict[str, Any], args: Namespace, pro
         print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
         return 4
     except snapshots.SnapshotError as exc:
-        print(json.dumps({"status": "SNAPSHOT_ERROR", "error": str(exc)}, sort_keys=True))
+        print(
+            json.dumps({"status": "SNAPSHOT_ERROR", "error": str(exc)}, sort_keys=True)
+        )
         return 6
     except snapshots.GitHubApiError as exc:
         print(json.dumps({"status": "GITHUB_ERROR", "error": str(exc)}, sort_keys=True))
@@ -160,7 +160,9 @@ def run_capture_snapshot_a(store: Any, ids: dict[str, Any], args: Namespace, pro
     return 0
 
 
-def run_attest_draft_dry_run(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
+def run_attest_draft_dry_run(
+    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
+) -> int:
     distributions = [
         {
             "project": "dpone",
@@ -188,7 +190,9 @@ def run_attest_draft_dry_run(store: Any, ids: dict[str, Any], args: Namespace, p
     return 0
 
 
-def run_stage_draft_live(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
+def run_stage_draft_live(
+    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
+) -> int:
     subject_path: Path = args.subject_file
     bundle_path: Path = args.attestation_bundle
     if not subject_path.is_file():
@@ -232,7 +236,9 @@ def run_stage_draft_live(store: Any, ids: dict[str, Any], args: Namespace, prod:
     return 0
 
 
-def run_authorize_publication(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
+def run_authorize_publication(
+    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
+) -> int:
     api = github.GitHubApi(token=require_env(args.github_token_env))
     try:
         result = authorize.run_authorize_publication(
@@ -253,7 +259,11 @@ def run_authorize_publication(store: Any, ids: dict[str, Any], args: Namespace, 
         print(json.dumps({"status": "PREREQUISITE", "error": str(exc)}, sort_keys=True))
         return 4
     except authorize.AuthorizationError as exc:
-        print(json.dumps({"status": "AUTHORIZATION_ERROR", "error": str(exc)}, sort_keys=True))
+        print(
+            json.dumps(
+                {"status": "AUTHORIZATION_ERROR", "error": str(exc)}, sort_keys=True
+            )
+        )
         return 6
     except authorize.GitHubApiError as exc:
         print(json.dumps({"status": "GITHUB_ERROR", "error": str(exc)}, sort_keys=True))
@@ -265,7 +275,9 @@ def run_authorize_publication(store: Any, ids: dict[str, Any], args: Namespace, 
     return 0
 
 
-def run_release_lease(store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str) -> int:
+def run_release_lease(
+    store: Any, ids: dict[str, Any], args: Namespace, prod: dict[str, Any], now: str
+) -> int:
     try:
         receipt = lease.release_publication_lease(
             store,

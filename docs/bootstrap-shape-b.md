@@ -4,18 +4,17 @@ Status: **RETIRED / DO NOT EXECUTE.** This document records why the historical
 scaffold was created; it is not an operator runbook and does not activate ADR
 0028 in `PaulKov/dpone`.
 
-The retained tools/evidence/release_evidence_cli.py entry point is likewise
-**DORMANT / NOT AN OPERATOR INTERFACE**. All of its subcommands can append
-evidence-store receipts, including commands named observe or dry-run, and
-stage-draft-live can mutate GitHub. It refuses normal execution before loading
-the legacy runtime unless a caller supplies the explicit global
---allow-dormant-bootstrap-mutations acknowledgement before the subcommand.
+The retained `tools/evidence/release_evidence_cli.py` entry point is likewise
+**PERMANENTLY QUARANTINED / NOT AN OPERATOR INTERFACE**. It is a compatibility
+tombstone, not the historical implementation. Help is read-only; every
+non-help invocation exits with status 2 before loading the retired runtime,
+reading credentials, or dispatching any subcommand.
 
-That per-invocation flag exists only for separately approved forensic
-compatibility. It neither activates a controller nor authorizes a release, and
---dry-memory is not a substitute. The guard does not secure direct imports,
-historical refs, or provider-side re-runs; credential revocation and workflow
-disablement remain mandatory.
+There is no compatibility acknowledgement or activation flag. In particular,
+the former `--allow-dormant-bootstrap-mutations` option is rejected like every
+other non-help invocation, and `--dry-memory` grants no exception. The
+tombstone cannot secure historical refs or provider-side re-runs; credential
+revocation and workflow disablement remain mandatory.
 
 The historical bootstrap combined a broad GitHub App, long-lived B2
 credentials, mutable controller code, and direct provider mutation. A live run

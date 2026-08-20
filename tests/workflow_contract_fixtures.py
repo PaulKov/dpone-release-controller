@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 CHECKOUT_ACTION = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+SETUP_PYTHON_ACTION = "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1"
+SETUP_UV_ACTION = "astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78"
 UPLOAD_ARTIFACT_ACTION = (
     "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
 )
@@ -133,9 +135,16 @@ EXPECTED_CI_WORKFLOW: dict[str, Any] = {
     "permissions": {},
     "jobs": {
         "contract": {
-            "name": "Validate quarantine contract",
+            "name": (
+                "Validate quarantine contract (Python ${{ matrix.python-version }})"
+            ),
             "runs-on": "ubuntu-latest",
             "permissions": {"contents": "read"},
+            "strategy": {
+                "fail-fast": False,
+                "matrix": {"python-version": ["3.11", "3.12"]},
+            },
+            "env": {"UV_PYTHON": "${{ matrix.python-version }}"},
             "steps": [
                 {
                     "name": "Checkout controller source",
@@ -143,17 +152,46 @@ EXPECTED_CI_WORKFLOW: dict[str, Any] = {
                     "with": {"persist-credentials": False},
                 },
                 {
-                    "name": "Run dependency-free quarantine checks",
+                    "name": "Install uv",
+                    "uses": SETUP_UV_ACTION,
+                    "with": {"version": "0.11.28"},
+                },
+                {
+                    "name": "Set up Python",
+                    "uses": SETUP_PYTHON_ACTION,
+                    "with": {"python-version": "${{ matrix.python-version }}"},
+                },
+                {
+                    "name": "Synchronize locked validation dependencies",
+                    "run": "uv sync --frozen",
+                },
+                {
+                    "name": "Validate source, tests, and module boundaries",
                     "run": _shell(
                         "set -euo pipefail",
-                        "python3 -B -m unittest discover -s tests -v",
+                        "uv run --frozen ruff check .",
+                        "uv run --frozen ruff format --check .",
                         (
-                            "python3 -B -m py_compile "
-                            "tools/controller_preflight.py tests/*.py"
+                            "uv run --frozen python -B -m compileall -q "
+                            "scripts tests tools"
                         ),
+                        ("uv run --frozen python -B -m unittest discover -s tests -v"),
                         (
-                            "python3 -m json.tool "
+                            "uv run --frozen python -m json.tool "
                             "config/release-controller-activation.json >/dev/null"
+                        ),
+                    ),
+                },
+                {
+                    "name": "Verify generated contracts are current",
+                    "run": _shell(
+                        "set -euo pipefail",
+                        "for producer in scripts/generate_*.py; do",
+                        '  uv run --frozen python -B "${producer}" --check',
+                        "done",
+                        (
+                            "uv run --frozen python -B -m "
+                            "tools.evidence.release_receipt_vectors --check"
                         ),
                     ),
                 },

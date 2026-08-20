@@ -40,11 +40,38 @@ below are closed; changing a repository variable is insufficient.
 
 ## Self-service validation
 
-Run the dependency-free contract suite from the repository root:
+The controller runtime modules use the Python standard library. Contract
+validation additionally uses the locked development tools declared in
+`pyproject.toml` and `uv.lock`: `jsonschema` for schema tests and `ruff`
+for source checks. Use Python 3.11 as selected by `.python-version` and uv
+0.11.28, then synchronize without changing the lock:
 
-```bash
-python3 -B -m unittest discover -s tests -v
+```console
+$ uv sync --frozen
+$ uv run --frozen ruff check .
+$ uv run --frozen ruff format --check .
+$ uv run --frozen python -B -m compileall -q scripts tests tools
+$ uv run --frozen python -B -m unittest discover -s tests -v
 ```
+
+The CI workflow runs the same locked commands on Python 3.11 and 3.12 and
+checks every generated contract producer with `--check`. Use a producer's
+explicit `--write` mode only in the reviewed contract change that owns the
+generated output. All five producers below reject a missing mode and reject
+unexpected files in their managed namespace; invoke the receipt-vector module
+explicitly as shown.
+These are the exact regeneration commands:
+
+```console
+$ uv run --frozen python -B scripts/generate_release_controller_action_contract.py --write
+$ uv run --frozen python -B scripts/generate_release_controller_vectors.py --write
+$ uv run --frozen python -B scripts/generate_release_controller_wire_contracts.py --write
+$ uv run --frozen python -B scripts/generate_release_receipt_schema.py --write
+$ uv run --frozen python -B -m tools.evidence.release_receipt_vectors --write
+```
+
+The public closure producer intentionally has no write mode while its contract
+is on HOLD; CI invokes its read-only `--check` quarantine assertion.
 
 Exercise the local preflight without credentials or network access:
 
@@ -60,7 +87,7 @@ GITHUB_REPOSITORY_ID=1305993853 \
 GITHUB_EVENT_NAME=workflow_dispatch \
 GITHUB_REF=refs/heads/master \
 GITHUB_WORKFLOW_REF=PaulKov/dpone-release-controller/.github/workflows/controller-quarantine.yml@refs/heads/master \
-python3 tools/controller_preflight.py validate \
+uv run --frozen python tools/controller_preflight.py validate \
   --policy config/release-controller-activation.json \
   --github-output "$preflight_output"
 ```
@@ -71,29 +98,29 @@ live mode requires an explicit tag. Shell payloads, Unicode digits, unknown
 modes, malformed policy fields, marker mismatches, and commit-binding
 mismatches fail closed.
 
-### Dormant historical evidence CLI
+### Permanently quarantined historical evidence CLI
 
 The historical entry point at tools/evidence/release_evidence_cli.py is
-**DORMANT / NOT AN OPERATOR INTERFACE**. Every subcommand appends evidence-store
-receipts in its normal mode, including the observe and attest-draft-dry-run
-commands; stage-draft-live can also mutate GitHub.
+**PERMANENTLY QUARANTINED / NOT AN OPERATOR INTERFACE**. Current source is a
+compatibility tombstone: it cannot dispatch a historical subcommand, load the
+retired runtime graph, access credentials, or mutate GitHub, PyPI, B2, or a
+local test stream.
 
-By default the CLI exits before loading its retired runtime graph or accessing
-credentials, files, or the network. Help is safe and documents the guard:
+Help is read-only and documents the replacement protocol:
 
 ~~~bash
-python3 -B tools/evidence/release_evidence_cli.py --help
+uv run --frozen python -B tools/evidence/release_evidence_cli.py --help
 ~~~
 
-Controlled forensic compatibility requires the global
---allow-dormant-bootstrap-mutations flag before the subcommand. The flag is a
-per-invocation acknowledgement, not activation or release authorization;
---dry-memory does not replace it. Do not persist the flag in a workflow,
-configuration, alias, or environment variable.
+Every non-help invocation exits with status 2 before runtime loading. There is
+no compatibility or activation flag; the former
+`--allow-dormant-bootstrap-mutations` option is rejected like any other
+invocation. The activation-bound broker v2 protocol is the only permitted
+release-state writer.
 
-This entry-point guard limits accidental use of current source only. Direct
-module imports, historical refs, and eligible historical run replays bypass
-it, so the provider controls in the operational checklist remain mandatory.
+This tombstone limits accidental use of current source only. Historical refs
+and eligible historical run replays remain separate provider risks, so the
+operational quarantine controls below are still mandatory.
 
 ## Operational quarantine checklist
 

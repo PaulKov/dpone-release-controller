@@ -24,7 +24,9 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
+stream = _load_sibling(
+    "dpone_agent_release_stream_service", "release_stream_service.py"
+)
 github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
@@ -66,7 +68,9 @@ def capture_bootstrap_snapshot(
         "completed_at": now_utc,
         "gap_seconds": gap_seconds,
     }
-    body["snapshot_sha256"] = canonical.sha256_id("dpone.release.governance-snapshot.v2", body)
+    body["snapshot_sha256"] = canonical.sha256_id(
+        "dpone.release.governance-snapshot.v2", body
+    )
     return body
 
 
@@ -83,7 +87,7 @@ def append_governance_snapshot(
     tag_ref: str,
     producer: Mapping[str, Any],
     now_utc: str,
-    retention_days: int = 365,
+    retention_days: int = 2_557,
     gap_seconds: float = 5.0,
     sleeper: Callable[[float], None] | None = None,
 ) -> dict[str, Any]:
@@ -116,15 +120,25 @@ def append_governance_snapshot(
         retention_days=retention_days,
         scope={"kind": "release", "release_identity_id": release_identity_id},
     )
-    return {"status": "GOVERNANCE_SNAPSHOT", "label": label, "snapshot": snapshot, "receipt": receipt}
+    return {
+        "status": "GOVERNANCE_SNAPSHOT",
+        "label": label,
+        "snapshot": snapshot,
+        "receipt": receipt,
+    }
 
 
-def latest_snapshot(receipts: list[dict[str, Any]], *, label: str) -> dict[str, Any] | None:
+def latest_snapshot(
+    receipts: list[dict[str, Any]], *, label: str
+) -> dict[str, Any] | None:
     """Return the latest bootstrap snapshot payload for ``label``, if present."""
 
     for receipt in reversed(receipts):
         payload = receipt.get("payload") or {}
-        if str(payload.get("kind")) == "GOVERNANCE_SNAPSHOT" and str(payload.get("label")) == label:
+        if (
+            str(payload.get("kind")) == "GOVERNANCE_SNAPSHOT"
+            and str(payload.get("label")) == label
+        ):
             snapshot = payload.get("snapshot")
             if isinstance(snapshot, dict):
                 return snapshot
@@ -141,7 +155,9 @@ def require_bootstrap_fast_forward(
 ) -> None:
     """Bootstrap ancestry: B tip is identical to or ahead of A (fast-forward)."""
 
-    if str(snapshot_a.get("protected_base_ref")) != str(snapshot_b.get("protected_base_ref")):
+    if str(snapshot_a.get("protected_base_ref")) != str(
+        snapshot_b.get("protected_base_ref")
+    ):
         raise SnapshotError("SNAPSHOT_BASE_REF_MISMATCH")
     sha_a = str(snapshot_a.get("protected_base_sha") or "")
     sha_b = str(snapshot_b.get("protected_base_sha") or "")

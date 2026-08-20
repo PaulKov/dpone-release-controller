@@ -23,8 +23,12 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-bundle_mod = _load_sibling("dpone_agent_release_public_bundle", "release_public_bundle.py")
-stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
+bundle_mod = _load_sibling(
+    "dpone_agent_release_public_bundle", "release_public_bundle.py"
+)
+stream = _load_sibling(
+    "dpone_agent_release_stream_service", "release_stream_service.py"
+)
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
 
@@ -39,7 +43,7 @@ def run_attest_and_draft_dry_run(
     producer: Mapping[str, Any],
     now_utc: str,
     distributions: list[dict[str, Any]],
-    retention_days: int = 365,
+    retention_days: int = 2_557,
 ) -> dict[str, Any]:
     """Append the attest/bundle/draft dry-run receipt chain.
 
@@ -99,7 +103,10 @@ def run_attest_and_draft_dry_run(
             "mode": "DRY_RUN",
             "candidate_id": candidate_id,
             "subject_count": len(distributions),
-            "subjects": [{"filename": row["filename"], "sha256": row["sha256"]} for row in distributions],
+            "subjects": [
+                {"filename": row["filename"], "sha256": row["sha256"]}
+                for row in distributions
+            ],
         },
         now_utc=now_utc,
         retention_days=retention_days,
@@ -123,7 +130,9 @@ def run_attest_and_draft_dry_run(
         retention_days=retention_days,
         scope={"kind": "candidate", "candidate_id": candidate_id},
     )
-    draft_id = f"dry-run:{public_bundle['manifest_sha256'].removeprefix('sha256:')[:16]}"
+    draft_id = (
+        f"dry-run:{public_bundle['manifest_sha256'].removeprefix('sha256:')[:16]}"
+    )
     draft = stream.append_stream_receipt(
         store,
         release_identity_id=release_identity_id,

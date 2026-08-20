@@ -1,0 +1,28 @@
+{
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-controller-selector-request.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "release_identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "schema": {
+      "const": "dpone.release-controller-selector-request.v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "tag": {
+      "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "release_identity_id",
+    "tag"
+  ],
+  "type": "object"
+}

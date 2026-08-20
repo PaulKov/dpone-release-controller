@@ -28,7 +28,9 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
+stream = _load_sibling(
+    "dpone_agent_release_stream_service", "release_stream_service.py"
+)
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
 
@@ -57,7 +59,13 @@ def fetch_project_release_files(
     getter = http_get or _default_http_get
     status, payload, text = getter(url)
     if status == 404:
-        return {"project": project, "reachable": True, "exists": False, "files": [], "latest_version": None}
+        return {
+            "project": project,
+            "reachable": True,
+            "exists": False,
+            "files": [],
+            "latest_version": None,
+        }
     if status >= 400 or payload is None:
         raise InventoryError(f"PYPI_HTTP_{status}:{project}:{text[:200]}")
     releases = payload.get("releases") or {}
@@ -116,7 +124,9 @@ def classify_expected_file(
     exact = [
         row
         for row in matches
-        if str(row.get("sha256")) == sha256 and int(row.get("size") or 0) == size and not bool(row.get("yanked"))
+        if str(row.get("sha256")) == sha256
+        and int(row.get("size") or 0) == size
+        and not bool(row.get("yanked"))
     ]
     if exact:
         return {
@@ -136,7 +146,12 @@ def classify_expected_file(
         "sha256": sha256,
         "size": size,
         "observed": [
-            {"sha256": row.get("sha256"), "size": row.get("size"), "yanked": row.get("yanked")} for row in matches
+            {
+                "sha256": row.get("sha256"),
+                "size": row.get("size"),
+                "yanked": row.get("yanked"),
+            }
+            for row in matches
         ],
     }
 
@@ -152,7 +167,7 @@ def run_pypi_inventory_observe(
     now_utc: str,
     expected_distributions: list[dict[str, Any]] | None = None,
     projects: tuple[str, ...] = DEFAULT_PROJECTS,
-    retention_days: int = 365,
+    retention_days: int = 2_557,
     http_get: HttpGet | None = None,
     index_url: str = "https://pypi.org/",
 ) -> dict[str, Any]:
@@ -167,7 +182,9 @@ def run_pypi_inventory_observe(
     project_rows: list[dict[str, Any]] = []
     files_by_project: dict[str, list[dict[str, Any]]] = {}
     for project in projects:
-        row = fetch_project_release_files(project, http_get=http_get, index_url=index_url)
+        row = fetch_project_release_files(
+            project, http_get=http_get, index_url=index_url
+        )
         project_rows.append(
             {
                 "project": row["project"],
@@ -179,10 +196,15 @@ def run_pypi_inventory_observe(
         )
         files_by_project[project] = list(row["files"])
     classifications = [
-        classify_expected_file(item, files_by_project.get(str(item["project"]), [])) for item in expected
+        classify_expected_file(item, files_by_project.get(str(item["project"]), []))
+        for item in expected
     ]
-    conflicts = [row for row in classifications if row.get("classification") == "CONFLICT"]
-    upload_subset = [row for row in classifications if row.get("classification") == "PENDING_UPLOAD"]
+    conflicts = [
+        row for row in classifications if row.get("classification") == "CONFLICT"
+    ]
+    upload_subset = [
+        row for row in classifications if row.get("classification") == "PENDING_UPLOAD"
+    ]
     inventory_id = canonical.sha256_id(
         "dpone.release.pypi-inventory.v2",
         {
@@ -232,7 +254,9 @@ def _latest_kind(receipts: list[dict[str, Any]], kind: str) -> dict[str, Any] | 
 
 
 def _default_http_get(url: str) -> tuple[int, dict[str, Any] | None, str]:
-    request = urllib.request.Request(url, headers={"User-Agent": "dpone-release-controller"})
+    request = urllib.request.Request(
+        url, headers={"User-Agent": "dpone-release-controller"}
+    )
     try:
         with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310
             raw = response.read()

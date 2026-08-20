@@ -1,0 +1,104 @@
+{
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-controller-pypi-outcome-response.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "append_count": {
+      "maximum": 9,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "appended_selectors": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 9,
+      "minItems": 1,
+      "type": "array"
+    },
+    "batch_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "classification": {
+      "enum": [
+        "ALREADY_PUBLISHED_EXACT",
+        "AMBIGUOUS",
+        "COMPLETE",
+        "CONFLICT",
+        "PARTIAL_EXACT"
+      ]
+    },
+    "first_receipt_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "first_receipt_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "first_sequence": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "head_receipt_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "head_receipt_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "head_sequence": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "release_identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "resulting_state": {
+      "enum": [
+        "PYPI_RECOVERY",
+        "PYPI_VERIFIED",
+        "RECOVERY_REQUIRED"
+      ]
+    },
+    "schema": {
+      "const": "dpone.release-controller-pypi-outcome-response.v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "tag": {
+      "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "type": "string"
+    },
+    "verified_file_count": {
+      "maximum": 8,
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "head_receipt_id",
+    "head_receipt_sha256",
+    "head_sequence",
+    "release_identity_id",
+    "tag",
+    "append_count",
+    "appended_selectors",
+    "batch_sha256",
+    "classification",
+    "first_receipt_id",
+    "first_receipt_sha256",
+    "first_sequence",
+    "resulting_state",
+    "verified_file_count"
+  ],
+  "type": "object"
+}

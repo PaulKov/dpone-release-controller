@@ -1,0 +1,101 @@
+{
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-controller-cancellation-outcome-response.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "append_count": {
+      "const": 2
+    },
+    "appended_selectors": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "type": "array"
+    },
+    "batch_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "external_commit_observed": {
+      "type": "boolean"
+    },
+    "first_receipt_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "first_receipt_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "first_sequence": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "head_receipt_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "head_receipt_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "head_sequence": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "recovery_id": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        }
+      ]
+    },
+    "release_identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "resulting_state": {
+      "enum": [
+        "ABORTED",
+        "RECOVERY_REQUIRED"
+      ]
+    },
+    "schema": {
+      "const": "dpone.release-controller-cancellation-outcome-response.v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "tag": {
+      "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "head_receipt_id",
+    "head_receipt_sha256",
+    "head_sequence",
+    "release_identity_id",
+    "tag",
+    "append_count",
+    "appended_selectors",
+    "batch_sha256",
+    "external_commit_observed",
+    "first_receipt_id",
+    "first_receipt_sha256",
+    "first_sequence",
+    "recovery_id",
+    "resulting_state"
+  ],
+  "type": "object"
+}

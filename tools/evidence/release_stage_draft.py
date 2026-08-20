@@ -24,8 +24,12 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-bundle_mod = _load_sibling("dpone_agent_release_public_bundle", "release_public_bundle.py")
-stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
+bundle_mod = _load_sibling(
+    "dpone_agent_release_public_bundle", "release_public_bundle.py"
+)
+stream = _load_sibling(
+    "dpone_agent_release_stream_service", "release_stream_service.py"
+)
 github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
@@ -47,7 +51,7 @@ def run_stage_draft_live(
     subject_filename: str,
     subject_bytes: bytes,
     attestation: Mapping[str, Any],
-    retention_days: int = 365,
+    retention_days: int = 2_557,
 ) -> dict[str, Any]:
     """Create/resume a real draft release and append LIVE receipt chain.
 
@@ -191,7 +195,9 @@ def run_stage_draft_live(
             "draft_release_id": draft_id,
             "draft_html_url": release.get("html_url"),
             "public_bundle_sha256": public_bundle["manifest_sha256"],
-            "tag_ref": tag_ref if tag_ref.startswith("refs/") else f"refs/tags/{tag_name}",
+            "tag_ref": tag_ref
+            if tag_ref.startswith("refs/")
+            else f"refs/tags/{tag_name}",
             "tag_object_sha": tip_sha,
             "asset_id": asset.get("id"),
             "tag_created": tag_result["created"],

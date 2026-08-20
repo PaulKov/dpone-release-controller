@@ -23,7 +23,9 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
+stream = _load_sibling(
+    "dpone_agent_release_stream_service", "release_stream_service.py"
+)
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
 
@@ -55,7 +57,9 @@ def _observe_org_immutable(api: Any, *, owner: str) -> dict[str, Any]:
     path = f"/orgs/{owner}/settings/immutable-releases"
     payload = api.request("GET", path)
     assert isinstance(payload, dict)
-    enabled = bool(payload.get("enabled_for_new_repos") or payload.get("enabled") or False)
+    enabled = bool(
+        payload.get("enabled_for_new_repos") or payload.get("enabled") or False
+    )
     return {
         "required": True,
         "observed": "ENABLED" if enabled else "DISABLED",
@@ -114,7 +118,7 @@ def run_immutable_inventory(
     tag_ref: str,
     producer: Mapping[str, Any],
     now_utc: str,
-    retention_days: int = 365,
+    retention_days: int = 2_557,
 ) -> dict[str, Any]:
     """Append IMMUTABLE_RELEASE_INVENTORY under an active AUTHORIZED lease."""
 

@@ -60,5 +60,7 @@ def build_public_bundle(
         "distributions": normalized,
         "asset_names": names,
     }
-    body["manifest_sha256"] = canonical.sha256_id("dpone.release.public-bundle-manifest.v2", body)
+    body["manifest_sha256"] = canonical.sha256_id(
+        "dpone.release.public-bundle-manifest.v2", body
+    )
     return body

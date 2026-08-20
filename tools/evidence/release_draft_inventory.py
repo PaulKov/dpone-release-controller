@@ -23,7 +23,9 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
+stream = _load_sibling(
+    "dpone_agent_release_stream_service", "release_stream_service.py"
+)
 github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
@@ -80,7 +82,9 @@ def classify_draft_observation(
         "immutable": release.get("immutable"),
         "asset_ids": asset_ids,
         "asset_count": len(asset_ids),
-        "expected_asset_id": str(expected_asset_id) if expected_asset_id is not None else None,
+        "expected_asset_id": str(expected_asset_id)
+        if expected_asset_id is not None
+        else None,
     }
 
 
@@ -96,7 +100,7 @@ def run_draft_inventory(
     tag_ref: str,
     producer: Mapping[str, Any],
     now_utc: str,
-    retention_days: int = 365,
+    retention_days: int = 2_557,
 ) -> dict[str, Any]:
     """Append DRAFT_INVENTORY under AUTHORIZED; never publish or edit the draft."""
 
@@ -116,7 +120,9 @@ def run_draft_inventory(
     release: dict[str, Any] | None
     api_status: int | None = None
     try:
-        release = github.get_release(api, owner=owner, repo=repo, release_id=draft_release_id)
+        release = github.get_release(
+            api, owner=owner, repo=repo, release_id=draft_release_id
+        )
     except Exception as exc:
         status = getattr(exc, "status", None)
         if not isinstance(status, int):
@@ -126,7 +132,9 @@ def run_draft_inventory(
 
     observation = classify_draft_observation(
         expected_draft_release_id=draft_release_id,
-        expected_asset_id=str(expected_asset_id) if expected_asset_id is not None else None,
+        expected_asset_id=str(expected_asset_id)
+        if expected_asset_id is not None
+        else None,
         release=release,
         api_status=api_status,
     )

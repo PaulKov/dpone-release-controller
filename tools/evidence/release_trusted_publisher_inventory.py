@@ -29,7 +29,9 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
+stream = _load_sibling(
+    "dpone_agent_release_stream_service", "release_stream_service.py"
+)
 pypi = _load_sibling("dpone_agent_release_pypi_inventory", "release_pypi_inventory.py")
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
@@ -144,7 +146,9 @@ def observe_project_trusted_publisher(
 ) -> dict[str, Any]:
     """Observe latest-version Integrity publisher claims for one project."""
 
-    row = pypi.fetch_project_release_files(project, http_get=http_get_json, index_url=index_url)
+    row = pypi.fetch_project_release_files(
+        project, http_get=http_get_json, index_url=index_url
+    )
     if not row["exists"] or not row["latest_version"]:
         return {
             "project": project,
@@ -152,13 +156,21 @@ def observe_project_trusted_publisher(
             "latest_version": row.get("latest_version"),
             "config_binding": "UNVERIFIED",
             "config_reason": "NO_PUBLIC_TRUSTED_PUBLISHER_MANAGEMENT_API",
-            "classification": "PROJECT_MISSING" if not row["exists"] else "VERSION_MISSING",
+            "classification": "PROJECT_MISSING"
+            if not row["exists"]
+            else "VERSION_MISSING",
             "files": [],
             "rebind_attempted": False,
         }
     version = str(row["latest_version"])
-    latest_files = [f for f in row["files"] if str(f.get("version")) == version and f.get("filename")]
-    latest_files = sorted(latest_files, key=lambda item: str(item["filename"]))[:max_files]
+    latest_files = [
+        f
+        for f in row["files"]
+        if str(f.get("version")) == version and f.get("filename")
+    ]
+    latest_files = sorted(latest_files, key=lambda item: str(item["filename"]))[
+        :max_files
+    ]
     file_rows: list[dict[str, Any]] = []
     classifications: list[str] = []
     for item in latest_files:
@@ -169,7 +181,9 @@ def observe_project_trusted_publisher(
             http_get=http_get_integrity,
             index_url=index_url,
         )
-        classification = classify_publisher_claims(list(provenance.get("publishers") or []))
+        classification = classify_publisher_claims(
+            list(provenance.get("publishers") or [])
+        )
         if provenance.get("provenance") == "UNVERIFIED":
             classification = "PROVENANCE_UNVERIFIED"
         classifications.append(classification)
@@ -199,7 +213,7 @@ def run_trusted_publisher_inventory(
     producer: Mapping[str, Any],
     now_utc: str,
     projects: tuple[str, ...] = DEFAULT_PROJECTS,
-    retention_days: int = 365,
+    retention_days: int = 2_557,
     http_get_json: HttpGet | None = None,
     http_get_integrity: HttpGet | None = None,
     index_url: str = "https://pypi.org/",
@@ -266,7 +280,9 @@ def run_trusted_publisher_inventory(
     }
 
 
-def _publisher_matches(observed: Mapping[str, Any], expected: Mapping[str, Any]) -> bool:
+def _publisher_matches(
+    observed: Mapping[str, Any], expected: Mapping[str, Any]
+) -> bool:
     repo = str(observed.get("repository") or "")
     owner = str(expected.get("repository_owner") or "")
     name = str(expected.get("repository") or "")

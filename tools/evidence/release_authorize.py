@@ -23,9 +23,13 @@ def _load_sibling(module_name: str, filename: str) -> Any:
 
 
 canonical = _load_sibling("dpone_agent_release_canonical", "release_canonical.py")
-stream = _load_sibling("dpone_agent_release_stream_service", "release_stream_service.py")
+stream = _load_sibling(
+    "dpone_agent_release_stream_service", "release_stream_service.py"
+)
 github = _load_sibling("dpone_agent_release_github_api", "release_github_api.py")
-snapshots = _load_sibling("dpone_agent_release_governance_snapshot", "release_governance_snapshot.py")
+snapshots = _load_sibling(
+    "dpone_agent_release_governance_snapshot", "release_governance_snapshot.py"
+)
 
 StreamPrerequisiteError = stream.StreamPrerequisiteError
 GitHubApiError = github.GitHubApiError
@@ -48,7 +52,7 @@ def run_authorize_publication(
     tag_ref: str,
     producer: Mapping[str, Any],
     now_utc: str,
-    retention_days: int = 365,
+    retention_days: int = 2_557,
     snapshot_gap_seconds: float = 5.0,
     sleeper: Callable[[float], None] | None = None,
 ) -> dict[str, Any]:
@@ -73,7 +77,9 @@ def run_authorize_publication(
     draft_release_id = str(draft["payload"]["draft_release_id"])
     expected_asset_id = draft["payload"].get("asset_id")
 
-    release = github.get_release(api, owner=owner, repo=repo, release_id=draft_release_id)
+    release = github.get_release(
+        api, owner=owner, repo=repo, release_id=draft_release_id
+    )
     if not bool(release.get("draft")):
         raise AuthorizationError("DRAFT_NOT_DRAFT")
     if str(release.get("id")) != draft_release_id:
@@ -119,7 +125,9 @@ def run_authorize_publication(
     except GitHubApiError as exc:
         raise AuthorizationError(f"SNAPSHOT_COMPARE_FAILED:{exc}") from exc
 
-    active = _require_active_lease_fields(store, release_identity_id=release_identity_id, now_utc=now_utc)
+    active = _require_active_lease_fields(
+        store, release_identity_id=release_identity_id, now_utc=now_utc
+    )
     authorization_id = canonical.sha256_id(
         "dpone.release.authorization.v2",
         {
@@ -189,7 +197,9 @@ def _require_active_lease_fields(
     release_identity_id: str,
     now_utc: str,
 ) -> dict[str, Any]:
-    lease_mod = _load_sibling("dpone_agent_release_lease_service", "release_lease_service.py")
+    lease_mod = _load_sibling(
+        "dpone_agent_release_lease_service", "release_lease_service.py"
+    )
     now = lease_mod.parse_utc(now_utc)
     active = lease_mod.active_lease(store.list_receipts(release_identity_id), now=now)
     if active is None:
