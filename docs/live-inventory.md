@@ -1,43 +1,38 @@
-# Live inventory (controller) — 2026-07-19
+# Historical controller inventory
 
-Status: **PARTIAL — App installed + B2 WORM smoke verified. Mutation jobs / TP / policy v2 not activated.**
+Status: **UNVERIFIED PROVIDER STATE / CODE QUARANTINE ONLY**.
 
-## GitHub App
+This document separates historical observations from desired state. Values
+below are retained for incident response and must not be interpreted as proof
+of current authority, revocation, rotation, or production readiness.
 
-| Field | Value |
-|---|---|
-| name / slug | `dpone-release-controller` |
-| app_id | `4341356` |
-| installation_id | `147673155` |
-| html_url | https://github.com/apps/dpone-release-controller |
-| installed repositories | `PaulKov/dpone`, `PaulKov/dpone-release-controller` |
-| permissions | metadata:read, contents:write, actions:read, checks:read, statuses:read, administration:write, attestations:write |
-| private key / client secret | Actions secrets on this repo only |
+## Historical observations
 
-## Evidence store (Backblaze B2)
+| Resource | Last recorded value | Current claim |
+|---|---|---|
+| controller repository | `PaulKov/dpone-release-controller` (`1305993853`) | identity only |
+| target repository | `PaulKov/dpone` (`1255975556`) | identity only |
+| legacy workflow | id `316322127`, path `.github/workflows/release-controller.yml` | removed by the quarantine patch; provider retirement still requires evidence |
+| historical run | `29735872648` | retained run; re-run eligibility must be checked provider-side |
+| GitHub App | app `4341356`, installation `147673155` | historical broad-write installation; suspend, uninstall, or reduce provider-side |
+| B2 bucket | `dpone-release-evidence-v1`, id `87db248c461b71c09afb0416` | historical inventory; writer credentials must be revoked or rotated |
 
-| Field | Value |
-|---|---|
-| bucket | `dpone-release-evidence-v1` |
-| bucket_id | `87db248c461b71c09afb0416` |
-| account_id | `7b4c6b10ab46` |
-| endpoint | `s3.us-east-005.backblazeb2.com` |
-| api_url | `https://api005.backblazeb2.com` |
-| object_lock | enabled |
-| applicationKeyId | `0057b4c6b10ab460000000001` |
-| application key secret | Actions secret `B2_APPLICATION_KEY` |
-| store_id | `b2://dpone-release-evidence-v1?endpoint=s3.us-east-005.backblazeb2.com&object_lock=enabled&bucket_id=87db248c461b71c09afb0416&retention_days_pre_mutation=365&retention_days_closed=2557` |
-| smoke object | `bootstrap/smoke/20260719T212938Z-store-smoke.json` (compliance retention ~365d) PASS |
+The former workflow used repository-level B2 and GitHub App secrets. Secret
+names and provider objects are not proof that their values remain valid, but
+their retirement must be demonstrated rather than inferred from this patch.
 
-## Explicit non-claims
+## Code state after this patch
 
-- ADR 0028 / policy v2 in `PaulKov/dpone` remain **inactive**.
-- No PyPI Trusted Publisher rebind yet.
-- No mutation jobs yet.
-- Rotate `B2_APPLICATION_KEY` after chat exposure when convenient.
+- no release workflow is manually dispatchable;
+- no B2, GitHub, PyPI, lease, attestation, or evidence writer implementation
+  remains in the current default-branch tree;
+- the compatibility CLI always fails closed; and
+- the checked-in App manifest requests metadata read access only.
 
-## Evidence tooling (2026-07-19)
+## Required fresh observation
 
-Mirrored from `PaulKov/dpone` `tools/agent_policy/release_*.py` into
-`tools/evidence/`. Workflow job `admit-and-lease` appends `LEASE_ACQUIRED` to
-B2 only — no PyPI / GitHub Release mutation and no policy v2 cutover.
+Before future activation, capture signed or independently reviewed evidence for
+workflow state and historical re-run behavior, active/queued runs, App
+installation permissions, Actions secrets and variables, branch/environment
+protection, B2 key state, PyPI Trusted Publisher rows, and target release/tag
+inventory. Record observation time and immutable evidence digests.
