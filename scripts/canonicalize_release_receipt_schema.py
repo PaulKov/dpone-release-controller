@@ -1,4 +1,12 @@
-"""Project the normative receipt-envelope v2 registry into public JSON Schema."""
+#!/usr/bin/env python3
+"""Validate or canonicalize the checked public receipt-envelope v2 schema.
+
+This command is intentionally not a schema generator.  The checked JSON
+Schema is the language-neutral structural contract authority; the contract
+registry binds its digest and the Python registry validates its closed shape.
+``--check`` is read-only, while ``--write`` rewrites only that already-valid
+document into canonical JSON bytes.
+"""
 
 from __future__ import annotations
 
@@ -22,14 +30,14 @@ OUTPUT = ROOT / "docs/schemas/release/release-receipt-envelope-v2.schema.json"
 MANAGED_PATTERNS = ("release-receipt-envelope-*.schema.json",)
 
 
-def document() -> dict[str, Any]:
-    """Return the validated production-owned schema registry document."""
+def validated_document() -> dict[str, Any]:
+    """Return a validated copy of the checked public schema authority."""
 
     return registry.document()
 
 
-def schema_bytes() -> bytes:
-    """Return exact public projection bytes from the normative registry."""
+def canonical_schema_bytes() -> bytes:
+    """Return canonical bytes of the validated checked public schema."""
 
     return registry.schema_bytes()
 
@@ -40,20 +48,20 @@ def managed_roots() -> tuple[ManagedRoot, ...]:
     return (ManagedRoot(OUTPUT.parent, MANAGED_PATTERNS),)
 
 
-def generate(*, check: bool) -> int:
-    """Verify or atomically update the exact receipt-envelope schema."""
+def reconcile(*, check: bool) -> int:
+    """Check or canonicalize the exact receipt-envelope schema inventory."""
 
     return reconcile_generated_files(
-        {OUTPUT: schema_bytes()},
+        {OUTPUT: canonical_schema_bytes()},
         managed_roots(),
         check=check,
-        label="receipt envelope schema",
+        label="checked receipt envelope schema",
     )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    return generate(check=parse_check_mode(parser, argv))
+    return reconcile(check=parse_check_mode(parser, argv))
 
 
 if __name__ == "__main__":

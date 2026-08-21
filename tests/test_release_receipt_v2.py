@@ -10,7 +10,7 @@ from unittest import mock
 
 from jsonschema import Draft202012Validator
 
-from scripts.generate_release_receipt_schema import schema_bytes
+from scripts.canonicalize_release_receipt_schema import canonical_schema_bytes
 from tests import release_receipt_chain_fixtures as chain_fixture
 from tests import release_receipt_publish_fixtures as publish
 from tests.release_receipt_fixtures import (
@@ -39,7 +39,7 @@ SCHEMA_PATH = Path("docs/schemas/release/release-receipt-envelope-v2.schema.json
 
 class ReleaseReceiptV2EnvelopeTests(unittest.TestCase):
     def test_checked_schema_is_current_and_accepts_every_closed_branch(self) -> None:
-        expected = schema_bytes()
+        expected = canonical_schema_bytes()
         self.assertEqual(expected, schema_registry.schema_bytes())
         self.assertEqual(SCHEMA_PATH.read_bytes(), expected)
         schema = json.loads(expected)

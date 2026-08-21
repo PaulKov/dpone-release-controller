@@ -1,8 +1,11 @@
-"""Normative production registry for receipt-envelope v2 structural schema.
+"""Validate the checked public receipt-envelope v2 structural schema.
 
-The checked JSON source is the language-neutral contract authority.  Runtime
-semantic validators remain authoritative for cross-field and state-machine
-rules that JSON Schema cannot express.
+The checked JSON source is the language-neutral structural contract authority;
+the production-owned registry binds its location, digest, and runtime kind
+inventory.  This module validates and canonicalizes that source but does not
+generate its structural content.  Runtime semantic validators remain
+authoritative for cross-field and state-machine rules that JSON Schema cannot
+express.
 """
 
 from __future__ import annotations
@@ -41,7 +44,7 @@ def document() -> dict[str, Any]:
 
 
 def schema_bytes() -> bytes:
-    """Return the stable public JSON Schema projection bytes."""
+    """Return canonical bytes of the validated checked public JSON Schema."""
 
     return pretty_json_bytes(document())
 

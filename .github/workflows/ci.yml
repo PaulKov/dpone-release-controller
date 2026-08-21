@@ -50,12 +50,13 @@ jobs:
           uv run --frozen python -B -m unittest discover -s tests -v
           uv run --frozen python -m json.tool config/release-controller-activation.json >/dev/null
 
-      - name: Verify generated contracts are current
+      - name: Verify generated contracts and checked schema are current
         run: |
           set -euo pipefail
           for producer in scripts/generate_*.py; do
             uv run --frozen python -B "${producer}" --check
           done
+          uv run --frozen python -B scripts/canonicalize_release_receipt_schema.py --check
           uv run --frozen python -B -m tools.evidence.release_receipt_vectors --check
 
   broker:

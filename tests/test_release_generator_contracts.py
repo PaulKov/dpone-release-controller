@@ -4,29 +4,44 @@ from __future__ import annotations
 
 from contextlib import redirect_stderr
 import io
+import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
 
+from scripts import canonicalize_release_receipt_schema as receipt_schema_canonicalizer
 from scripts import generate_release_controller_action_contract as action_generator
 from scripts import generate_release_controller_vectors as vector_generator
 from scripts import generate_release_controller_wire_contracts as wire_generator
-from scripts import generate_release_receipt_schema as receipt_schema_generator
 from scripts import release_generator_support as support
+from tools.evidence import release_receipt_schema_registry
 from tools.evidence import release_receipt_vectors as receipt_vector_generator
 
+ROOT = Path(__file__).resolve().parents[1]
+CI_WORKFLOW = ROOT / ".github/workflows/ci.yml"
 
 GENERATORS = (
     action_generator.main,
     vector_generator.main,
     wire_generator.main,
-    receipt_schema_generator.main,
     receipt_vector_generator.main,
 )
 
+CANONICALIZERS = (receipt_schema_canonicalizer.main,)
+
 
 class ReleaseGeneratorCliTests(unittest.TestCase):
+    def test_ci_keeps_generators_and_schema_canonicalizer_in_drift_gate(self) -> None:
+        workflow = CI_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("for producer in scripts/generate_*.py", workflow)
+        self.assertIn(
+            "python -B scripts/canonicalize_release_receipt_schema.py --check",
+            workflow,
+        )
+        self.assertNotIn("generate_release_receipt_schema.py", workflow)
+
     def test_every_mutating_generator_requires_one_explicit_mode(self) -> None:
         for main in GENERATORS:
             with (
@@ -40,6 +55,27 @@ class ReleaseGeneratorCliTests(unittest.TestCase):
             with (
                 self.subTest(
                     generator=main.__module__,
+                    arguments=("--check", "--write"),
+                ),
+                redirect_stderr(io.StringIO()),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                main(["--check", "--write"])
+            self.assertEqual(raised.exception.code, 2)
+
+    def test_every_canonicalizer_requires_one_explicit_mode(self) -> None:
+        for main in CANONICALIZERS:
+            with (
+                self.subTest(canonicalizer=main.__module__, arguments=()),
+                redirect_stderr(io.StringIO()),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                main([])
+            self.assertEqual(raised.exception.code, 2)
+
+            with (
+                self.subTest(
+                    canonicalizer=main.__module__,
                     arguments=("--check", "--write"),
                 ),
                 redirect_stderr(io.StringIO()),
@@ -99,6 +135,37 @@ class ReleaseGeneratorCliTests(unittest.TestCase):
 
 
 class ReleaseGeneratorInventoryTests(unittest.TestCase):
+    def test_receipt_schema_canonicalizer_rewrites_only_valid_source(self) -> None:
+        document = release_receipt_schema_registry.document()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            relative = release_receipt_schema_registry.SOURCE.relative_to(
+                release_receipt_schema_registry.REPOSITORY_ROOT
+            )
+            output = root / relative
+            output.parent.mkdir(parents=True)
+            output.write_text(
+                json.dumps(document, separators=(",", ":")),
+                encoding="utf-8",
+            )
+
+            with (
+                patch.object(release_receipt_schema_registry, "SOURCE", output),
+                patch.object(
+                    release_receipt_schema_registry,
+                    "REPOSITORY_ROOT",
+                    root,
+                ),
+                patch.object(receipt_schema_canonicalizer, "OUTPUT", output),
+                redirect_stderr(io.StringIO()),
+            ):
+                self.assertEqual(receipt_schema_canonicalizer.reconcile(check=True), 1)
+                self.assertEqual(receipt_schema_canonicalizer.reconcile(check=False), 0)
+                self.assertEqual(
+                    output.read_bytes(),
+                    release_receipt_schema_registry.schema_bytes(),
+                )
+
     def test_shared_root_ignores_other_namespaces_but_rejects_owned_extra(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
