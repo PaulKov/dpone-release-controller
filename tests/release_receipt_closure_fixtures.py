@@ -154,7 +154,7 @@ def closed_check(transition: str) -> dict[str, Any]:
         "output_marker_schema": "dpone.release-controller-closed-check.v1",
         "output_marker": marker,
         "output_marker_sha256": marker_sha256,
-        "output_title": marker_contract.OUTPUT_TITLE,
+        "output_title": marker_contract.HISTORICAL_WIRE_OUTPUT_TITLE,
         "output_summary_sha256": summary_sha256,
         "provider_api_version": "2026-03-10",
     }
