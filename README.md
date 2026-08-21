@@ -61,12 +61,14 @@ generated output. All five producers below reject a missing mode and reject
 unexpected files in their managed namespace; invoke the receipt-vector module
 explicitly as shown.
 
-Normative language-neutral sources live under [`contracts/`](contracts/README.md).
-Production registry modules validate those sources before projecting public
-schemas and conformance fixtures. Production modules are forbidden from
-importing `tests`, so test helpers cannot silently redefine release authority.
-Protocol-byte changes start in `contracts/`; generated `docs/` and
-`tests/fixtures/` files must never be edited as independent authorities.
+Normative registries and language-neutral vectors live under
+[`contracts/`](contracts/README.md). The receipt registry binds the checked
+public schema path and digest; vector sources are projected into conformance
+fixtures only after production parsers accept them. Production modules are
+forbidden from importing `tests`, so test helpers cannot silently redefine
+release authority. Schema changes update the checked `docs/` source and its
+compact registry binding together; generated `tests/fixtures/` files are never
+independent authorities.
 
 These are the exact regeneration commands:
 
