@@ -1,0 +1,252 @@
+[
+  {
+    "type": "index",
+    "name": "activation_component_live_sessions_v2",
+    "sql": "CREATE INDEX activation_component_live_sessions_v2\n      ON activation_component_sessions_v2(state)\n      WHERE state IN ('PROVISIONAL', 'STAGED')"
+  },
+  {
+    "type": "index",
+    "name": "activation_component_one_live_set_v2",
+    "sql": "CREATE UNIQUE INDEX activation_component_one_live_set_v2\n      ON activation_component_sessions_v2(set_id)\n      WHERE state IN ('PROVISIONAL', 'STAGED', 'SELECTED')"
+  },
+  {
+    "type": "index",
+    "name": "activation_component_one_selected_session_v2",
+    "sql": "CREATE UNIQUE INDEX activation_component_one_selected_session_v2\n      ON activation_component_sessions_v2((1))\n      WHERE state = 'SELECTED'"
+  },
+  {
+    "type": "index",
+    "name": "activation_operation_one_live_issuance",
+    "sql": "CREATE UNIQUE INDEX activation_operation_one_live_issuance\n      ON activation_operation_issuances(attempt_id)\n      WHERE state NOT IN ('CONFIRMED', 'EXPIRED_UNDISPATCHED', 'SUPERSEDED_STALE')"
+  },
+  {
+    "type": "table",
+    "name": "activation_cloudflare_anchors",
+    "sql": "CREATE TABLE activation_cloudflare_anchors (\n      issuance_id TEXT NOT NULL,\n      slot_index INTEGER NOT NULL CHECK(slot_index BETWEEN 0 AND 14),\n      authority_role TEXT,\n      record_id TEXT NOT NULL UNIQUE,\n      record_sha256 TEXT NOT NULL UNIQUE,\n      worm_key TEXT NOT NULL UNIQUE,\n      worm_version_id TEXT NOT NULL UNIQUE,\n      worm_retention_until TEXT NOT NULL,\n      PRIMARY KEY(issuance_id, slot_index),\n      FOREIGN KEY(issuance_id) REFERENCES activation_operation_issuances(issuance_id)\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_component_journal_schema",
+    "sql": "CREATE TABLE activation_component_journal_schema (\n      singleton INTEGER PRIMARY KEY CHECK(singleton = 1),\n      schema_version INTEGER NOT NULL CHECK(schema_version = 2),\n      worker_version_id TEXT NOT NULL UNIQUE CHECK(length(worker_version_id) = 36)\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_component_manifest_authority_v2",
+    "sql": "CREATE TABLE activation_component_manifest_authority_v2 (\n      session_id TEXT PRIMARY KEY CHECK(length(session_id) = 71),\n      manifest_id TEXT NOT NULL UNIQUE CHECK(length(manifest_id) = 71),\n      manifest_sha256 TEXT NOT NULL UNIQUE CHECK(length(manifest_sha256) = 71),\n      manifest_bytes BLOB NOT NULL CHECK(length(manifest_bytes) BETWEEN 1 AND 65536),\n      object_key TEXT NOT NULL UNIQUE CHECK(length(object_key) BETWEEN 1 AND 512),\n      effect_id TEXT NOT NULL UNIQUE CHECK(length(effect_id) = 71),\n      result_bytes BLOB CHECK(length(result_bytes) BETWEEN 1 AND 65536),\n      result_sha256 TEXT CHECK(length(result_sha256) = 71),\n      pointer_bytes BLOB CHECK(length(pointer_bytes) BETWEEN 1 AND 65536),\n      pointer_sha256 TEXT CHECK(length(pointer_sha256) = 71),\n      status TEXT NOT NULL CHECK(status IN ('SEALED', 'RESULT_CONFIRMED', 'CONFIRMED')),\n      FOREIGN KEY(session_id) REFERENCES activation_component_sessions_v2(session_id),\n      CHECK(\n        (status = 'SEALED' AND result_bytes IS NULL AND result_sha256 IS NULL\n          AND pointer_bytes IS NULL AND pointer_sha256 IS NULL)\n        OR\n        (status = 'RESULT_CONFIRMED' AND result_bytes IS NOT NULL\n          AND result_sha256 IS NOT NULL AND pointer_bytes IS NULL AND pointer_sha256 IS NULL)\n        OR\n        (status = 'CONFIRMED' AND result_bytes IS NOT NULL AND result_sha256 IS NOT NULL\n          AND pointer_bytes IS NOT NULL AND pointer_sha256 IS NOT NULL)\n      )\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_component_operation_binding_v2",
+    "sql": "CREATE TABLE activation_component_operation_binding_v2 (\n      singleton INTEGER PRIMARY KEY CHECK(singleton = 1),\n      selected_session_id TEXT NOT NULL UNIQUE CHECK(length(selected_session_id) = 71),\n      attempt_id TEXT NOT NULL UNIQUE CHECK(length(attempt_id) = 71),\n      manifest_pointer_sha256 TEXT NOT NULL CHECK(length(manifest_pointer_sha256) = 71),\n      resolved_projection_sha256 TEXT NOT NULL CHECK(length(resolved_projection_sha256) = 71),\n      FOREIGN KEY(selected_session_id)\n        REFERENCES activation_component_selection_v2(selected_session_id),\n      FOREIGN KEY(selected_session_id)\n        REFERENCES activation_component_manifest_authority_v2(session_id),\n      FOREIGN KEY(attempt_id) REFERENCES activation_operation_intents(attempt_id)\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_component_selection_v2",
+    "sql": "CREATE TABLE activation_component_selection_v2 (\n      singleton INTEGER PRIMARY KEY CHECK(singleton = 1),\n      selected_session_id TEXT UNIQUE,\n      state TEXT NOT NULL CHECK(state IN (\n        'OPEN', 'COMPONENT_EFFECTS_SEALED', 'COMPONENTS_CONFIRMED',\n        'MANIFEST_EFFECT_SEALED', 'CONFIRMED', 'HOLD'\n      )),\n      worm_service_identity TEXT,\n      worm_version_id TEXT,\n      observer_service_identity TEXT,\n      observer_version_id TEXT,\n      hold_code TEXT CHECK(length(hold_code) BETWEEN 1 AND 128),\n      FOREIGN KEY(selected_session_id) REFERENCES activation_component_sessions_v2(session_id),\n      CHECK(\n        (state = 'OPEN' AND selected_session_id IS NULL AND worm_service_identity IS NULL\n          AND worm_version_id IS NULL AND observer_service_identity IS NULL\n          AND observer_version_id IS NULL AND hold_code IS NULL)\n        OR\n        (state NOT IN ('OPEN', 'HOLD') AND selected_session_id IS NOT NULL\n          AND worm_service_identity IS NOT NULL AND worm_version_id IS NOT NULL\n          AND observer_service_identity IS NOT NULL AND observer_version_id IS NOT NULL\n          AND hold_code IS NULL)\n        OR\n        (state = 'HOLD' AND selected_session_id IS NOT NULL\n          AND worm_service_identity IS NOT NULL AND worm_version_id IS NOT NULL\n          AND observer_service_identity IS NOT NULL AND observer_version_id IS NOT NULL\n          AND hold_code IS NOT NULL)\n      )\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_component_session_entries_v2",
+    "sql": "CREATE TABLE activation_component_session_entries_v2 (\n      session_id TEXT NOT NULL,\n      ordinal INTEGER NOT NULL CHECK(ordinal BETWEEN 0 AND 14),\n      component_kind TEXT NOT NULL,\n      expected_payload_sha256 TEXT NOT NULL CHECK(length(expected_payload_sha256) = 71),\n      component_id TEXT UNIQUE CHECK(length(component_id) = 71),\n      envelope_sha256 TEXT UNIQUE CHECK(length(envelope_sha256) = 71),\n      envelope_bytes BLOB CHECK(length(envelope_bytes) BETWEEN 1 AND 65536),\n      object_key TEXT UNIQUE CHECK(length(object_key) BETWEEN 1 AND 512),\n      effect_id TEXT UNIQUE CHECK(length(effect_id) = 71),\n      result_bytes BLOB CHECK(length(result_bytes) BETWEEN 1 AND 65536),\n      result_sha256 TEXT CHECK(length(result_sha256) = 71),\n      status TEXT NOT NULL CHECK(status IN ('EXPECTED', 'STAGED', 'SEALED', 'CONFIRMED')),\n      PRIMARY KEY(session_id, ordinal),\n      UNIQUE(session_id, component_kind),\n      FOREIGN KEY(session_id) REFERENCES activation_component_sessions_v2(session_id),\n      CHECK((ordinal = 0 AND component_kind = 'admin_access') OR (ordinal = 1 AND component_kind = 'b2') OR (ordinal = 2 AND component_kind = 'broker_core') OR (ordinal = 3 AND component_kind = 'controller') OR (ordinal = 4 AND component_kind = 'controller_governance') OR (ordinal = 5 AND component_kind = 'github_apps') OR (ordinal = 6 AND component_kind = 'oidc') OR (ordinal = 7 AND component_kind = 'service_authority_header') OR (ordinal = 8 AND component_kind = 'service_authority_inventory') OR (ordinal = 9 AND component_kind = 'service_authority_a0_deployments') OR (ordinal = 10 AND component_kind = 'service_authority_a1_deployments') OR (ordinal = 11 AND component_kind = 'service_authority_network') OR (ordinal = 12 AND component_kind = 'service_authority_receipt_bindings') OR (ordinal = 13 AND component_kind = 'target_governance') OR (ordinal = 14 AND component_kind = 'trusted_publishers')),\n      CHECK(\n        (status = 'EXPECTED' AND component_id IS NULL AND envelope_sha256 IS NULL\n          AND envelope_bytes IS NULL AND object_key IS NULL AND effect_id IS NULL\n          AND result_bytes IS NULL AND result_sha256 IS NULL)\n        OR\n        (status = 'STAGED' AND component_id IS NOT NULL AND envelope_sha256 IS NOT NULL\n          AND envelope_bytes IS NOT NULL AND object_key IS NOT NULL AND effect_id IS NULL\n          AND result_bytes IS NULL AND result_sha256 IS NULL)\n        OR\n        (status = 'SEALED' AND component_id IS NOT NULL AND envelope_sha256 IS NOT NULL\n          AND envelope_bytes IS NOT NULL AND object_key IS NOT NULL AND effect_id IS NOT NULL\n          AND result_bytes IS NULL AND result_sha256 IS NULL)\n        OR\n        (status = 'CONFIRMED' AND component_id IS NOT NULL AND envelope_sha256 IS NOT NULL\n          AND envelope_bytes IS NOT NULL AND object_key IS NOT NULL AND effect_id IS NOT NULL\n          AND result_bytes IS NOT NULL AND result_sha256 IS NOT NULL)\n      )\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_component_sessions_v2",
+    "sql": "CREATE TABLE activation_component_sessions_v2 (\n      session_id TEXT PRIMARY KEY CHECK(length(session_id) = 71),\n      journal_ordinal INTEGER NOT NULL UNIQUE CHECK(journal_ordinal BETWEEN 1 AND 8),\n      generation INTEGER NOT NULL CHECK(generation BETWEEN 1 AND 8),\n      predecessor_session_id TEXT UNIQUE,\n      set_id TEXT NOT NULL CHECK(length(set_id) = 71),\n      worker_version_id TEXT NOT NULL CHECK(length(worker_version_id) = 36),\n      descriptor_id TEXT NOT NULL UNIQUE CHECK(length(descriptor_id) = 71),\n      descriptor_sha256 TEXT NOT NULL UNIQUE CHECK(length(descriptor_sha256) = 71),\n      descriptor_bytes BLOB NOT NULL CHECK(length(descriptor_bytes) BETWEEN 1 AND 65536),\n      component_set_committed_at TEXT NOT NULL CHECK(length(component_set_committed_at) = 24),\n      fresh_until TEXT NOT NULL CHECK(length(fresh_until) = 24),\n      state TEXT NOT NULL CHECK(state IN (\n        'PROVISIONAL', 'STAGED', 'SELECTED', 'REJECTED', 'ABANDONED', 'SUPERSEDED'\n      )),\n      terminal_code TEXT CHECK(length(terminal_code) BETWEEN 1 AND 128),\n      UNIQUE(set_id, generation),\n      FOREIGN KEY(predecessor_session_id) REFERENCES activation_component_sessions_v2(session_id),\n      FOREIGN KEY(worker_version_id) REFERENCES activation_component_journal_schema(worker_version_id),\n      CHECK(\n        (generation = 1 AND predecessor_session_id IS NULL)\n        OR (generation > 1 AND predecessor_session_id IS NOT NULL)\n      ),\n      CHECK(component_set_committed_at < fresh_until),\n      CHECK(\n        (state IN ('PROVISIONAL', 'STAGED', 'SELECTED') AND terminal_code IS NULL)\n        OR (state = 'REJECTED' AND terminal_code IS NOT NULL\n          AND terminal_code = 'ACTIVATION_COMPONENT_SET_SEMANTIC_INVALID')\n        OR (state = 'ABANDONED' AND terminal_code IS NOT NULL\n          AND terminal_code = 'ACTIVATION_COMPONENT_SESSION_EXPIRED')\n        OR (state = 'SUPERSEDED' AND terminal_code IS NOT NULL\n          AND terminal_code = 'ACTIVATION_COMPONENT_SESSION_SUPERSEDED')\n      )\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_operation_intents",
+    "sql": "CREATE TABLE activation_operation_intents (\n      sequence INTEGER PRIMARY KEY CHECK(sequence IN (0, 1)),\n      attempt_id TEXT NOT NULL UNIQUE,\n      intent_sha256 TEXT NOT NULL UNIQUE,\n      semantic_request_bytes BLOB NOT NULL CHECK(length(semantic_request_bytes) BETWEEN 1 AND 65536),\n      worker_version_id TEXT NOT NULL,\n      created_at TEXT NOT NULL,\n      state TEXT NOT NULL CHECK(state IN ('OPEN', 'CONFIRMED', 'HOLD'))\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_operation_issuances",
+    "sql": "CREATE TABLE activation_operation_issuances (\n      attempt_id TEXT NOT NULL,\n      ordinal INTEGER NOT NULL CHECK(ordinal BETWEEN 1 AND 1000000),\n      issuance_id TEXT NOT NULL UNIQUE,\n      internal_request_id TEXT NOT NULL UNIQUE,\n      issued_at TEXT NOT NULL,\n      fresh_until TEXT NOT NULL,\n      record_committed_at TEXT,\n      record_worm_result_bytes BLOB CHECK(length(record_worm_result_bytes) BETWEEN 1 AND 65536),\n      record_worm_result_sha256 TEXT,\n      state TEXT NOT NULL CHECK(state IN (\n        'RESERVED', 'COLLECTING', 'FROZEN', 'EFFECTS_PENDING',\n        'READY_TO_APPEND', 'RECORD_APPENDED', 'CONFIRMED',\n        'EXPIRED_UNDISPATCHED', 'SUPERSEDED_STALE',\n        'DISPATCHED_HOLD', 'HOLD'\n      )),\n      superseded_by_ordinal INTEGER,\n      PRIMARY KEY(attempt_id, ordinal),\n      FOREIGN KEY(attempt_id) REFERENCES activation_operation_intents(attempt_id),\n      CHECK(\n        (state = 'SUPERSEDED_STALE' AND superseded_by_ordinal IS NOT NULL)\n        OR (state != 'SUPERSEDED_STALE' AND superseded_by_ordinal IS NULL)\n      ),\n      CHECK(\n        (state IN ('READY_TO_APPEND', 'RECORD_APPENDED', 'CONFIRMED')\n          AND record_committed_at IS NOT NULL)\n        OR\n        (state NOT IN ('READY_TO_APPEND', 'RECORD_APPENDED', 'CONFIRMED'))\n      ),\n      CHECK(\n        (record_worm_result_bytes IS NULL AND record_worm_result_sha256 IS NULL)\n        OR\n        (record_worm_result_bytes IS NOT NULL AND record_worm_result_sha256 IS NOT NULL)\n      ),\n      CHECK(\n        (state = 'CONFIRMED' AND record_worm_result_bytes IS NOT NULL)\n        OR (state != 'CONFIRMED' AND record_worm_result_bytes IS NULL)\n      )\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_operation_slots",
+    "sql": "CREATE TABLE activation_operation_slots (\n      issuance_id TEXT NOT NULL,\n      slot_id TEXT NOT NULL CHECK(slot_id IN (\n        'CONTROLLER_ACTION', 'CONTROLLER_OIDC', 'TARGET_OIDC',\n        'TARGET_RULESET', 'CLOUDFLARE_BATCH'\n      )),\n      slot_kind TEXT NOT NULL CHECK(slot_kind IN ('READ_ONLY', 'DIRECT_WORM', 'CLOUDFLARE_BATCH')),\n      slot_index INTEGER NOT NULL CHECK(slot_index BETWEEN 0 AND 4),\n      state TEXT NOT NULL CHECK(state IN (\n        'PREPARED', 'READ_IN_FLIGHT', 'FROZEN',\n        'DELEGATED_IN_FLIGHT', 'CONFIRMED', 'DISPATCHED_HOLD', 'HOLD'\n      )),\n      provider_request_bytes BLOB CHECK(length(provider_request_bytes) BETWEEN 1 AND 65536),\n      provider_request_sha256 TEXT,\n      frozen_payload_bytes BLOB CHECK(length(frozen_payload_bytes) BETWEEN 1 AND 1048576),\n      frozen_payload_sha256 TEXT,\n      observed_at TEXT,\n      committed_at TEXT,\n      effect_id TEXT UNIQUE,\n      batch_id TEXT UNIQUE,\n      cloudflare_observer_service_identity TEXT,\n      cloudflare_observer_worker_version_id TEXT,\n      worm_service_identity TEXT,\n      worm_worker_version_id TEXT,\n      b2_observer_service_identity TEXT,\n      b2_observer_worker_version_id TEXT,\n      executor_service_identity TEXT,\n      executor_worker_version_id TEXT,\n      expected_worm_key TEXT UNIQUE,\n      observer_service_identity TEXT,\n      observer_worker_version_id TEXT,\n      result_bytes BLOB CHECK(length(result_bytes) BETWEEN 1 AND 1048576),\n      result_sha256 TEXT,\n      worm_digest TEXT,\n      worm_key TEXT UNIQUE,\n      worm_version_id TEXT UNIQUE,\n      worm_retention_until TEXT,\n      PRIMARY KEY(issuance_id, slot_id),\n      UNIQUE(issuance_id, slot_index),\n      FOREIGN KEY(issuance_id) REFERENCES activation_operation_issuances(issuance_id),\n      CHECK(\n        (slot_id = 'CONTROLLER_ACTION' AND slot_kind = 'DIRECT_WORM' AND slot_index = 0)\n        OR (slot_id = 'CONTROLLER_OIDC' AND slot_kind = 'DIRECT_WORM' AND slot_index = 1)\n        OR (slot_id = 'TARGET_OIDC' AND slot_kind = 'DIRECT_WORM' AND slot_index = 2)\n        OR (slot_id = 'TARGET_RULESET' AND slot_kind = 'DIRECT_WORM' AND slot_index = 3)\n        OR (slot_id = 'CLOUDFLARE_BATCH' AND slot_kind = 'CLOUDFLARE_BATCH'\n            AND slot_index IN (0, 4))\n      ),\n      CHECK(\n        (provider_request_bytes IS NULL AND provider_request_sha256 IS NULL)\n        OR (provider_request_bytes IS NOT NULL AND provider_request_sha256 IS NOT NULL)\n      ),\n      CHECK(\n        (cloudflare_observer_service_identity IS NULL AND cloudflare_observer_worker_version_id IS NULL\n         AND worm_service_identity IS NULL AND worm_worker_version_id IS NULL\n         AND b2_observer_service_identity IS NULL AND b2_observer_worker_version_id IS NULL)\n        OR\n        (cloudflare_observer_service_identity IS NOT NULL AND cloudflare_observer_worker_version_id IS NOT NULL\n         AND worm_service_identity IS NOT NULL AND worm_worker_version_id IS NOT NULL\n         AND b2_observer_service_identity IS NOT NULL AND b2_observer_worker_version_id IS NOT NULL)\n      ),\n      CHECK(\n        (frozen_payload_bytes IS NULL AND frozen_payload_sha256 IS NULL)\n        OR (frozen_payload_bytes IS NOT NULL AND frozen_payload_sha256 IS NOT NULL)\n      ),\n      CHECK(slot_kind != 'DIRECT_WORM' OR length(frozen_payload_bytes) <= 65536),\n      CHECK(\n        (result_bytes IS NULL AND result_sha256 IS NULL)\n        OR (result_bytes IS NOT NULL AND result_sha256 IS NOT NULL)\n      ),\n      CHECK(slot_kind != 'DIRECT_WORM' OR length(result_bytes) <= 65536),\n      CHECK(\n        (worm_digest IS NULL AND worm_key IS NULL AND worm_version_id IS NULL AND worm_retention_until IS NULL)\n        OR\n        (worm_digest IS NOT NULL AND worm_key IS NOT NULL AND worm_version_id IS NOT NULL AND worm_retention_until IS NOT NULL)\n      ),\n      CHECK(slot_kind != 'READ_ONLY' OR (\n        effect_id IS NULL AND batch_id IS NULL AND worm_digest IS NULL\n      )),\n      CHECK(\n        (executor_service_identity IS NULL AND executor_worker_version_id IS NULL\n         AND observer_service_identity IS NULL AND observer_worker_version_id IS NULL)\n        OR\n        (executor_service_identity IS NOT NULL AND executor_worker_version_id IS NOT NULL\n         AND observer_service_identity IS NOT NULL AND observer_worker_version_id IS NOT NULL)\n      ),\n      CHECK(slot_kind != 'DIRECT_WORM' OR batch_id IS NULL),\n      CHECK(slot_kind != 'CLOUDFLARE_BATCH' OR (effect_id IS NULL AND expected_worm_key IS NULL)),\n      CHECK(slot_kind != 'READ_ONLY' OR expected_worm_key IS NULL),\n      CHECK(slot_kind != 'READ_ONLY' OR state IN ('PREPARED', 'READ_IN_FLIGHT', 'FROZEN')),\n      CHECK(state != 'CONFIRMED' OR (\n        result_bytes IS NOT NULL AND\n        (slot_kind != 'DIRECT_WORM' OR worm_digest IS NOT NULL) AND\n        (slot_kind != 'CLOUDFLARE_BATCH' OR batch_id IS NOT NULL)\n      )),\n      CHECK(\n        (state = 'PREPARED' AND\n          provider_request_bytes IS NULL AND frozen_payload_bytes IS NULL AND observed_at IS NULL AND\n          committed_at IS NULL AND effect_id IS NULL AND batch_id IS NULL AND\n          expected_worm_key IS NULL AND executor_service_identity IS NULL AND\n          cloudflare_observer_service_identity IS NULL AND\n          result_bytes IS NULL AND worm_digest IS NULL)\n        OR\n        (state = 'READ_IN_FLIGHT' AND\n          provider_request_bytes IS NOT NULL AND frozen_payload_bytes IS NULL AND observed_at IS NULL AND\n          committed_at IS NULL AND effect_id IS NULL AND batch_id IS NULL AND\n          expected_worm_key IS NULL AND executor_service_identity IS NULL AND\n          cloudflare_observer_service_identity IS NULL AND\n          result_bytes IS NULL AND worm_digest IS NULL)\n        OR\n        (state = 'FROZEN' AND\n          slot_kind != 'CLOUDFLARE_BATCH' AND\n          provider_request_bytes IS NOT NULL AND frozen_payload_bytes IS NOT NULL AND observed_at IS NOT NULL AND\n          committed_at IS NULL AND effect_id IS NULL AND batch_id IS NULL AND\n          expected_worm_key IS NULL AND executor_service_identity IS NULL AND\n          cloudflare_observer_service_identity IS NULL AND\n          result_bytes IS NULL AND worm_digest IS NULL)\n        OR\n        (state IN ('DELEGATED_IN_FLIGHT', 'DISPATCHED_HOLD', 'HOLD') AND\n          provider_request_bytes IS NOT NULL AND committed_at IS NOT NULL AND\n          result_bytes IS NULL AND worm_digest IS NULL AND\n          ((slot_kind = 'DIRECT_WORM' AND frozen_payload_bytes IS NOT NULL AND\n            observed_at IS NOT NULL AND effect_id IS NOT NULL AND expected_worm_key IS NOT NULL AND\n            batch_id IS NULL AND executor_service_identity IS NOT NULL AND\n            cloudflare_observer_service_identity IS NULL)\n           OR\n           (slot_kind = 'CLOUDFLARE_BATCH' AND frozen_payload_bytes IS NULL AND\n            observed_at IS NULL AND batch_id IS NOT NULL AND effect_id IS NULL AND\n            expected_worm_key IS NULL AND executor_service_identity IS NULL AND\n            cloudflare_observer_service_identity IS NOT NULL)))\n        OR\n        (state = 'CONFIRMED' AND\n          provider_request_bytes IS NOT NULL AND committed_at IS NOT NULL AND\n          result_bytes IS NOT NULL AND\n          ((slot_kind = 'DIRECT_WORM' AND frozen_payload_bytes IS NOT NULL AND\n            observed_at IS NOT NULL AND effect_id IS NOT NULL AND expected_worm_key IS NOT NULL AND\n            batch_id IS NULL AND worm_digest IS NOT NULL AND executor_service_identity IS NOT NULL AND\n            cloudflare_observer_service_identity IS NULL)\n           OR\n           (slot_kind = 'CLOUDFLARE_BATCH' AND frozen_payload_bytes IS NULL AND\n            observed_at IS NULL AND batch_id IS NOT NULL AND effect_id IS NULL AND\n            expected_worm_key IS NULL AND worm_digest IS NULL AND\n            executor_service_identity IS NULL AND cloudflare_observer_service_identity IS NOT NULL)))\n      )\n    ) STRICT"
+  },
+  {
+    "type": "table",
+    "name": "activation_records",
+    "sql": "CREATE TABLE activation_records (\n      sequence INTEGER PRIMARY KEY CHECK(sequence IN (0, 1)),\n      operation_issuance_id TEXT NOT NULL UNIQUE,\n      request_digest TEXT NOT NULL UNIQUE,\n      record_id TEXT NOT NULL UNIQUE,\n      record_digest TEXT NOT NULL UNIQUE,\n      canonical_bytes BLOB NOT NULL CHECK(length(canonical_bytes) BETWEEN 1 AND 65536),\n      committed_at TEXT NOT NULL,\n      worm_key TEXT,\n      worm_version_id TEXT,\n      worm_retention_until TEXT,\n      FOREIGN KEY(operation_issuance_id) REFERENCES activation_operation_issuances(issuance_id),\n      CHECK (\n        (worm_key IS NULL AND worm_version_id IS NULL AND worm_retention_until IS NULL)\n        OR\n        (worm_key IS NOT NULL AND worm_version_id IS NOT NULL AND worm_retention_until IS NOT NULL)\n      )\n    ) STRICT\n  "
+  },
+  {
+    "type": "table",
+    "name": "activation_registry_storage_schema",
+    "sql": "CREATE TABLE activation_registry_storage_schema (\n      singleton INTEGER PRIMARY KEY CHECK(singleton = 1),\n      version INTEGER NOT NULL CHECK(version = 2),\n      worker_version_id TEXT NOT NULL UNIQUE CHECK(length(worker_version_id) = 36)\n    ) STRICT\n  "
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_components_confirmed_transition_v2",
+    "sql": "CREATE TRIGGER activation_component_components_confirmed_transition_v2\n      BEFORE UPDATE OF state ON activation_component_selection_v2\n      WHEN NEW.state = 'COMPONENTS_CONFIRMED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENTS_CONFIRMED_TRANSITION_INVALID')\n        WHERE OLD.state != 'COMPONENT_EFFECTS_SEALED'\n          OR NEW.selected_session_id IS NOT OLD.selected_session_id\n          OR (SELECT COUNT(*) FROM activation_component_session_entries_v2\n              WHERE session_id = NEW.selected_session_id AND status = 'CONFIRMED')\n              != 15;\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_confirmed_transition_v2",
+    "sql": "CREATE TRIGGER activation_component_confirmed_transition_v2\n      BEFORE UPDATE OF state ON activation_component_selection_v2\n      WHEN NEW.state = 'CONFIRMED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_CONFIRMED_TRANSITION_INVALID')\n        WHERE OLD.state != 'MANIFEST_EFFECT_SEALED'\n          OR NEW.selected_session_id IS NOT OLD.selected_session_id\n          OR NOT EXISTS (\n            SELECT 1 FROM activation_component_manifest_authority_v2\n            WHERE session_id = NEW.selected_session_id AND status = 'CONFIRMED'\n          );\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_effects_sealed_transition_v2",
+    "sql": "CREATE TRIGGER activation_component_effects_sealed_transition_v2\n      BEFORE UPDATE OF state ON activation_component_selection_v2\n      WHEN NEW.state = 'COMPONENT_EFFECTS_SEALED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_EFFECTS_SEAL_INVALID')\n        WHERE OLD.state != 'OPEN';\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_entry_confirm_transition_v2",
+    "sql": "CREATE TRIGGER activation_component_entry_confirm_transition_v2\n      BEFORE UPDATE OF status ON activation_component_session_entries_v2\n      WHEN NEW.status = 'CONFIRMED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_CONFIRM_TRANSITION_INVALID')\n        WHERE OLD.status != 'SEALED'\n          OR NOT EXISTS (\n            SELECT 1 FROM activation_component_selection_v2\n            WHERE singleton = 1 AND state = 'COMPONENT_EFFECTS_SEALED'\n              AND selected_session_id = NEW.session_id\n          );\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_entry_confirmed_immutable_v2",
+    "sql": "CREATE TRIGGER activation_component_entry_confirmed_immutable_v2\n      BEFORE UPDATE ON activation_component_session_entries_v2\n      WHEN OLD.status = 'CONFIRMED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_CONFIRMED_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_hold_transition_v2",
+    "sql": "CREATE TRIGGER activation_component_hold_transition_v2\n      BEFORE UPDATE OF state ON activation_component_selection_v2\n      WHEN NEW.state = 'HOLD'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_HOLD_TRANSITION_INVALID')\n        WHERE NEW.selected_session_id IS NOT OLD.selected_session_id\n          OR NOT (\n            (OLD.state = 'COMPONENTS_CONFIRMED'\n              AND NEW.hold_code IS 'ACTIVATION_COMPONENT_WORM_VERSION_CONFLICT'\n              AND NOT EXISTS (\n                SELECT 1 FROM activation_component_manifest_authority_v2\n                WHERE session_id = NEW.selected_session_id\n              ))\n            OR\n            (OLD.state = 'MANIFEST_EFFECT_SEALED'\n              AND NEW.hold_code IS 'ACTIVATION_COMPONENT_MANIFEST_VERSION_CONFLICT'\n              AND EXISTS (\n                SELECT 1 FROM activation_component_manifest_authority_v2\n                WHERE session_id = NEW.selected_session_id AND status = 'RESULT_CONFIRMED'\n              ))\n          );\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_live_capacity_insert_v2",
+    "sql": "CREATE TRIGGER activation_component_live_capacity_insert_v2\n      BEFORE INSERT ON activation_component_sessions_v2\n      WHEN NEW.state IN ('PROVISIONAL', 'STAGED')\n        AND (SELECT COUNT(*) FROM activation_component_sessions_v2\n             WHERE state IN ('PROVISIONAL', 'STAGED')) >= 4\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_JOURNAL_LIVE_CAPACITY_EXHAUSTED');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_live_capacity_update_v2",
+    "sql": "CREATE TRIGGER activation_component_live_capacity_update_v2\n      BEFORE UPDATE OF state ON activation_component_sessions_v2\n      WHEN OLD.state NOT IN ('PROVISIONAL', 'STAGED')\n        AND NEW.state IN ('PROVISIONAL', 'STAGED')\n        AND (SELECT COUNT(*) FROM activation_component_sessions_v2\n             WHERE state IN ('PROVISIONAL', 'STAGED')) >= 4\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_JOURNAL_LIVE_CAPACITY_EXHAUSTED');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_manifest_confirm_transition_v2",
+    "sql": "CREATE TRIGGER activation_component_manifest_confirm_transition_v2\n      BEFORE UPDATE OF status ON activation_component_manifest_authority_v2\n      WHEN NEW.status IN ('RESULT_CONFIRMED', 'CONFIRMED')\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_MANIFEST_CONFIRM_INVALID')\n        WHERE OLD.status != 'SEALED'\n          OR NOT EXISTS (\n            SELECT 1 FROM activation_component_selection_v2\n            WHERE singleton = 1 AND state = 'MANIFEST_EFFECT_SEALED'\n              AND selected_session_id = NEW.session_id\n          );\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_manifest_immutable_v2",
+    "sql": "CREATE TRIGGER activation_component_manifest_immutable_v2\n      BEFORE UPDATE ON activation_component_manifest_authority_v2\n      WHEN OLD.status IN ('RESULT_CONFIRMED', 'CONFIRMED')\n        OR NEW.session_id IS NOT OLD.session_id\n        OR NEW.manifest_id IS NOT OLD.manifest_id\n        OR NEW.manifest_sha256 IS NOT OLD.manifest_sha256\n        OR NEW.manifest_bytes IS NOT OLD.manifest_bytes\n        OR NEW.object_key IS NOT OLD.object_key\n        OR NEW.effect_id IS NOT OLD.effect_id\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_MANIFEST_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_manifest_insert_v2",
+    "sql": "CREATE TRIGGER activation_component_manifest_insert_v2\n      BEFORE INSERT ON activation_component_manifest_authority_v2\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_MANIFEST_INSERT_INVALID')\n        WHERE NEW.status != 'SEALED'\n          OR NOT EXISTS (\n            SELECT 1 FROM activation_component_selection_v2\n            WHERE singleton = 1 AND state = 'COMPONENTS_CONFIRMED'\n              AND selected_session_id = NEW.session_id\n          );\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_manifest_no_delete_v2",
+    "sql": "CREATE TRIGGER activation_component_manifest_no_delete_v2\n      BEFORE DELETE ON activation_component_manifest_authority_v2\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_MANIFEST_DELETE_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_manifest_sealed_transition_v2",
+    "sql": "CREATE TRIGGER activation_component_manifest_sealed_transition_v2\n      BEFORE UPDATE OF state ON activation_component_selection_v2\n      WHEN NEW.state = 'MANIFEST_EFFECT_SEALED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_MANIFEST_SEAL_INVALID')\n        WHERE OLD.state != 'COMPONENTS_CONFIRMED'\n          OR NEW.selected_session_id IS NOT OLD.selected_session_id\n          OR NOT EXISTS (\n            SELECT 1 FROM activation_component_manifest_authority_v2\n            WHERE session_id = NEW.selected_session_id AND status = 'SEALED'\n          );\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_operation_binding_delete_v2",
+    "sql": "CREATE TRIGGER activation_component_operation_binding_delete_v2\n      BEFORE DELETE ON activation_component_operation_binding_v2\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_OPERATION_BINDING_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_operation_binding_insert_v2",
+    "sql": "CREATE TRIGGER activation_component_operation_binding_insert_v2\n      BEFORE INSERT ON activation_component_operation_binding_v2\n      WHEN NOT EXISTS (\n        SELECT 1 FROM activation_component_selection_v2 AS selection\n        JOIN activation_component_sessions_v2 AS session\n          ON session.session_id = selection.selected_session_id\n        JOIN activation_component_manifest_authority_v2 AS manifest\n          ON manifest.session_id = selection.selected_session_id\n        WHERE selection.singleton = 1 AND selection.state = 'CONFIRMED'\n          AND selection.selected_session_id = NEW.selected_session_id\n          AND session.state = 'SELECTED'\n          AND session.worker_version_id = (\n            SELECT worker_version_id FROM activation_component_journal_schema WHERE singleton = 1\n          )\n          AND manifest.status = 'CONFIRMED'\n          AND manifest.pointer_sha256 = NEW.manifest_pointer_sha256\n      ) OR NOT EXISTS (\n        SELECT 1 FROM activation_operation_issuances AS issuance\n        JOIN activation_operation_intents AS intent ON intent.attempt_id = issuance.attempt_id\n        WHERE intent.attempt_id = NEW.attempt_id\n          AND intent.sequence = 0 AND intent.state = 'OPEN'\n          AND intent.worker_version_id = (\n            SELECT worker_version_id FROM activation_component_journal_schema WHERE singleton = 1\n          )\n          AND issuance.state IN (\n            'RESERVED', 'COLLECTING', 'FROZEN', 'EFFECTS_PENDING', 'READY_TO_APPEND'\n          )\n          AND issuance.ordinal = (\n            SELECT MAX(current.ordinal) FROM activation_operation_issuances AS current\n            WHERE current.attempt_id = issuance.attempt_id\n          )\n          AND (\n            SELECT COUNT(*) FROM activation_operation_slots AS slot\n            WHERE slot.issuance_id = issuance.issuance_id\n          ) = 5\n      )\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_OPERATION_BINDING_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_operation_binding_update_v2",
+    "sql": "CREATE TRIGGER activation_component_operation_binding_update_v2\n      BEFORE UPDATE ON activation_component_operation_binding_v2\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_OPERATION_BINDING_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_selected_entry_no_delete_v2",
+    "sql": "CREATE TRIGGER activation_component_selected_entry_no_delete_v2\n      BEFORE DELETE ON activation_component_session_entries_v2\n      WHEN EXISTS (\n        SELECT 1 FROM activation_component_selection_v2\n        WHERE singleton = 1 AND state != 'OPEN' AND selected_session_id = OLD.session_id\n      )\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_SELECTED_ENTRY_DELETE_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_selected_session_no_delete_v2",
+    "sql": "CREATE TRIGGER activation_component_selected_session_no_delete_v2\n      BEFORE DELETE ON activation_component_sessions_v2\n      WHEN OLD.state = 'SELECTED' OR EXISTS (\n        SELECT 1 FROM activation_component_selection_v2\n        WHERE singleton = 1 AND selected_session_id = OLD.session_id\n      )\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_SELECTED_SESSION_DELETE_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_selection_authority_immutable_v2",
+    "sql": "CREATE TRIGGER activation_component_selection_authority_immutable_v2\n      BEFORE UPDATE ON activation_component_selection_v2\n      WHEN OLD.state != 'OPEN' AND (\n        NEW.selected_session_id IS NOT OLD.selected_session_id\n        OR NEW.worm_service_identity IS NOT OLD.worm_service_identity\n        OR NEW.worm_version_id IS NOT OLD.worm_version_id\n        OR NEW.observer_service_identity IS NOT OLD.observer_service_identity\n        OR NEW.observer_version_id IS NOT OLD.observer_version_id\n      )\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_SELECTION_AUTHORITY_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_selection_no_delete_v2",
+    "sql": "CREATE TRIGGER activation_component_selection_no_delete_v2\n      BEFORE DELETE ON activation_component_selection_v2\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_SELECTION_DELETE_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_selection_no_reopen_v2",
+    "sql": "CREATE TRIGGER activation_component_selection_no_reopen_v2\n      BEFORE UPDATE OF state ON activation_component_selection_v2\n      WHEN NEW.state = 'OPEN'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_SELECTION_REOPEN_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_component_selection_terminal_immutable_v2",
+    "sql": "CREATE TRIGGER activation_component_selection_terminal_immutable_v2\n      BEFORE UPDATE ON activation_component_selection_v2\n      WHEN OLD.state IN ('CONFIRMED', 'HOLD')\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_COMPONENT_SELECTION_TERMINAL_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_intent_identity_immutable_v2",
+    "sql": "CREATE TRIGGER activation_operation_intent_identity_immutable_v2\n      BEFORE UPDATE OF sequence, attempt_id, intent_sha256, semantic_request_bytes,\n        worker_version_id, created_at\n      ON activation_operation_intents\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_INTENT_IDENTITY_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_intent_initial_state_v2",
+    "sql": "CREATE TRIGGER activation_operation_intent_initial_state_v2\n      BEFORE INSERT ON activation_operation_intents\n      WHEN NEW.state != 'OPEN'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_INTENT_INITIAL_STATE_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_issuance_identity_immutable_v2",
+    "sql": "CREATE TRIGGER activation_operation_issuance_identity_immutable_v2\n      BEFORE UPDATE OF attempt_id, ordinal, issuance_id, internal_request_id,\n        issued_at, fresh_until\n      ON activation_operation_issuances\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_ISSUANCE_IDENTITY_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_issuance_initial_state_v2",
+    "sql": "CREATE TRIGGER activation_operation_issuance_initial_state_v2\n      BEFORE INSERT ON activation_operation_issuances\n      WHEN NEW.state != 'RESERVED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_ISSUANCE_INITIAL_STATE_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_issuance_roster_complete_v2",
+    "sql": "CREATE TRIGGER activation_operation_issuance_roster_complete_v2\n      BEFORE UPDATE OF state ON activation_operation_issuances\n      WHEN OLD.state = 'RESERVED' AND NEW.state != 'RESERVED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_ROSTER_INCOMPLETE')\n        WHERE NOT EXISTS (\n          SELECT 1 FROM activation_operation_intents AS intent\n          WHERE intent.attempt_id = OLD.attempt_id\n            AND (\n              (intent.sequence = 0 AND (\n                SELECT COUNT(*) FROM activation_operation_slots AS slot\n                WHERE slot.issuance_id = OLD.issuance_id\n              ) = 5)\n              OR (intent.sequence = 1 AND (\n                SELECT COUNT(*) FROM activation_operation_slots AS slot\n                WHERE slot.issuance_id = OLD.issuance_id\n              ) = 1)\n            )\n        );\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_slot_delete_forbidden_v2",
+    "sql": "CREATE TRIGGER activation_operation_slot_delete_forbidden_v2\n      BEFORE DELETE ON activation_operation_slots\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_SLOT_DELETE_FORBIDDEN');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_slot_identity_immutable_v2",
+    "sql": "CREATE TRIGGER activation_operation_slot_identity_immutable_v2\n      BEFORE UPDATE OF issuance_id, slot_id, slot_kind, slot_index\n      ON activation_operation_slots\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_SLOT_IDENTITY_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_slot_profile_insert_v2",
+    "sql": "CREATE TRIGGER activation_operation_slot_profile_insert_v2\n      BEFORE INSERT ON activation_operation_slots\n      WHEN NOT EXISTS (\n    SELECT 1\n    FROM activation_operation_issuances AS issuance\n    JOIN activation_operation_intents AS intent ON intent.attempt_id = issuance.attempt_id\n    WHERE issuance.issuance_id = NEW.issuance_id\n      AND issuance.state = 'RESERVED'\n      AND NEW.state = 'PREPARED'\n      AND (\n        (intent.sequence = 0 AND (\n          (NEW.slot_id = 'CONTROLLER_ACTION' AND NEW.slot_kind = 'DIRECT_WORM'\n            AND NEW.slot_index = 0)\n          OR (NEW.slot_id = 'CONTROLLER_OIDC' AND NEW.slot_kind = 'DIRECT_WORM'\n            AND NEW.slot_index = 1)\n          OR (NEW.slot_id = 'TARGET_OIDC' AND NEW.slot_kind = 'DIRECT_WORM'\n            AND NEW.slot_index = 2)\n          OR (NEW.slot_id = 'TARGET_RULESET' AND NEW.slot_kind = 'DIRECT_WORM'\n            AND NEW.slot_index = 3)\n          OR (NEW.slot_id = 'CLOUDFLARE_BATCH' AND NEW.slot_kind = 'CLOUDFLARE_BATCH'\n            AND NEW.slot_index = 4)\n        ))\n        OR (intent.sequence = 1 AND NEW.slot_id = 'CLOUDFLARE_BATCH'\n          AND NEW.slot_kind = 'CLOUDFLARE_BATCH' AND NEW.slot_index = 0)\n      )\n  )\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_SLOT_PROFILE_INVALID');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_operation_slot_work_roster_complete_v2",
+    "sql": "CREATE TRIGGER activation_operation_slot_work_roster_complete_v2\n      BEFORE UPDATE OF state ON activation_operation_slots\n      WHEN OLD.state = 'PREPARED' AND NEW.state != 'PREPARED'\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_OPERATION_ROSTER_INCOMPLETE')\n        WHERE NOT EXISTS (\n          SELECT 1 FROM activation_operation_issuances AS issuance\n          JOIN activation_operation_intents AS intent ON intent.attempt_id = issuance.attempt_id\n          WHERE issuance.issuance_id = OLD.issuance_id\n            AND (\n              (intent.sequence = 0 AND (\n                SELECT COUNT(*) FROM activation_operation_slots AS slot\n                WHERE slot.issuance_id = OLD.issuance_id\n              ) = 5)\n              OR (intent.sequence = 1 AND (\n                SELECT COUNT(*) FROM activation_operation_slots AS slot\n                WHERE slot.issuance_id = OLD.issuance_id\n              ) = 1)\n            )\n        );\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_record_core_immutable_v2",
+    "sql": "CREATE TRIGGER activation_record_core_immutable_v2\n      BEFORE UPDATE OF sequence, operation_issuance_id, request_digest,\n        record_id, record_digest, canonical_bytes, committed_at\n      ON activation_records\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_RECORD_CORE_IMMUTABLE');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_record_delete_forbidden_v2",
+    "sql": "CREATE TRIGGER activation_record_delete_forbidden_v2\n      BEFORE DELETE ON activation_records\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_RECORD_DELETE_FORBIDDEN');\n      END"
+  },
+  {
+    "type": "trigger",
+    "name": "activation_record_operation_binding_insert_v2",
+    "sql": "CREATE TRIGGER activation_record_operation_binding_insert_v2\n      BEFORE INSERT ON activation_records\n      WHEN NOT EXISTS (\n        SELECT 1 FROM activation_operation_issuances AS issuance\n        JOIN activation_operation_intents AS intent ON intent.attempt_id = issuance.attempt_id\n        WHERE issuance.issuance_id = NEW.operation_issuance_id\n          AND intent.state = 'OPEN'\n          AND issuance.state = 'READY_TO_APPEND'\n          AND issuance.ordinal = (\n            SELECT MAX(current.ordinal) FROM activation_operation_issuances AS current\n            WHERE current.attempt_id = issuance.attempt_id\n          )\n          AND intent.sequence = NEW.sequence\n          AND intent.intent_sha256 = NEW.request_digest\n          AND issuance.record_committed_at IS NOT NULL\n          AND issuance.record_committed_at = NEW.committed_at\n      )\n      BEGIN\n        SELECT RAISE(ABORT, 'ACTIVATION_RECORD_OPERATION_BINDING_INVALID');\n      END"
+  }
+]
