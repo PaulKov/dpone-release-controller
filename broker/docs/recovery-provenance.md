@@ -51,9 +51,14 @@ claimed as recovered historical bytes:
   `75b049d04cea061e2de37bad0ed8f1704f1f41f2910e3daa361d647774998ee5`;
 - lint and documentation were updated without changing provider state.
 
-Semantic effect/recovery suites use explicit fake effect ports. Candidate engines have no default
-real provider adapter. Production-bound `main` functions remain guarded; flags, environment
-variables, local files, credentials, and dependency injection cannot release the HOLD.
+Semantic effect/recovery coverage uses primitive-JSON, in-memory trace models with no callback,
+filesystem, subprocess, network, or provider capability; every production effect boundary remains
+independently guarded, and a pinned strict-ECMAScript preflight checks the exact production graph
+before the general verifier imports it. Lifting the HOLD requires newly reviewed
+production-adapter source, and no repository-defined flag or environment authorization, local
+file, credential, test model, or dependency injection can release it. That statement assumes a
+trusted, pinned Node startup; it does not claim protection from `NODE_OPTIONS`, preload or custom
+loaders, a malicious/prototype-poisoned runtime, or a simultaneous malicious policy/code edit.
 
 ## Exact historical receipt fixture
 

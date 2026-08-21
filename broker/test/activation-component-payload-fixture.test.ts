@@ -37,7 +37,7 @@ describe("production-valid activation component payload fixture", () => {
     }
 
     expect(fixture.measurement).toEqual({
-      bytes: 71_403,
+      bytes: 71_413,
       depth: 9,
       maxStringBytes: 132,
       nodes: 1_426,
@@ -51,7 +51,7 @@ describe("production-valid activation component payload fixture", () => {
       ),
     }));
     expect(componentMeasurements).toEqual([
-      { bytes: 1_786, componentKind: "admin_access", depth: 1, maxStringBytes: 71, nodes: 24 },
+      { bytes: 1_796, componentKind: "admin_access", depth: 1, maxStringBytes: 71, nodes: 24 },
       { bytes: 959, componentKind: "b2", depth: 2, maxStringBytes: 71, nodes: 24 },
       { bytes: 1_793, componentKind: "broker_core", depth: 3, maxStringBytes: 71, nodes: 43 },
       { bytes: 3_930, componentKind: "controller", depth: 4, maxStringBytes: 71, nodes: 83 },
@@ -143,7 +143,7 @@ describe("production-valid activation component payload fixture", () => {
       depth: 7,
       maxStringBytes: 132,
       nodes: 160,
-      totalBytes: 49_786,
+      totalBytes: 49_796,
     });
   });
 });
