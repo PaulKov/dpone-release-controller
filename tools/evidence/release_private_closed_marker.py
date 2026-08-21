@@ -13,7 +13,12 @@ from tools.evidence.release_canonical import canonical_json_bytes
 SCHEMA = "dpone.release-controller-closed-check.v1"
 SCHEMA_VERSION = 1
 TARGET_REPOSITORY_ID = 1_255_975_556
-OUTPUT_TITLE = "dpone release controller CLOSED / PASS / GO"
+HISTORICAL_WIRE_OUTPUT_TITLE = "dpone release controller CLOSED / PASS / GO"
+OPERATOR_DISPLAY_TITLE = "INTERNAL LEDGER MARKER / NOT PUBLIC RELEASE AUTHORITY"
+# Compatibility alias for historical receipt builders. New operator-facing code
+# must use OPERATOR_DISPLAY_TITLE; changing this v1 value would invalidate
+# already committed receipt bytes.
+OUTPUT_TITLE = HISTORICAL_WIRE_OUTPUT_TITLE
 SUMMARY_PREFIX = "DPONE_RELEASE_CONTROLLER_CLOSED_V1"
 _KEYS = {
     "schema",

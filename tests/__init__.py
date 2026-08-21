@@ -1,1 +1,1 @@
-"""Dependency-free test support for the release-controller quarantine."""
+"""Dependency-free emergency quarantine contract tests."""

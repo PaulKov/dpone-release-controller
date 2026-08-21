@@ -17,6 +17,7 @@ from tests.release_receipt_fixtures import (
 )
 from tools.evidence import release_receipt_contract as contract
 from tools.evidence import release_authority_guard as authority_guard
+from tools.evidence import release_private_closed_marker as private_marker
 from tools.evidence import release_receipt_intents as intents
 from tools.evidence.release_receipt_envelope_v2 import (
     decode,
@@ -31,6 +32,18 @@ SCHEMA_PATH = Path("docs/schemas/release/release-receipt-envelope-v2.schema.json
 
 
 class ReleaseReceiptV2PayloadTests(unittest.TestCase):
+    def test_private_marker_operator_label_cannot_claim_public_go(self) -> None:
+        self.assertEqual(
+            private_marker.OUTPUT_TITLE,
+            private_marker.HISTORICAL_WIRE_OUTPUT_TITLE,
+        )
+        self.assertEqual(
+            private_marker.OPERATOR_DISPLAY_TITLE,
+            "INTERNAL LEDGER MARKER / NOT PUBLIC RELEASE AUTHORITY",
+        )
+        self.assertNotIn("PASS", private_marker.OPERATOR_DISPLAY_TITLE)
+        self.assertNotIn("GO", private_marker.OPERATOR_DISPLAY_TITLE)
+
     def test_pypi_integrity_binds_repository_api_bytes_sigstore_and_rekor(self) -> None:
         envelope = envelope_for(publish.pypi("INTEGRITY_VERIFIED", verified_count=8))
         integrity = envelope["payload"]["integrity"]

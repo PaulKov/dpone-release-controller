@@ -1,52 +1,19 @@
-# Shape B bootstrap — retired provisioning guide
+# Shape B bootstrap — retired
 
-Status: **RETIRED / DO NOT EXECUTE.** This document records why the historical
-scaffold was created; it is not an operator runbook and does not activate ADR
-0028 in `PaulKov/dpone`.
+Status: **QUARANTINED / NOT AN OPERATOR RUNBOOK**.
 
-The retained `tools/evidence/release_evidence_cli.py` entry point is likewise
-**PERMANENTLY QUARANTINED / NOT AN OPERATOR INTERFACE**. It is a compatibility
-tombstone, not the historical implementation. Help is read-only; every
-non-help invocation exits with status 2 before loading the retired runtime,
-reading credentials, or dispatching any subcommand.
+The historical GitHub App and Backblaze B2 bootstrap procedure is intentionally
+removed. Do not create, install, expand, or re-key provider authority from this
+document. The checked-in App manifest is metadata-read-only inventory, and the
+former one-click App creation page no longer exists.
 
-There is no compatibility acknowledgement or activation flag. In particular,
-the former `--allow-dormant-bootstrap-mutations` option is rejected like every
-other non-help invocation, and `--dry-memory` grants no exception. The
-tombstone cannot secure historical refs or provider-side re-runs; credential
-revocation and workflow disablement remain mandatory.
+A future bootstrap requires a separately approved RFC and runbook covering:
 
-The historical bootstrap combined a broad GitHub App, long-lived B2
-credentials, mutable controller code, and direct provider mutation. A live run
-used that path. The exact observed objects and unresolved provider controls are
-recorded in [`live-inventory.md`](live-inventory.md).
+- job-specific least-privilege identities and short-lived credentials;
+- protected human approval without administrator bypass;
+- transactional evidence fencing, recovery, and provider rollback;
+- exact repository, workflow, environment, tag-object, and commit binding; and
+- independently verified provider evidence before activation.
 
-## GitHub App disposition
-
-The installed App must be suspended or reduced and its private key/client
-secret rotated before any controller work resumes. The checked-in
-[`github-app-manifest.json`](../github-app-manifest.json) now describes a
-read-only inspection shape only. Updating that file does not change the
-installed App. The historical one-click HTML form is intentionally disabled.
-
-Any future activation design must use job-specific credentials with the exact
-minimum repository permissions. No privileged job may checkout mutable
-controller or candidate code.
-
-## Evidence-store disposition
-
-Backblaze B2 Object Lock remains inventory evidence, not transaction authority.
-Object Lock alone cannot provide compare-and-swap, a unique lease sequence,
-fencing, renewal, one-use capabilities, or deterministic recovery. Revoke or
-rotate the historical application key. A future design requires a transactional
-coordinator plus an outbox that verifies the immutable B2 archive before any
-provider-mutation capability is issued.
-
-The historical `store_id` shape is retained only for forensic compatibility:
-
-```text
-b2://<bucket-name>?region=<region>&object_lock=compliance&retention_days_pre_mutation=365&retention_days_closed=2557
-```
-
-Do not create, delete, overwrite, publish, or reuse any historical bootstrap
-object without a separate evidence-preserving cleanup plan and approval.
+Until those controls are reviewed and implemented, use the operational
+quarantine checklist in the repository README.
