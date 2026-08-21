@@ -37,7 +37,7 @@ const PROJECT_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 export function loadLiveWorkerConfig(path) {
   const resolved = resolve(path);
   const filename = basename(resolved);
-  const definition = LIVE_WORKERS[filename];
+  const definition = liveWorkerDefinition(filename);
   if (resolved !== resolve(PROJECT_ROOT, filename) || definition === undefined) {
     throw new Error("deployment requires one exact reviewed broker live-config path");
   }
@@ -48,7 +48,7 @@ export function loadLiveWorkerConfig(path) {
 
 /** Validate parsed config independently from filesystem I/O for closed smoke tests. */
 export function validateLiveWorkerConfig(config, filename, expectedName) {
-  const definition = LIVE_WORKERS[filename];
+  const definition = liveWorkerDefinition(filename);
   if (definition === undefined || expectedName !== definition.name) {
     throw new Error("live Worker config identity/safety contract mismatch");
   }
@@ -111,6 +111,10 @@ export function validateLiveWorkerConfig(config, filename, expectedName) {
   }
 }
 
+function liveWorkerDefinition(filename) {
+  return Object.entries(LIVE_WORKERS).find(([candidate]) => candidate === filename)?.[1];
+}
+
 function validateWormDurableObjects(value, migrations) {
   const durable = requireRecord(value, "WORM Durable Object config");
   requireExactKeys(durable, ["bindings"], "WORM Durable Object config");
@@ -139,14 +143,14 @@ export const LIVE_WORKER_IDENTITIES = Object.freeze(
 
 function validateVariables(value, definition, accountId) {
   const vars = requireRecord(value, "live Worker vars");
-  const expected = {
-    candidate: [
-      "CANDIDATE_READER_SERVICE_NAME",
-      "CF_ACCOUNT_ID",
-      "GITHUB_APP_ID",
-      "GITHUB_APP_INSTALLATION_ID",
-      "OPERATING_MODE",
-    ],
+  const githubProviderKeys = [
+    "CF_ACCOUNT_ID",
+    "GITHUB_APP_ID",
+    "GITHUB_APP_INSTALLATION_ID",
+    "OPERATING_MODE",
+  ];
+  const expectedByKind = {
+    candidate: ["CANDIDATE_READER_SERVICE_NAME", ...githubProviderKeys],
     cloudflare_observer: [
       "APPROVED_INGRESS_HOSTNAME",
       "APPROVED_INGRESS_ZONE_ID",
@@ -155,22 +159,9 @@ function validateVariables(value, definition, accountId) {
       "OPERATING_MODE",
       "SERVICE_NAME",
     ],
-    controller: [
-      "CF_ACCOUNT_ID",
-      "GITHUB_APP_ID",
-      "GITHUB_APP_INSTALLATION_ID",
-      "GITHUB_APP_SLUG",
-      "OPERATING_MODE",
-      "SERVICE_NAME",
-    ],
+    controller: [...githubProviderKeys, "GITHUB_APP_SLUG", "SERVICE_NAME"],
     deny: ["OPERATING_MODE", "SERVICE_NAME"],
-    governance: [
-      "CF_ACCOUNT_ID",
-      "GITHUB_APP_ID",
-      "GITHUB_APP_INSTALLATION_ID",
-      "OPERATING_MODE",
-      "SERVICE_NAME",
-    ],
+    governance: [...githubProviderKeys, "SERVICE_NAME"],
     ingress: [
       "ADMIN_ACCESS_APPLICATION_ID",
       "ADMIN_ACCESS_AUDIENCE",
@@ -193,7 +184,25 @@ function validateVariables(value, definition, accountId) {
       "WORM_EXPECTED_CALLER_SERVICE_IDENTITY",
       "WORM_EXPECTED_CLOUDFLARE_OBSERVER_SERVICE_IDENTITY",
     ],
-  }[definition.kind];
+  };
+  const expected =
+    definition.kind === "candidate"
+      ? expectedByKind.candidate
+      : definition.kind === "cloudflare_observer"
+        ? expectedByKind.cloudflare_observer
+        : definition.kind === "controller"
+          ? expectedByKind.controller
+          : definition.kind === "deny"
+            ? expectedByKind.deny
+            : definition.kind === "governance"
+              ? expectedByKind.governance
+              : definition.kind === "ingress"
+                ? expectedByKind.ingress
+                : definition.kind === "observer"
+                  ? expectedByKind.observer
+                  : definition.kind === "worm"
+                    ? expectedByKind.worm
+                    : undefined;
   requireExactKeys(vars, expected, "live Worker vars");
   for (const key of Object.keys(vars)) {
     if (SECRET_NAME.test(key)) throw new Error("secret-bearing Worker variable must be a secret");

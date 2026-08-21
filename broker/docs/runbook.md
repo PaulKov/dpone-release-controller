@@ -3,14 +3,27 @@
 > **Current state: `DPONE_PROVIDER_MUTATION_HOLD_V1`.** Every provider-mutating `--apply`
 > operation below is a future post-lift ceremony description. In this publication candidate it
 > fails with `PROVIDER_MUTATION_HOLD` before secret reads, temp/report reservation, subprocess,
-> fetch, client, or provider access. Never attempt to bypass the guard with environment variables,
-> flags, local files, credentials, or injected dependencies.
+> fetch, client, or provider access. No repository-defined environment/configuration flag, local
+> file, credential, or injected dependency authorizes bypassing the guard.
 
-Read-only/offline commands currently allowed are `pnpm config:check`, `pnpm privacy:check`, the
-test/lint/type/format gates, `bootstrap:live` without `--apply`, GitHub App PEM conversion without
-`--apply`, and Cloudflare observer token evidence verification. The latter two read named local
-secret files but contact no provider. `version:upload` and `version:deploy` require an explicit
-`--apply` and remain unconditionally held.
+The source quarantine is deeper than the CLI: every exported production engine, provider helper,
+bootstrap smoke/materialization helper, and WORM journal mutation boundary independently enters the
+same HOLD. Module loading may establish static import bindings, and native direct-entry detection
+may inspect only `process.argv[1]` and invoke native path/URL comparison helpers before dispatch.
+Those operations do not snapshot, parse, or use the command option vector or invoke injected
+dependency/provider ports. Every exported production `main` enters the HOLD as its exact
+first statement in every mode, including the former dry/validation branches; only afterward could
+the guarded function create its own frozen snapshot of `process.argv.slice(2)`. Their semantic test counterparts consume
+primitive JSON text and produce in-memory traces only; they cannot spawn, fetch, write a journal, or
+wrap a real provider client.
+
+Commands currently allowed are only `pnpm config:check`, `pnpm privacy:check`, the
+test/lint/type/format gates, and their primitive-JSON in-memory simulations. `bootstrap:live`, the
+GitHub App key command, the Cloudflare observer token command, `version:upload`, `version:deploy`,
+and the WORM command are unconditionally held even without mutation flags. Future
+`version:upload`/`version:deploy` contracts still require explicit `--apply`, but no argument can
+release them in this candidate. Every command example below is documentary and inactive until a
+separately approved source lift.
 
 ## Preconditions
 
@@ -36,7 +49,7 @@ pnpm github-app-key:provision -- \
   --version-message <reviewed-validation-message>
 ```
 
-This validation mode uploads nothing. After a separately reviewed HOLD lift, the apply form must change `--config` to the exact corresponding `.live.jsonc` path and add `--apply`; merely adding `--apply` to the provisioning-config example is invalid. The future apply form pipes the converted key into `wrangler versions secret put`, creating an undeployed immutable Worker version. The provisioner uses a mode-0600 temporary file, zeroes buffers where possible, and removes its private temporary directory. The source PEM is never copied or logged. After upload, run the closed private-service smoke that reauthenticates `GET /app` and an exact selected-repository installation token; A0 remains blocked until that provider observation is WORM-confirmed.
+The example describes a former local-validation contract but is also held before the CLI option vector is snapshotted, parsed, or used and before the PEM is read in this candidate. Native direct-entry detection may inspect only `process.argv[1]` before the guard. After a separately reviewed HOLD lift, the apply form must change `--config` to the exact corresponding `.live.jsonc` path and add `--apply`; merely adding `--apply` to the provisioning-config example is invalid. The future apply form pipes the converted key into `wrangler versions secret put`, creating an undeployed immutable Worker version. The provisioner uses a mode-0600 temporary file, zeroes buffers where possible, and removes its private temporary directory. The source PEM is never copied or logged. After upload, run the closed private-service smoke that reauthenticates `GET /app` and an exact selected-repository installation token; A0 remains blocked until that provider observation is WORM-confirmed.
 
 ## One-use blank-account lifecycle bootstrap
 
@@ -44,7 +57,7 @@ Cloudflare does not apply Durable Object lifecycle changes through `wrangler ver
 
 The WORM lifecycle deployment is deliberately distinct from the other private deny Workers. It deploys `src/bootstrap-worm.ts`, whose default entrypoint remains credential-free and fail-closed, but whose named ES-module exports are the same final `CloudflareEvidenceBatch` and `WormExactObjectEffect` classes. The preserved WORM bindings and append-only `v1`/`v2` `new_sqlite_classes` migrations create both SQLite namespaces without exposing a usable WORM endpoint. The bootstrap then deploys `src/bootstrap-ingress.ts` against the final ingress config so the reviewed ingress SQLite migrations `v1`/`v2` are applied. The ingress owns the final Custom Domain but serves only `/livez`; readiness, activation, provider, receipt, runtime, and webhook paths return canonical `503`.
 
-The tracked `wrangler.*.live.jsonc` files are publication review templates with synthetic identifiers. For a future non-public cutover change, replace every classified placeholder with provider-observed values and review the final service-binding graph before dry validation. Declarative Durable Object config `exports` are intentionally forbidden because they are incompatible with this gradual/versioned rollout; the reviewed migration histories are rollout prerequisites. The canonical bootstrap report uses schema `dpone.release-broker-bootstrap-report.v2` and must carry an explicit `plan.lifecycle_migrations` projection for both ingress and WORM. A report that substitutes the obsolete `legacy_migrations_only` assertion is not admissible provenance.
+The tracked `wrangler.*.live.jsonc` files are publication review templates with synthetic identifiers. For a future non-public cutover change, replace every classified placeholder with provider-observed values and review the final service-binding graph before any production validation. Declarative Durable Object config `exports` are intentionally forbidden because they are incompatible with this gradual/versioned rollout; the reviewed migration histories are rollout prerequisites. The canonical bootstrap report uses schema `dpone.release-broker-bootstrap-report.v2` and must carry an explicit `plan.lifecycle_migrations` projection for both ingress and WORM. A report that substitutes the obsolete `legacy_migrations_only` assertion is not admissible provenance.
 
 ```sh
 pnpm bootstrap:live -- \
@@ -99,6 +112,11 @@ Run the ceremony in an exclusive upload window: no other process may upload any 
 
 A success remains `READY_FOR_PRIVATE_PREFLIGHT`, not activated: the exact private writer authorization and observer authorization/list-bucket re-queries must still prove the restriction and bucket state before A0 or promotion.
 
+This sequence documents the historical reviewed algorithm; removing the current HOLD does not make
+it executable or approved. Before any cutover, land a separately reviewed production adapter,
+re-establish direct effect/recovery coverage without a test authorization bypass, and rerun the
+zero-effect inventory. The declarative simulation alone is never provider evidence.
+
 `versions upload` is neither migration proof nor deployment proof. Before A0, deploy the exact final WORM version at 100%, re-query the provider until that one version is the exact observed 100% deployment, and run the closed internal `CloudflareEvidenceBatch` and `WormExactObjectEffect` journal smoke/requery. The smoke must prove durable journal recovery, a single writer dispatch, and exact observer-backed confirmation rather than merely obtaining a successful Worker response. Any version mismatch, traffic split, unconfirmed journal slot, divergent B2 object/version observation, or unavailable requery leaves the authority in `HOLD`; A0 must not start.
 
 The command does not deploy any version. Generic `version:upload` is rejected for ingress, WORM, B2 observer, and Cloudflare observer so a secretless or credential-aliased candidate cannot bypass the paired ceremony. Every key and credential input must be an exact mode-`0600` regular file. Temporary Wrangler secret documents are mode `0600`, zeroed in memory where possible, and removed after each upload. No application key, authorization response, upload URL, or provider bearer is written to stdout or the ceremony journal.
@@ -136,7 +154,8 @@ If SQLite append succeeded but WORM confirmation timed out, retry the exact same
 
 ## Verification
 
-Run with exact Node and pnpm versions from `packageManager`/`engines`:
+Run with Node `24.19.0` from `.node-version` and pnpm `11.19.0` from `packageManager`.
+`engines.node` is the compatibility range, not the verified runtime pin:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -145,3 +164,17 @@ pnpm audit --prod --audit-level high
 ```
 
 `pnpm check` includes project policy verification, formatting, lint, typecheck, PKCS conversion/fingerprint tests, unit/DO fault tests, and the real workerd candidate stream boundary.
+
+`config:check` launches `verify-provider-quarantine.mjs` as a separate builtins-only trusted
+bootstrap. That root cannot self-hash. Before importing policy or parser code, it rejects
+non-regular/symlink inputs and verifies the exact bytes and complete import-source inventory of the
+21-file policy closure, plus `package.json`, `pnpm-lock.yaml`, and `.node-version`. Only then does
+it load the direct-pinned Espree/eslint-scope policy and validate the exact module, export, import,
+77-boundary, effect-data-initializer, HOLD-AST, typed capability-graph, full simulation-Program,
+and package-command inventories. Treat this as
+a syntactic quarantine under explicitly denied dynamic features, not Cloudflare readiness or
+adapter-correctness evidence. It proves the checked-in source only under a trusted pinned Node
+startup and trusted installed parser dependencies; it does not cover `NODE_OPTIONS`, preload or
+custom-loader execution, a malicious/prototype-poisoned runtime, or a malicious simultaneous edit
+of the trusted bootstrap and checked source. Every bootstrap/policy/code update requires
+independent review; do not accept regenerated inventories by themselves.

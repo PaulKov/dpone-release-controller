@@ -6,17 +6,19 @@ import { loadLiveWorkerConfig } from "./live-worker-config.mjs";
 import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 /** Upload code as an undeployed immutable version. Traffic is changed separately. */
-export function main(arguments_, dependencies = {}) {
-  const options = parseArguments(arguments_);
+export function main() {
   assertProviderMutationReleased("version-upload");
+  const arguments_ = Object.freeze(process.argv.slice(2));
+  const options = parseArguments(arguments_);
   return runVersionUpload(options, {
-    loadLiveWorkerConfig: dependencies.loadLiveWorkerConfig ?? loadLiveWorkerConfig,
-    spawnSync: dependencies.spawnSync ?? spawnSync,
+    loadLiveWorkerConfig,
+    spawnSync,
   });
 }
 
 /** Execute a parsed upload through explicit test/provider ports, with no real defaults. */
 export function runVersionUpload(options, dependencies) {
+  assertProviderMutationReleased("version-upload");
   const inspectConfig = requirePort(dependencies, "loadLiveWorkerConfig");
   const execute = requirePort(dependencies, "spawnSync");
   const inspected = inspectConfig(options.config);
@@ -60,6 +62,7 @@ function requirePort(dependencies, name) {
 }
 
 export function parseArguments(arguments_) {
+  assertProviderMutationReleased("version-upload");
   const values = new Map();
   let apply = false;
   for (let index = 0; index < arguments_.length; index += 1) {
@@ -94,7 +97,7 @@ export function parseArguments(arguments_) {
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2));
+  main();
 }
 
 function usage() {

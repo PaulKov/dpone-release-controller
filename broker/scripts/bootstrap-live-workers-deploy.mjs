@@ -12,6 +12,7 @@ import {
   canonicalWorkerVersionResourceProjectionBytes,
   projectWorkerVersionResources,
 } from "./worker-version-resources.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 export function deployBootstrapWorker(
   worker,
@@ -22,6 +23,7 @@ export function deployBootstrapWorker(
   execute,
   read,
 ) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   if (
     resolve(PROJECT_ROOT, worker.bootstrap_main) !== source ||
     taggedSha256(read(source)) !== worker.bootstrap_main_sha256
@@ -104,6 +106,7 @@ export function deployBootstrapWorker(
 }
 
 export function requeryDeployment(deployment, options, inspectConfig, execute) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   const status = executeJson(
     [WRANGLER, "deployments", "status", "--json", "--config", deployment.provider_config],
     execute,

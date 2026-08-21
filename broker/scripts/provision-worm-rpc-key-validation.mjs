@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { TextDecoder } from "node:util";
 
@@ -14,8 +15,10 @@ import { LIVE_WORKERS } from "./live-worker-topology.mjs";
 import { MAX_INPUT_BYTES, PROJECT_ROOT, VERSION } from "./provision-worm-rpc-key-constants.mjs";
 import { taggedSha256 } from "./provision-worm-rpc-key-crypto.mjs";
 import { readPrivateFile } from "./provision-worm-rpc-key-inputs.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 export function validateInspectedConfig(inspected, expectedName) {
+  assertProviderMutationReleased("worm-authority-apply");
   if (
     inspected === null ||
     typeof inspected !== "object" ||
@@ -28,16 +31,10 @@ export function validateInspectedConfig(inspected, expectedName) {
   }
 }
 
-export function validateBootstrapProvenance(
-  path,
-  ingress,
-  observer,
-  cloudflareObserver,
-  worm,
-  read,
-) {
+export function validateBootstrapProvenance(path, ingress, observer, cloudflareObserver, worm) {
+  assertProviderMutationReleased("worm-authority-apply");
   if (path === null) throw new Error("applied authority ceremony requires bootstrap provenance");
-  const bytes = readPrivateFile(path, 64, MAX_INPUT_BYTES, read, "bootstrap report");
+  const bytes = readPrivateFile(path, 64, MAX_INPUT_BYTES, "bootstrap report");
   let report;
   try {
     report = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
@@ -94,10 +91,10 @@ export function validateBootstrapProvenance(
   }
   return {
     bootstrap_report_sha256: taggedSha256(bytes),
-    cloudflare_observer: validateBootstrapWorkerProjection(report, cloudflareObserver, read),
-    ingress: validateBootstrapWorkerProjection(report, ingress, read),
-    observer: validateBootstrapWorkerProjection(report, observer, read),
-    worm: validateBootstrapWorkerProjection(report, worm, read),
+    cloudflare_observer: validateBootstrapWorkerProjection(report, cloudflareObserver),
+    ingress: validateBootstrapWorkerProjection(report, ingress),
+    observer: validateBootstrapWorkerProjection(report, observer),
+    worm: validateBootstrapWorkerProjection(report, worm),
   };
 }
 
@@ -122,7 +119,7 @@ function hasExactLifecycleMigrationProjection(plan) {
   return JSON.stringify(plan.lifecycle_migrations) === JSON.stringify(expected);
 }
 
-function validateBootstrapWorkerProjection(report, inspected, read) {
+function validateBootstrapWorkerProjection(report, inspected) {
   const matches = report.plan.workers.filter((item) => item?.name === inspected.expectedName);
   const observations = report.provider_observations.filter(
     (item) => item?.name === inspected.expectedName,
@@ -146,9 +143,9 @@ function validateBootstrapWorkerProjection(report, inspected, read) {
     main === "src/index.ts" ? "ingress" : worm ? "worm" : "private",
     bootstrapMain,
   );
-  const configSha256 = taggedSha256(read(inspected.path));
-  const mainSha256 = taggedSha256(read(resolve(PROJECT_ROOT, main)));
-  const bootstrapMainSha256 = taggedSha256(read(resolve(PROJECT_ROOT, bootstrapMain)));
+  const configSha256 = taggedSha256(readFileSync(inspected.path));
+  const mainSha256 = taggedSha256(readFileSync(resolve(PROJECT_ROOT, main)));
+  const bootstrapMainSha256 = taggedSha256(readFileSync(resolve(PROJECT_ROOT, bootstrapMain)));
   const bindingProjection = validateWorkerVersionResourceProjection(
     observation.binding_projection,
     bootstrapConfig,

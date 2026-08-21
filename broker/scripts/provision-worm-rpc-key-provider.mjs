@@ -14,8 +14,10 @@ import {
   VERSION,
 } from "./provision-worm-rpc-key-constants.mjs";
 import { taggedSha256 } from "./provision-worm-rpc-key-crypto.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 export function uploadFinalVersion(config, secretValues, extraArguments, options, role, execute) {
+  assertProviderMutationReleased("worm-authority-apply");
   const temporaryDirectory = mkdtempSync(join(tmpdir(), "dpone-final-version-"));
   const secretsPath = join(temporaryDirectory, "secrets.json");
   const secrets = Buffer.from(`${JSON.stringify(secretValues)}\n`, "utf8");
@@ -70,6 +72,7 @@ export function requireUnusedVersionTag(
   predecessorCompletedUploads,
   execute,
 ) {
+  assertProviderMutationReleased("worm-authority-apply");
   const listed = listTaggedVersions(configPath, role, options, execute);
   if (listed.candidates.length !== 0) {
     throw new Error(`immutable ${role} version tag was already consumed`);
@@ -94,6 +97,7 @@ export function discoverRecoverableVersion(
   variableOverrides,
   execute,
 ) {
+  assertProviderMutationReleased("worm-authority-apply");
   const listed = listTaggedVersions(configPath, role, options, execute);
   if (listed.candidates.length === 0) {
     if (listed.observation.listed_version_count === 10) {
@@ -191,6 +195,7 @@ export function requeryVersion(
   variableOverrides,
   execute,
 ) {
+  assertProviderMutationReleased("worm-authority-apply");
   if (typeof versionId !== "string" || !VERSION.test(versionId)) {
     throw new Error(`immutable ${role} version identity unavailable for requery`);
   }

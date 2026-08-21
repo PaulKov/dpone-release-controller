@@ -6,6 +6,7 @@ import {
   record,
 } from "./worker-version-resource-common.mjs";
 import { validateWorkerVersionResourceProjection } from "./worker-version-resource-validation.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 /**
  * Build the closed, secret-value-free projection returned by
@@ -15,8 +16,10 @@ export function projectWorkerVersionResources(
   resources,
   config,
   expectedSecrets,
-  variableOverrides = {},
+  variableOverrides,
 ) {
+  assertProviderMutationReleased("worm-authority-apply");
+  variableOverrides ??= {};
   const source = record(resources, "immutable version resources");
   exactKeys(source, ["bindings", "script", "script_runtime"], "immutable version resources");
   const script = record(source.script, "immutable version script");

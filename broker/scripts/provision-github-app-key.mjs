@@ -28,18 +28,35 @@ const CONVERTED = /^-----BEGIN PRIVATE KEY-----\n[+/0-9A-Za-z\n=]+\n-----END PRI
  * Validate GitHub's PKCS#1 download, convert it to runtime PKCS#8 and optionally
  * create one undeployed secret-bearing Worker version. Private bytes are never logged.
  */
-export function main(arguments_, dependencies = {}) {
+export function main() {
+  assertProviderMutationReleased("github-app-key-apply");
+  const arguments_ = Object.freeze(process.argv.slice(2));
   const options = parseArguments(arguments_);
-  if (options.apply) assertProviderMutationReleased("github-app-key-apply");
+  if (!options.apply) return runGithubAppKeyValidation(options);
   return runGithubAppKeyProvision(options, {
-    loadLiveWorkerConfig: dependencies.loadLiveWorkerConfig ?? loadLiveWorkerConfig,
-    spawnSync: dependencies.spawnSync ?? spawnSync,
-    writeOutput: dependencies.writeOutput ?? ((value) => process.stdout.write(value)),
+    loadLiveWorkerConfig,
+    spawnSync,
+    writeOutput: (value) => process.stdout.write(value),
   });
 }
 
-/** Conversion/provisioning engine with explicit effect ports and no real provider default. */
+/** Quarantined provider mutation boundary; the shared HOLD is always the first operation. */
 export function runGithubAppKeyProvision(options, dependencies) {
+  assertProviderMutationReleased("github-app-key-apply");
+  return executeGithubAppKeyOperation(options, dependencies);
+}
+
+/** Validate and convert a key without loading a live config or invoking Wrangler. */
+function runGithubAppKeyValidation(options) {
+  if (options.apply) throw new Error("GitHub App key validation rejects apply options");
+  return executeGithubAppKeyOperation(options, {
+    loadLiveWorkerConfig,
+    spawnSync,
+    writeOutput: (value) => process.stdout.write(value),
+  });
+}
+
+function executeGithubAppKeyOperation(options, dependencies) {
   const execute = requirePort(dependencies, "spawnSync");
   const inspectLiveConfig = requirePort(dependencies, "loadLiveWorkerConfig");
   const writeOutput = requirePort(dependencies, "writeOutput");
@@ -139,6 +156,7 @@ function requirePort(dependencies, name) {
 }
 
 export function parseArguments(arguments_) {
+  assertProviderMutationReleased("github-app-key-apply");
   const values = new Map();
   let apply = false;
   for (let index = 0; index < arguments_.length; index += 1) {
@@ -207,7 +225,7 @@ function runOpenSsl(arguments_, execute) {
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2));
+  main();
 }
 
 function usage() {

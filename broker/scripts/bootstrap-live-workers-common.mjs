@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { CLOUDFLARE_UUID } from "./cloudflare-ids.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 export const PROJECT_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 export const WRANGLER = fileURLToPath(
@@ -44,5 +45,6 @@ export const MAX_PROVIDER_BYTES = 1_048_576;
 export const MAX_SMOKE_BYTES = 65_536;
 
 export function taggedSha256(value) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   return `sha256:${createHash("sha256").update(value).digest("hex")}`;
 }

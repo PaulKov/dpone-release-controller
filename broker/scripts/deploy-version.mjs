@@ -8,18 +8,20 @@ import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 const VERSION = CLOUDFLARE_UUID;
 
-/** Build and execute one immutable deployment change. Dependencies are injectable for smoke tests. */
-export function main(arguments_, dependencies = {}) {
-  const options = parseArguments(arguments_);
+/** Build and execute one immutable deployment change through exact production adapters. */
+export function main() {
   assertProviderMutationReleased("version-deploy");
+  const arguments_ = Object.freeze(process.argv.slice(2));
+  const options = parseArguments(arguments_);
   return runVersionDeployment(options, {
-    loadLiveWorkerConfig: dependencies.loadLiveWorkerConfig ?? loadLiveWorkerConfig,
-    spawnSync: dependencies.spawnSync ?? spawnSync,
+    loadLiveWorkerConfig,
+    spawnSync,
   });
 }
 
 /** Execute a parsed deployment through explicit test/provider ports, with no real defaults. */
 export function runVersionDeployment(options, dependencies) {
+  assertProviderMutationReleased("version-deploy");
   const inspectConfig = requirePort(dependencies, "loadLiveWorkerConfig");
   const execute = requirePort(dependencies, "spawnSync");
   inspectConfig(options.config);
@@ -55,6 +57,7 @@ function requirePort(dependencies, name) {
 }
 
 export function parseArguments(arguments_) {
+  assertProviderMutationReleased("version-deploy");
   const values = new Map();
   let operation;
   let apply = false;
@@ -107,7 +110,7 @@ export function parseArguments(arguments_) {
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2));
+  main();
 }
 
 function usage() {

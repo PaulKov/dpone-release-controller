@@ -1,14 +1,15 @@
 import { spawnSync } from "node:child_process";
-import { closeSync, readFileSync } from "node:fs";
+import { closeSync } from "node:fs";
 
 import { loadLiveWorkerConfig } from "./live-worker-config.mjs";
-import { requireEffectPort } from "./explicit-effect-port.mjs";
 import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 import { readTokenDocument as readCloudflareTokenDocument } from "./provision-cloudflare-deployment-observer-token.mjs";
+import { parseArguments } from "./provision-worm-rpc-key-arguments.mjs";
 import { SERVICE_NAMES } from "./provision-worm-rpc-key-constants.mjs";
 import { taggedSha256 } from "./provision-worm-rpc-key-crypto.mjs";
 import {
   adminPrincipalDigests,
+  authoritySecretNames,
   readAdminPrincipalDocument,
   readB2SecretDocument,
   readCloudflareObserverRestriction,
@@ -27,6 +28,7 @@ import { requireUnusedVersionTag } from "./provision-worm-rpc-key-provider.mjs";
 import {
   callerIdentity,
   ceremonyReport,
+  initialCeremonyState,
   serviceIdentity,
 } from "./provision-worm-rpc-key-report.mjs";
 import {
@@ -46,54 +48,68 @@ import {
  * Cloudflare observer receives the provider token and two separated RPC
  * keys. The WORM writer receives only its B2 writer credential plus WORM and
  * observer-to-WORM keys. Uploads are effect-ordered ingress -> B2 observer ->
- * Cloudflare observer -> WORM, so every immutable identity is derivable in a
- * finite DAG and no placeholder/latest-version pin is needed.
+ * Cloudflare observer -> WORM; immutable identities form a finite DAG without placeholder pins.
  */
-export function runCeremony(options, dependencies = {}) {
-  if (options.apply) assertProviderMutationReleased("worm-authority-apply");
+export function runCeremonyCommand() {
+  assertProviderMutationReleased("worm-authority-apply");
+  const arguments_ = Object.freeze(process.argv.slice(2));
+  const options = parseArguments(arguments_);
+  if (!options.apply) return runCeremonyDryValidation(options);
+  return runCeremony(options);
+}
+
+export function runCeremony(options) {
+  assertProviderMutationReleased("worm-authority-apply");
   return runCeremonyEngine(options, {
-    ...dependencies,
-    loadLiveWorkerConfig: dependencies.loadLiveWorkerConfig ?? loadLiveWorkerConfig,
-    now: dependencies.now ?? Date.now,
-    readFileSync: dependencies.readFileSync ?? readFileSync,
-    spawnSync: dependencies.spawnSync ?? spawnSync,
-    writeOutput: dependencies.writeOutput ?? ((value) => process.stdout.write(value)),
+    loadLiveWorkerConfig,
+    now: Date.now,
+    spawnSync,
+    writeOutput: (value) => process.stdout.write(value),
   });
 }
 
 export function runCeremonyEngine(options, dependencies) {
-  const execute = requireEffectPort(dependencies, "spawnSync", "ceremony");
-  const inspectConfig = requireEffectPort(dependencies, "loadLiveWorkerConfig", "ceremony");
-  const read = requireEffectPort(dependencies, "readFileSync", "ceremony");
+  assertProviderMutationReleased("worm-authority-apply");
+  return executeCeremony(options, dependencies);
+}
+
+/** Validate local ceremony inputs without provider calls or a durable result journal. */
+function runCeremonyDryValidation(options) {
+  if (options.apply) throw new Error("dry ceremony validation rejects apply options");
+  return executeCeremony(options, {
+    now: Date.now,
+    writeOutput: (value) => process.stdout.write(value),
+  });
+}
+
+function executeCeremony(options, dependencies) {
+  const execute = options.apply
+    ? requireEffectPort(dependencies, "spawnSync", "ceremony")
+    : undefined;
+  const inspectConfig = options.apply
+    ? requireEffectPort(dependencies, "loadLiveWorkerConfig", "ceremony")
+    : undefined;
   const now = requireEffectPort(dependencies, "now", "ceremony");
   const writeOutput = requireEffectPort(dependencies, "writeOutput", "ceremony");
-  const rpcBytes = readPrivateFile(options.input, 32, 32, read, "WORM RPC key");
+  const rpcBytes = readPrivateFile(options.input, 32, 32, "WORM RPC key");
   const observerRpcBytes = readPrivateFile(
     options.cloudflareObserverRpcKey,
     32,
     32,
-    read,
     "Cloudflare observer RPC key",
   );
   const evidenceRpcBytes = readPrivateFile(
     options.cloudflareEvidenceRpcKey,
     32,
     32,
-    read,
     "Cloudflare evidence RPC key",
   );
-  const cloudflareCredential = readCloudflareTokenDocument(options.cloudflareObserverToken, read);
-  const adminPrincipals = readAdminPrincipalDocument(options.adminAccessPrincipals, read);
-  const writer = readB2SecretDocument(options.writerSecret, read, "writer");
-  const observer = readB2SecretDocument(options.observerSecret, read, "observer");
+  const cloudflareCredential = readCloudflareTokenDocument(options.cloudflareObserverToken);
+  const adminPrincipals = readAdminPrincipalDocument(options.adminAccessPrincipals);
+  const writer = readB2SecretDocument(options.writerSecret, "writer");
+  const observer = readB2SecretDocument(options.observerSecret, "observer");
   let resultHandle = null;
-  const state = {
-    completed_uploads: [],
-    initial_absence_observations: [],
-    provider_version_observations: [],
-    recovery_observations: [],
-    version_ids: { cloudflareObserver: null, ingress: null, observer: null, worm: null },
-  };
+  const state = initialCeremonyState();
   let journalSequence = 0;
   let previousJournalEntrySha256 = null;
   let finalJournalEntrySha256 = null;
@@ -119,20 +135,17 @@ export function runCeremonyEngine(options, dependencies) {
       options.writerRestrictionEvidence,
       "writer",
       writer.keyIdSha256,
-      read,
     );
     const observerRestriction = readRestrictionEvidence(
       options.observerRestrictionEvidence,
       "observer",
       observer.keyIdSha256,
-      read,
     );
     const restrictions = {
       cloudflare_observer: readCloudflareObserverRestriction(
         options,
         cloudflareCredential.token,
         now(),
-        read,
       ),
       observer: observerRestriction,
       private_provider_requery_required: true,
@@ -168,7 +181,6 @@ export function runCeremonyEngine(options, dependencies) {
         observerConfig,
         cloudflareObserverConfig,
         wormConfig,
-        read,
       );
       const reservation = reserveResult(
         options.result,
@@ -218,27 +230,7 @@ export function runCeremonyEngine(options, dependencies) {
         observer: observerConfig.config,
         worm: wormConfig.config,
       };
-      const expectedSecrets = {
-        cloudflareObserver: [
-          "CLOUDFLARE_API_TOKEN",
-          "CLOUDFLARE_EVIDENCE_RPC_AUTH_KEY",
-          "CLOUDFLARE_OBSERVER_RPC_AUTH_KEY",
-        ],
-        ingress: [
-          "ADMIN_ACCESS_GROUP",
-          "ADMIN_ACCESS_IDENTITY",
-          "ADMIN_ACCESS_SUBJECT_ID",
-          "CLOUDFLARE_OBSERVER_RPC_AUTH_KEY",
-          "WORM_RPC_AUTH_KEY",
-        ],
-        observer: ["B2_APPLICATION_KEY", "B2_KEY_ID"],
-        worm: [
-          "B2_APPLICATION_KEY",
-          "B2_KEY_ID",
-          "CLOUDFLARE_EVIDENCE_RPC_AUTH_KEY",
-          "WORM_RPC_AUTH_KEY",
-        ],
-      };
+      const expectedSecrets = authoritySecretNames();
       if (reservation.terminal) {
         return emitRecoveredTerminal({
           bootstrapProvenance,
@@ -356,4 +348,10 @@ export function runCeremonyEngine(options, dependencies) {
     observer.bytes.fill(0);
     if (resultHandle !== null) closeSync(resultHandle);
   }
+}
+
+function requireEffectPort(dependencies, name, boundary) {
+  const value = dependencies?.[name];
+  if (typeof value !== "function") throw new Error(`${boundary} effect port missing: ${name}`);
+  return value;
 }

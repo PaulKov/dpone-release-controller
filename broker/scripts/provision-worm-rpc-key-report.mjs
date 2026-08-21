@@ -1,6 +1,18 @@
 import { basename } from "node:path";
 
 import { ACCOUNT_ID, SERVICE_NAMES, VERSION } from "./provision-worm-rpc-key-constants.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
+
+export function initialCeremonyState() {
+  assertProviderMutationReleased("worm-authority-apply");
+  return {
+    completed_uploads: [],
+    initial_absence_observations: [],
+    provider_version_observations: [],
+    recovery_observations: [],
+    version_ids: { cloudflareObserver: null, ingress: null, observer: null, worm: null },
+  };
+}
 
 export function ceremonyReport(
   options,
@@ -16,6 +28,7 @@ export function ceremonyReport(
   expectedB2ObserverServiceIdentity,
   status,
 ) {
+  assertProviderMutationReleased("worm-authority-apply");
   return {
     admin_access_principal_digests: principalDigests,
     applied: options.apply,
@@ -53,10 +66,12 @@ export function ceremonyReport(
 }
 
 export function callerIdentity(config, versionId) {
+  assertProviderMutationReleased("worm-authority-apply");
   return serviceIdentity(config, versionId, SERVICE_NAMES.ingress);
 }
 
 export function serviceIdentity(config, versionId, expectedServiceName) {
+  assertProviderMutationReleased("worm-authority-apply");
   const accountId = config.account_id;
   if (
     typeof accountId !== "string" ||

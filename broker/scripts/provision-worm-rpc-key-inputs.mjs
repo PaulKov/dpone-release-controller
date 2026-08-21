@@ -1,4 +1,4 @@
-import { lstatSync } from "node:fs";
+import { lstatSync, readFileSync } from "node:fs";
 import { TextDecoder } from "node:util";
 
 import {
@@ -14,9 +14,11 @@ import {
   MAX_INPUT_BYTES,
 } from "./provision-worm-rpc-key-constants.mjs";
 import { taggedSha256 } from "./provision-worm-rpc-key-crypto.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
-export function readB2SecretDocument(path, read, role) {
-  const bytes = readPrivateFile(path, 38, 360, read, `B2 ${role} secret document`);
+export function readB2SecretDocument(path, role) {
+  assertProviderMutationReleased("worm-authority-apply");
+  const bytes = readPrivateFile(path, 38, 360, `B2 ${role} secret document`);
   let text;
   try {
     text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -37,8 +39,9 @@ export function readB2SecretDocument(path, read, role) {
   };
 }
 
-export function readRestrictionEvidence(path, role, keyIdSha256, read) {
-  const bytes = readPrivateFile(path, 64, MAX_INPUT_BYTES, read, `B2 ${role} restriction evidence`);
+export function readRestrictionEvidence(path, role, keyIdSha256) {
+  assertProviderMutationReleased("worm-authority-apply");
+  const bytes = readPrivateFile(path, 64, MAX_INPUT_BYTES, `B2 ${role} restriction evidence`);
   let value;
   try {
     value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
@@ -88,7 +91,8 @@ export function readRestrictionEvidence(path, role, keyIdSha256, read) {
   };
 }
 
-export function readPrivateFile(path, minimumBytes, maximumBytes, read, label) {
+export function readPrivateFile(path, minimumBytes, maximumBytes, label) {
+  assertProviderMutationReleased("worm-authority-apply");
   const stat = lstatSync(path);
   if (
     !stat.isFile() ||
@@ -99,15 +103,16 @@ export function readPrivateFile(path, minimumBytes, maximumBytes, read, label) {
   ) {
     throw new Error(`${label} must be an exact mode-0600 regular file`);
   }
-  const bytes = read(path);
+  const bytes = readFileSync(path);
   if (!Buffer.isBuffer(bytes) || bytes.byteLength !== stat.size) {
     throw new Error(`${label} read is not byte-exact`);
   }
   return bytes;
 }
 
-export function readAdminPrincipalDocument(path, read) {
-  const bytes = readPrivateFile(path, 64, 2048, read, "Access principal secret document");
+export function readAdminPrincipalDocument(path) {
+  assertProviderMutationReleased("worm-authority-apply");
+  const bytes = readPrivateFile(path, 64, 2048, "Access principal secret document");
   let value;
   try {
     value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
@@ -141,6 +146,7 @@ export function readAdminPrincipalDocument(path, read) {
 }
 
 export function adminPrincipalDigests(principals) {
+  assertProviderMutationReleased("worm-authority-apply");
   return {
     access_group_sha256: adminPrincipalDigest("access_group", principals.accessGroup),
     access_identity_sha256: adminPrincipalDigest("access_identity", principals.accessIdentity),
@@ -162,12 +168,12 @@ function adminPrincipalDigest(field, value) {
   );
 }
 
-export function readCloudflareObserverRestriction(options, token, acceptedAtMs, read) {
+export function readCloudflareObserverRestriction(options, token, acceptedAtMs) {
+  assertProviderMutationReleased("worm-authority-apply");
   const tokenFingerprint = taggedSha256(Buffer.from(token, "utf8"));
   const restriction = readCloudflareRestrictionEvidence(
     options.cloudflareObserverRestrictionEvidence,
     tokenFingerprint,
-    read,
   );
   const providerPolicy =
     options.cloudflareObserverProviderPolicyEvidence === null
@@ -177,7 +183,6 @@ export function readCloudflareObserverRestriction(options, token, acceptedAtMs, 
           restriction,
           tokenFingerprint,
           acceptedAtMs,
-          read,
         );
   if (options.apply && providerPolicy === null) {
     throw new Error("Cloudflare observer apply requires fresh provider policy evidence");
@@ -190,6 +195,7 @@ export function readCloudflareObserverRestriction(options, token, acceptedAtMs, 
 }
 
 export function validateCloudflareObserverConfig(config, restriction) {
+  assertProviderMutationReleased("worm-authority-apply");
   const vars = config?.vars;
   if (
     vars === null ||
@@ -202,6 +208,7 @@ export function validateCloudflareObserverConfig(config, restriction) {
 }
 
 export function validateAuthorityNetworkCrossBind(ingressConfig, observerConfig) {
+  assertProviderMutationReleased("worm-authority-apply");
   const ingressAccountId = ingressConfig?.account_id;
   const observerAccountId = observerConfig?.account_id;
   const routeHostname = ingressConfig?.routes?.[0]?.pattern;
@@ -230,6 +237,7 @@ export function ceremonyVariableOverrides(
   expectedCloudflareObserverServiceIdentity,
   expectedB2ObserverServiceIdentity,
 ) {
+  assertProviderMutationReleased("worm-authority-apply");
   if (role === "cloudflareObserver") {
     if (expectedCallerServiceIdentity === null) {
       throw new Error("Cloudflare observer upload requires the immutable ingress identity");
@@ -253,7 +261,33 @@ export function ceremonyVariableOverrides(
   return {};
 }
 
+export function authoritySecretNames() {
+  assertProviderMutationReleased("worm-authority-apply");
+  return {
+    cloudflareObserver: [
+      "CLOUDFLARE_API_TOKEN",
+      "CLOUDFLARE_EVIDENCE_RPC_AUTH_KEY",
+      "CLOUDFLARE_OBSERVER_RPC_AUTH_KEY",
+    ],
+    ingress: [
+      "ADMIN_ACCESS_GROUP",
+      "ADMIN_ACCESS_IDENTITY",
+      "ADMIN_ACCESS_SUBJECT_ID",
+      "CLOUDFLARE_OBSERVER_RPC_AUTH_KEY",
+      "WORM_RPC_AUTH_KEY",
+    ],
+    observer: ["B2_APPLICATION_KEY", "B2_KEY_ID"],
+    worm: [
+      "B2_APPLICATION_KEY",
+      "B2_KEY_ID",
+      "CLOUDFLARE_EVIDENCE_RPC_AUTH_KEY",
+      "WORM_RPC_AUTH_KEY",
+    ],
+  };
+}
+
 export function validateB2Config(config, restriction, role) {
+  assertProviderMutationReleased("worm-authority-apply");
   const vars = config.vars;
   if (
     vars === null ||

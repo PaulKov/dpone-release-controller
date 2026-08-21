@@ -53,7 +53,7 @@ describe("confidential activation component resolver", () => {
     expect(resolved.trust).toBe("RESOLVED_SEMANTICS");
     expect(resolved.canonicalProjectionBytes.byteLength).toBe(6_160);
     expect(resolved.projectionSha256).toBe(
-      "sha256:26926bbf4ab158b469d34b260c15ca836cb412311292c9a6f52c7d90f0f6fddf",
+      "sha256:86d97613c72a7292d8778aa1d1c2ddbdb7d362ce059c666c05dcb6a540e27e4c",
     );
     expect(activationJsonBudget(resolved.document)).toEqual({
       bytes: 6_160,

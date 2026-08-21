@@ -4,14 +4,17 @@ import {
   exactKeys,
   record,
 } from "./worker-version-resource-common.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 /** Validate a persisted sanitized projection without trusting report fields. */
 export function validateWorkerVersionResourceProjection(
   value,
   config,
   expectedSecrets,
-  variableOverrides = {},
+  variableOverrides,
 ) {
+  assertProviderMutationReleased("worm-authority-apply");
+  variableOverrides ??= {};
   const projection = record(value, "immutable version binding projection");
   exactKeys(
     projection,
@@ -101,6 +104,7 @@ export function validateWorkerVersionResourceProjection(
 
 /** Canonical no-newline bytes used by reports to bind the sanitized projection. */
 export function canonicalWorkerVersionResourceProjectionBytes(value) {
+  assertProviderMutationReleased("worm-authority-apply");
   return Buffer.from(canonicalJson(value), "utf8");
 }
 

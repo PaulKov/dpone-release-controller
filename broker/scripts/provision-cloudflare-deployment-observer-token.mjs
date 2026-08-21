@@ -4,6 +4,8 @@ import { dirname, resolve } from "node:path";
 import { TextDecoder } from "node:util";
 import { fileURLToPath } from "node:url";
 
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
+
 const TOKEN_DOCUMENT = /^\{"api_token":"([A-Za-z0-9._~-]{20,512})"\}\n$/u;
 const ACCOUNT_ID = /^[0-9a-f]{32}$/u;
 const DIGEST = /^sha256:[0-9a-f]{64}$/u;
@@ -14,19 +16,33 @@ const DIGEST = /^sha256:[0-9a-f]{64}$/u;
  * the sole token-bearing Worker version is uploaded by the four-role paired
  * authority ceremony, which also installs both separated RPC keys.
  */
-export function main(arguments_, dependencies = {}) {
+export function main() {
+  assertProviderMutationReleased("cloudflare-observer-token-verify");
+  const arguments_ = Object.freeze(process.argv.slice(2));
   const options = parseArguments(arguments_);
-  const read = dependencies.readFileSync ?? readFileSync;
-  const now = dependencies.now ?? Date.now;
-  const writeOutput = dependencies.writeOutput ?? ((value) => process.stdout.write(value));
-  const writeResult = dependencies.writeFileSync ?? writeFileSync;
-  const credential = readTokenDocument(options.credential, read);
+  return options.verify
+    ? runCloudflareObserverTokenVerification(options)
+    : runCloudflareObserverTokenDryValidation(options);
+}
+
+/** Quarantined durable verification report boundary. */
+export function runCloudflareObserverTokenVerification(options) {
+  assertProviderMutationReleased("cloudflare-observer-token-verify");
+  return executeCloudflareObserverTokenVerification(options);
+}
+
+function runCloudflareObserverTokenDryValidation(options) {
+  if (options.verify) throw new Error("dry token validation rejects verify options");
+  return executeCloudflareObserverTokenVerification(options);
+}
+
+function executeCloudflareObserverTokenVerification(options) {
+  const credential = readTokenDocument(options.credential);
   try {
     const tokenFingerprintSha256 = taggedSha256(Buffer.from(credential.token, "utf8"));
     const restriction = readRestrictionEvidence(
       options.restrictionEvidence,
       tokenFingerprintSha256,
-      read,
     );
     const providerPolicyEvidence =
       options.providerPolicyEvidence === null
@@ -35,8 +51,7 @@ export function main(arguments_, dependencies = {}) {
             options.providerPolicyEvidence,
             restriction,
             tokenFingerprintSha256,
-            now(),
-            read,
+            Date.now(),
           );
     const report = {
       provider_mutation_performed: false,
@@ -52,10 +67,10 @@ export function main(arguments_, dependencies = {}) {
         throw new Error("verified token policy requires provider evidence and a result path");
       }
       assertPrivateResultTarget(options.result);
-      writeResult(options.result, canonicalBytes(report), { flag: "wx", mode: 0o600 });
+      writeFileSync(options.result, canonicalBytes(report), { flag: "wx", mode: 0o600 });
     }
     const output = `${JSON.stringify({ ...report, result: options.result })}\n`;
-    writeOutput(output);
+    process.stdout.write(output);
     return output;
   } finally {
     credential.bytes.fill(0);
@@ -63,6 +78,7 @@ export function main(arguments_, dependencies = {}) {
 }
 
 export function parseArguments(arguments_) {
+  assertProviderMutationReleased("cloudflare-observer-token-verify");
   const values = new Map();
   let verify = false;
   for (let index = 0; index < arguments_.length; index += 1) {
@@ -111,8 +127,9 @@ export function parseArguments(arguments_) {
   };
 }
 
-export function readTokenDocument(path, read) {
-  const bytes = readPrivateFile(path, 35, 544, read);
+export function readTokenDocument(path) {
+  assertProviderMutationReleased("cloudflare-observer-token-verify");
+  const bytes = readPrivateFile(path, 35, 544);
   let text;
   try {
     text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -128,8 +145,9 @@ export function readTokenDocument(path, read) {
   return { bytes, token: match[1] };
 }
 
-export function readRestrictionEvidence(path, tokenFingerprintSha256, read) {
-  const bytes = readPrivateFile(path, 64, 4096, read);
+export function readRestrictionEvidence(path, tokenFingerprintSha256) {
+  assertProviderMutationReleased("cloudflare-observer-token-verify");
+  const bytes = readPrivateFile(path, 64, 4096);
   const value = parseCanonicalJson(bytes, "Cloudflare token restriction evidence");
   if (
     JSON.stringify(Object.keys(value)) !==
@@ -176,9 +194,9 @@ export function readProviderPolicyEvidence(
   restriction,
   tokenFingerprintSha256,
   acceptedAtMs,
-  read,
 ) {
-  const bytes = readPrivateFile(path, 64, 8192, read);
+  assertProviderMutationReleased("cloudflare-observer-token-verify");
+  const bytes = readPrivateFile(path, 64, 8192);
   const value = parseCanonicalJson(bytes, "Cloudflare token provider policy evidence");
   const observedAtMs = Date.parse(value.observed_at);
   if (
@@ -239,7 +257,7 @@ function parseCanonicalJson(bytes, label) {
   return value;
 }
 
-function readPrivateFile(path, minimumBytes, maximumBytes, read) {
+function readPrivateFile(path, minimumBytes, maximumBytes) {
   const stat = lstatSync(path);
   if (
     !stat.isFile() ||
@@ -250,7 +268,7 @@ function readPrivateFile(path, minimumBytes, maximumBytes, read) {
   ) {
     throw new Error("Cloudflare observer input must be an exact mode-0600 regular file");
   }
-  const bytes = read(path);
+  const bytes = readFileSync(path);
   if (!Buffer.isBuffer(bytes) || bytes.byteLength !== stat.size) {
     throw new Error("Cloudflare observer input read is not byte-exact");
   }
@@ -274,7 +292,7 @@ function taggedSha256(value) {
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2));
+  main();
 }
 
 function usage() {

@@ -58,7 +58,7 @@ describe("closed activation component payload set", () => {
       ...activationJsonBudget(decodePayload(canonicalBytes)),
     }));
     expect(measurements).toEqual([
-      row("admin_access", 2_500, 36, 2, 71),
+      row("admin_access", 2_510, 36, 2, 71),
       row("b2", 1_663, 36, 3, 71),
       row("broker_core", 2_506, 55, 4, 71),
       row("controller", 4_642, 95, 5, 71),

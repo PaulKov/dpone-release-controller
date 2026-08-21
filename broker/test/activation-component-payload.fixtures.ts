@@ -40,7 +40,7 @@ export const VALID_A0_CONFIG: TrustedRuntimeConfig = Object.freeze({
   adminAccessAudience: "access-audience-immutable-000001",
   adminAccessGroup: "release-activation-admins",
   adminAccessIdentity: "release-admin@example.invalid",
-  adminAccessIssuer: "https://dpone.cloudflareaccess.com",
+  adminAccessIssuer: "https://review-template.cloudflareaccess.com",
   adminAccessPolicyId: "22222222-2222-4222-8222-222222222222",
   adminAccessSubjectId: "33333333-3333-4333-8333-333333333333",
   adminHostname: "release-broker.example.invalid",

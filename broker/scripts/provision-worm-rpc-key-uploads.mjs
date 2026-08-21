@@ -10,23 +10,26 @@ import {
   ceremonyReport,
   serviceIdentity,
 } from "./provision-worm-rpc-key-report.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
-export function emitRecoveredTerminal({
-  bootstrapProvenance,
-  evidenceRpcFingerprint,
-  execute,
-  expectedSecrets,
-  fingerprint,
-  observerRpcFingerprint,
-  options,
-  principalDigests,
-  reservation,
-  restrictions,
-  roleConfigs,
-  serviceIdentities,
-  state,
-  writeOutput,
-}) {
+export function emitRecoveredTerminal(context) {
+  assertProviderMutationReleased("worm-authority-apply");
+  const {
+    bootstrapProvenance,
+    evidenceRpcFingerprint,
+    execute,
+    expectedSecrets,
+    fingerprint,
+    observerRpcFingerprint,
+    options,
+    principalDigests,
+    reservation,
+    restrictions,
+    roleConfigs,
+    serviceIdentities,
+    state,
+    writeOutput,
+  } = context;
   state.provider_version_observations = ROLE_ORDER.map((role) =>
     requeryVersion(
       options[role + "Config"],
@@ -69,27 +72,29 @@ export function emitRecoveredTerminal({
   return output;
 }
 
-export function completeAuthorityUploads({
-  adminPrincipals,
-  cloudflareCredential,
-  cloudflareObserverConfig,
-  encodedEvidenceRpcKey,
-  encodedObserverRpcKey,
-  encodedRpcKey,
-  ensureDurableAbsence,
-  execute,
-  expectedSecrets,
-  ingressConfig,
-  observer,
-  observerConfig,
-  options,
-  persistHold,
-  roleConfigs,
-  serviceIdentities,
-  state,
-  wormConfig,
-  writer,
-}) {
+export function completeAuthorityUploads(context) {
+  assertProviderMutationReleased("worm-authority-apply");
+  const {
+    adminPrincipals,
+    cloudflareCredential,
+    cloudflareObserverConfig,
+    encodedEvidenceRpcKey,
+    encodedObserverRpcKey,
+    encodedRpcKey,
+    ensureDurableAbsence,
+    execute,
+    expectedSecrets,
+    ingressConfig,
+    observer,
+    observerConfig,
+    options,
+    persistHold,
+    roleConfigs,
+    serviceIdentities,
+    state,
+    wormConfig,
+    writer,
+  } = context;
   if (!state.completed_uploads.includes("ingress")) {
     const mayRecover = ensureDurableAbsence("ingress", options.ingressConfig, 0);
     const recovered = mayRecover

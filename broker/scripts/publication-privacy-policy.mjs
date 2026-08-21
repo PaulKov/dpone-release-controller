@@ -1,3 +1,5 @@
+import { TextDecoder } from "node:util";
+
 import { PUBLICATION_REVIEW_TEMPLATE_HEADER } from "./reviewed-jsonc.mjs";
 
 export const SYNTHETIC_ACCOUNT_ID = "0".repeat(32);
@@ -52,6 +54,7 @@ const FORBIDDEN_DOCUMENT_CLAIMS = Object.freeze([
   /no checked-in live Wrangler config exists/iu,
   /until that ledger can requery the terminal C5/iu,
   /until the ledger can prove terminal `CLOSED_CHECK_VERIFIED`/iu,
+  /semantic (?:bootstrap|effect\/recovery).{0,80}explicit fake effect ports/iu,
 ]);
 const CREDENTIAL_PATTERNS = Object.freeze([
   /-----BEGIN (?:EC |OPENSSH |RSA )?PRIVATE KEY-----\r?\n(?:[+/0-9A-Za-z=]{16,}\r?\n){4,}-----END (?:EC |OPENSSH |RSA )?PRIVATE KEY-----/u,
@@ -60,6 +63,25 @@ const CREDENTIAL_PATTERNS = Object.freeze([
   /\bgithub_pat_[0-9A-Za-z_]{30,}\b/u,
   /\beyJ[0-9A-Za-z_-]{10,}\.[0-9A-Za-z_-]{10,}\.[0-9A-Za-z_-]{10,}\b/u,
   /(?:^|\n)\s*_authToken\s*=/u,
+]);
+const FORBIDDEN_PUBLICATION_VALUES = Object.freeze([/dpone\.cloudflareaccess\.com/iu]);
+const PUBLICATION_TEXT_EXTENSIONS = new Set([
+  ".cjs",
+  ".js",
+  ".json",
+  ".jsonc",
+  ".md",
+  ".mjs",
+  ".py",
+  ".ts",
+  ".yaml",
+  ".yml",
+]);
+const PUBLICATION_TEXT_DOTFILES = new Set([
+  ".gitignore",
+  ".node-version",
+  ".npmrc",
+  ".prettierignore",
 ]);
 
 export function assertPublishableLiveConfig(filename, source, config) {
@@ -112,6 +134,26 @@ export function assertPublishableDocument(path, source) {
 export function assertNoCredentialMaterial(path, source) {
   if (CREDENTIAL_PATTERNS.some((pattern) => pattern.test(source))) {
     throw new Error(`probable credential material is forbidden in publication: ${path}`);
+  }
+}
+
+export function assertNoForbiddenPublicationValue(path, source) {
+  if (FORBIDDEN_PUBLICATION_VALUES.some((pattern) => pattern.test(source))) {
+    throw new Error(`stale or real publication identifier is forbidden: ${path}`);
+  }
+}
+
+export function assertPublicationTextPath(path, extension) {
+  if (!PUBLICATION_TEXT_EXTENSIONS.has(extension) && !PUBLICATION_TEXT_DOTFILES.has(path)) {
+    throw new Error(`publication file type is unclassified: ${path}`);
+  }
+}
+
+export function decodePublicationText(path, bytes) {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error(`publication file is not exact UTF-8 text: ${path}`);
   }
 }
 

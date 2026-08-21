@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 import {
@@ -19,8 +19,13 @@ import {
   PROJECT_ROOT,
   taggedSha256,
 } from "./bootstrap-live-workers-common.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
+import { loadLiveWorkerConfig } from "./live-worker-config.mjs";
 
-export function buildPlan(inspectConfig, read) {
+export function buildPlan() {
+  assertProviderMutationReleased("bootstrap-live-apply");
+  const inspectConfig = loadLiveWorkerConfig;
+  const read = readFileSync;
   const filenames = [...PRIVATE_CONFIGS, INGRESS_CONFIG];
   const workers = filenames.map((filename) => {
     const path = resolve(PROJECT_ROOT, filename);
@@ -68,7 +73,7 @@ export function buildPlan(inspectConfig, read) {
       role,
     };
   });
-  requireDurableExportParity(read);
+  requireDurableExportParity();
   const ingress = workers.at(-1);
   const inspectedIngress = inspectConfig(resolve(PROJECT_ROOT, INGRESS_CONFIG));
   const hostname = inspectedIngress.config.routes?.[0]?.pattern;
@@ -91,6 +96,7 @@ export function buildPlan(inspectConfig, read) {
 }
 
 export function materializeBootstrapConfig(worker, temporaryDirectory, index) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   assertBootstrapWorkerConfig(worker.bootstrap_config, worker.role, worker.bootstrap_main);
   const bytes = canonicalBootstrapWorkerConfigBytes(worker.bootstrap_config);
   if (taggedSha256(bytes) !== worker.bootstrap_config_sha256) {
@@ -101,14 +107,16 @@ export function materializeBootstrapConfig(worker, temporaryDirectory, index) {
   return path;
 }
 
-export function assertPlanBytesUnchanged(plan, read) {
+export function assertPlanBytesUnchanged(plan) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   for (const worker of plan.workers) {
     if (
-      taggedSha256(read(worker.config)) !== worker.config_sha256 ||
+      taggedSha256(readFileSync(worker.config)) !== worker.config_sha256 ||
       taggedSha256(canonicalBootstrapWorkerConfigBytes(worker.bootstrap_config)) !==
         worker.bootstrap_config_sha256 ||
-      taggedSha256(read(resolve(PROJECT_ROOT, worker.final_main))) !== worker.final_main_sha256 ||
-      taggedSha256(read(resolve(PROJECT_ROOT, worker.bootstrap_main))) !==
+      taggedSha256(readFileSync(resolve(PROJECT_ROOT, worker.final_main))) !==
+        worker.final_main_sha256 ||
+      taggedSha256(readFileSync(resolve(PROJECT_ROOT, worker.bootstrap_main))) !==
         worker.bootstrap_main_sha256
     ) {
       throw new Error("bootstrap reviewed config/source bytes changed before the first effect");
@@ -116,11 +124,11 @@ export function assertPlanBytesUnchanged(plan, read) {
   }
 }
 
-function requireDurableExportParity(read) {
-  const finalExports = namedExports(read(FINAL_INGRESS_SOURCE, "utf8"));
-  const bootstrapExports = namedExports(read(BOOTSTRAP_INGRESS_SOURCE, "utf8"));
-  const finalWormExports = namedExports(read(FINAL_WORM_SOURCE, "utf8"));
-  const bootstrapWormExports = namedExports(read(BOOTSTRAP_WORM_SOURCE, "utf8"));
+function requireDurableExportParity() {
+  const finalExports = namedExports(readFileSync(FINAL_INGRESS_SOURCE, "utf8"));
+  const bootstrapExports = namedExports(readFileSync(BOOTSTRAP_INGRESS_SOURCE, "utf8"));
+  const finalWormExports = namedExports(readFileSync(FINAL_WORM_SOURCE, "utf8"));
+  const bootstrapWormExports = namedExports(readFileSync(BOOTSTRAP_WORM_SOURCE, "utf8"));
   if (
     JSON.stringify(finalExports) !== JSON.stringify(EXPECTED_DURABLE_EXPORTS) ||
     JSON.stringify(bootstrapExports) !== JSON.stringify(EXPECTED_DURABLE_EXPORTS) ||
@@ -151,8 +159,9 @@ function lifecycleMigrationProjection(workers) {
 
 /** Collect every explicit value export block before comparing Durable Object parity. */
 export function namedExports(source) {
-  const text = Buffer.isBuffer(source) ? source.toString("utf8") : source;
-  const matches = [...text.matchAll(/export\s*\{([^}]+)\}/gu)];
+  assertProviderMutationReleased("bootstrap-live-apply");
+  if (typeof source !== "string") throw new Error("export inventory source must be text");
+  const matches = [...source.matchAll(/export\s*\{([^}]+)\}/gu)];
   return matches
     .flatMap((match) => (match[1] === undefined ? [] : match[1].split(",")))
     .map((value) =>

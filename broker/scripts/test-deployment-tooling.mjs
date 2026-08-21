@@ -1,7 +1,10 @@
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
-import { parseArguments as parseDeployArguments, runVersionDeployment } from "./deploy-version.mjs";
+import { main as deployVersion } from "./deploy-version.mjs";
 import { LIVE_WORKER_IDENTITIES, validateLiveWorkerConfig } from "./live-worker-config.mjs";
+import { PROVIDER_MUTATION_HOLD_CODE } from "./provider-mutation-hold.mjs";
 import {
   CANDIDATE,
   LIVE_CONFIG,
@@ -10,7 +13,40 @@ import {
   liveConfig,
   privateConfig,
 } from "./test-deployment-tooling-fixtures.mjs";
-import { parseArguments as parseUploadArguments, runVersionUpload } from "./upload-version.mjs";
+import {
+  simulateVersionDeployment,
+  simulateVersionUpload,
+} from "./test-provider-trace-simulation.mjs";
+import { main as uploadVersion } from "./upload-version.mjs";
+
+for (const filename of ["deploy-version.mjs", "upload-version.mjs"]) {
+  const source = readFileSync(fileURLToPath(new URL(filename, import.meta.url)), "utf8");
+  const holdOffset = source.indexOf("assertProviderMutationReleased(");
+  const optionOffset = source.indexOf("process.argv.slice(2)");
+  assert.ok(
+    holdOffset >= 0 && optionOffset > holdOffset,
+    `${filename} must snapshot its native CLI options only after the unconditional HOLD`,
+  );
+}
+
+let callerArgumentReads = 0;
+const callerArguments = new Proxy([], {
+  get() {
+    callerArgumentReads += 1;
+    throw new Error("production main inspected caller-controlled argv before HOLD");
+  },
+});
+for (const [entrypoint, invoke] of [
+  ["version-deploy", deployVersion],
+  ["version-upload", uploadVersion],
+]) {
+  assert.throws(
+    () => invoke(callerArguments),
+    (error) => error?.code === PROVIDER_MUTATION_HOLD_CODE && error?.entrypoint === entrypoint,
+    `${entrypoint} must stop without reading caller-controlled argv`,
+  );
+}
+assert.equal(callerArgumentReads, 0);
 
 for (const [filename, expectedName] of Object.entries(LIVE_WORKER_IDENTITIES)) {
   const config = liveConfig(filename);
@@ -42,58 +78,33 @@ for (const mutation of [
   );
 }
 
-const calls = [];
-const dependencies = {
-  loadLiveWorkerConfig: (path) => {
-    assert.ok(path === LIVE_CONFIG || PAIRED_AUTHORITY_CONFIGS.has(path));
-    return {
-      config: privateConfig(),
-      expectedName: PAIRED_AUTHORITY_CONFIGS.get(path) ?? "dpone-release-controller-run-reader",
-      path,
-    };
-  },
-  spawnSync: (executable, arguments_, options) => {
-    calls.push({ arguments_, executable, options });
-    return { status: 0 };
-  },
+const uploadOptions = {
+  apply: true,
+  config: LIVE_CONFIG,
+  message: "reviewed broker version test",
+  tag: "broker-version-test-v1",
 };
-
-runVersionUpload(
-  parseUploadArguments([
-    "--apply",
-    "--config",
-    LIVE_CONFIG,
-    "--tag",
-    "broker-version-test-v1",
-    "--message",
-    "reviewed broker version test",
-  ]),
-  dependencies,
+const upload = simulateVersionUpload(
+  JSON.stringify({ ...uploadOptions, workerName: "dpone-release-controller-run-reader" }),
 );
-for (const config of PAIRED_AUTHORITY_CONFIGS.keys()) {
+for (const [config, workerName] of PAIRED_AUTHORITY_CONFIGS) {
   assert.throws(
     () =>
-      runVersionUpload(
-        parseUploadArguments([
-          "--apply",
-          "--config",
+      simulateVersionUpload(
+        JSON.stringify({
+          ...uploadOptions,
           config,
-          "--tag",
-          "broker-version-test-v1",
-          "--message",
-          "reviewed broker version test",
-        ]),
-        dependencies,
+          workerName,
+        }),
       ),
-    /paired authority-key ceremony/u,
+    /paired authority/u,
   );
 }
-runVersionDeployment(parseDeployArguments(deployArguments("--stage")), dependencies);
-runVersionDeployment(parseDeployArguments(deployArguments("--promote")), dependencies);
-runVersionDeployment(parseDeployArguments(deployArguments("--rollback")), dependencies);
+const deployments = ["--stage", "--promote", "--rollback"].map((operation) => {
+  return simulateVersionDeployment(JSON.stringify(deploymentInput(operation)));
+});
 
-assert.equal(calls.length, 4);
-assert.deepEqual(calls[0].arguments_.slice(1), [
+assert.deepEqual(upload.trace, [
   "versions",
   "upload",
   "--strict",
@@ -104,7 +115,7 @@ assert.deepEqual(calls[0].arguments_.slice(1), [
   "--config",
   LIVE_CONFIG,
 ]);
-assert.deepEqual(calls[1].arguments_.slice(1), [
+assert.deepEqual(deployments[0].trace, [
   "versions",
   "deploy",
   `${STABLE}@100%`,
@@ -115,7 +126,7 @@ assert.deepEqual(calls[1].arguments_.slice(1), [
   "--config",
   LIVE_CONFIG,
 ]);
-assert.deepEqual(calls[2].arguments_.slice(1), [
+assert.deepEqual(deployments[1].trace, [
   "versions",
   "deploy",
   `${CANDIDATE}@100%`,
@@ -125,7 +136,7 @@ assert.deepEqual(calls[2].arguments_.slice(1), [
   "--config",
   LIVE_CONFIG,
 ]);
-assert.deepEqual(calls[3].arguments_.slice(1), [
+assert.deepEqual(deployments[2].trace, [
   "versions",
   "deploy",
   `${STABLE}@100%`,
@@ -135,29 +146,28 @@ assert.deepEqual(calls[3].arguments_.slice(1), [
   "--config",
   LIVE_CONFIG,
 ]);
-for (const call of calls) {
-  assert.equal(call.executable, process.execPath);
-  assert.equal(call.arguments_.includes("deploy") && call.arguments_.includes("upload"), false);
-  assert.equal(call.options.stdio, "inherit");
-}
 
-assert.throws(() => parseDeployArguments(deployArguments("--promote", STABLE)), /usage:/u);
 assert.throws(
-  () => parseDeployArguments(deployArguments("--stage", "not-an-immutable-id")),
-  /usage:/u,
+  () =>
+    simulateVersionUpload(
+      JSON.stringify({ ...uploadOptions, workerName: "dpone-release-authority-broker" }),
+    ),
+  /authority/u,
 );
 
-function deployArguments(operation, candidate = CANDIDATE) {
-  return [
-    "--apply",
-    "--config",
-    LIVE_CONFIG,
-    "--stable",
-    STABLE,
-    "--candidate",
+assert.throws(
+  () =>
+    simulateVersionDeployment(JSON.stringify(deploymentInput("--stage", "not-an-immutable-id"))),
+  /input invalid/u,
+);
+
+function deploymentInput(operation, candidate = CANDIDATE) {
+  return {
+    apply: true,
     candidate,
-    "--message",
-    "reviewed deployment test",
-    operation,
-  ];
+    config: LIVE_CONFIG,
+    message: "reviewed deployment test",
+    operation: operation.slice(2),
+    stable: STABLE,
+  };
 }

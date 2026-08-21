@@ -1,14 +1,19 @@
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
+
 export function compareProjected(left, right) {
+  assertProviderMutationReleased("worm-authority-apply");
   const leftName = typeof left === "string" ? left : left.name;
   const rightName = typeof right === "string" ? right : right.name;
   return leftName < rightName ? -1 : leftName > rightName ? 1 : 0;
 }
 
 export function compareNamed(left, right) {
+  assertProviderMutationReleased("worm-authority-apply");
   return left.name < right.name ? -1 : left.name > right.name ? 1 : 0;
 }
 
 export function exactKeys(value, expected, name) {
+  assertProviderMutationReleased("worm-authority-apply");
   const actual = Object.keys(value).sort();
   const sortedExpected = [...expected].sort();
   if (JSON.stringify(actual) !== JSON.stringify(sortedExpected)) {
@@ -17,6 +22,7 @@ export function exactKeys(value, expected, name) {
 }
 
 export function allowedKeys(value, allowed, required, name) {
+  assertProviderMutationReleased("worm-authority-apply");
   const keys = Object.keys(value);
   if (keys.some((key) => !allowed.includes(key)) || required.some((key) => !keys.includes(key))) {
     throw new Error(`${name} keys mismatch`);
@@ -24,6 +30,7 @@ export function allowedKeys(value, allowed, required, name) {
 }
 
 export function record(value, name) {
+  assertProviderMutationReleased("worm-authority-apply");
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`${name} must be an object`);
   }
@@ -31,6 +38,7 @@ export function record(value, name) {
 }
 
 export function canonicalJson(value) {
+  assertProviderMutationReleased("worm-authority-apply");
   if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   return `{${Object.keys(value)

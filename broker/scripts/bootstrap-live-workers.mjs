@@ -22,8 +22,6 @@ import { smokeBootstrap } from "./bootstrap-live-workers-smoke.mjs";
 import { loadLiveWorkerConfig } from "./live-worker-config.mjs";
 import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
-export { boundedJsonResponse } from "./bootstrap-live-workers-smoke.mjs";
-
 /**
  * Apply the sole permitted blank-account lifecycle deployment.
  *
@@ -33,37 +31,34 @@ export { boundedJsonResponse } from "./bootstrap-live-workers-smoke.mjs";
  * code and the first shared key are uploaded later by the paired immutable-
  * version ceremony, after this bootstrap version has been re-queried.
  */
-export async function main(arguments_, dependencies = {}) {
+export async function main() {
+  assertProviderMutationReleased("bootstrap-live-apply");
+  const arguments_ = Object.freeze(process.argv.slice(2));
   const options = parseArguments(arguments_);
-  if (options.apply) assertProviderMutationReleased("bootstrap-live-apply");
+  if (!options.apply) return runBootstrapDryValidation();
   return runBootstrapEngine(options, {
-    ...dependencies,
-    fetch: dependencies.fetch ?? fetch,
-    loadLiveWorkerConfig: dependencies.loadLiveWorkerConfig ?? loadLiveWorkerConfig,
-    readFileSync: dependencies.readFileSync ?? readFileSync,
-    spawnSync: dependencies.spawnSync ?? spawnSync,
-    writeFileSync: dependencies.writeFileSync ?? writeFileSync,
-    writeOutput: dependencies.writeOutput ?? ((value) => process.stdout.write(value)),
+    fetch,
+    loadLiveWorkerConfig,
+    readFileSync,
+    spawnSync,
+    writeFileSync,
+    writeOutput: (value) => process.stdout.write(value),
   });
 }
 
 /** Explicit effect-port engine; production adapters are bound only by the guarded main function. */
 export async function runBootstrapEngine(options, dependencies) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   const inspectConfig = requirePort(dependencies, "loadLiveWorkerConfig");
   const execute = requirePort(dependencies, "spawnSync");
   const fetchImpl = requirePort(dependencies, "fetch");
   const read = requirePort(dependencies, "readFileSync");
   const writeOutput = requirePort(dependencies, "writeOutput");
   const writeReport = requirePort(dependencies, "writeFileSync");
-  const plan = buildPlan(inspectConfig, read);
+  const plan = buildPlan();
 
-  if (!options.apply) {
-    const output = `${JSON.stringify({ applied: false, plan })}\n`;
-    writeOutput(output);
-    return output;
-  }
   assertReportTarget(options.report);
-  assertPlanBytesUnchanged(plan, read);
+  assertPlanBytesUnchanged(plan);
   assertResolvedLiveNetworkSurface(
     inspectConfig(resolve(PROJECT_ROOT, INGRESS_CONFIG)),
     inspectConfig(resolve(PROJECT_ROOT, "wrangler.cloudflare-deployment-observer.live.jsonc")),
@@ -147,6 +142,16 @@ export async function runBootstrapEngine(options, dependencies) {
   return output;
 }
 
+/** Perform the provider-free bootstrap plan validation used by the default CLI mode. */
+function runBootstrapDryValidation() {
+  const output = `${JSON.stringify({
+    applied: false,
+    plan: buildPlan(),
+  })}\n`;
+  process.stdout.write(output);
+  return output;
+}
+
 function requirePort(dependencies, name) {
   const value = dependencies?.[name];
   if (typeof value !== "function") throw new Error(`bootstrap effect port missing: ${name}`);
@@ -154,6 +159,7 @@ function requirePort(dependencies, name) {
 }
 
 export function parseArguments(arguments_) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   const values = new Map();
   let apply = false;
   for (let index = 0; index < arguments_.length; index += 1) {
@@ -190,6 +196,7 @@ export function parseArguments(arguments_) {
 
 /** Reject syntactically valid placeholders before the first provider effect. */
 export function assertResolvedLiveNetworkSurface(ingress, observer) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   const ingressConfig = ingress?.config;
   const observerConfig = observer?.config;
   const routeHostname = ingressConfig?.routes?.[0]?.pattern;
@@ -224,7 +231,7 @@ function assertReportTarget(path) {
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  await main(process.argv.slice(2));
+  await main();
 }
 
 function usage() {

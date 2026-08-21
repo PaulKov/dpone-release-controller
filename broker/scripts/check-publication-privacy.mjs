@@ -5,24 +5,17 @@ import { fileURLToPath } from "node:url";
 import { LIVE_WORKERS } from "./live-worker-topology.mjs";
 import {
   assertNoCredentialMaterial,
+  assertNoForbiddenPublicationValue,
+  assertPublicationTextPath,
   assertPublishableDocument,
   assertPublishableLiveConfig,
+  decodePublicationText,
   isForbiddenSecretArtifact,
 } from "./publication-privacy-policy.mjs";
 import { parseReviewedJsonc } from "./reviewed-jsonc.mjs";
 
 const PROJECT_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const SKIPPED_DIRECTORIES = new Set([".wrangler", "coverage", "dist", "node_modules"]);
-const SCANNED_EXTENSIONS = new Set([
-  ".cjs",
-  ".json",
-  ".jsonc",
-  ".md",
-  ".mjs",
-  ".ts",
-  ".yaml",
-  ".yml",
-]);
 
 export function runPublicationPrivacyGate(projectRoot = PROJECT_ROOT) {
   const expectedTemplates = Object.keys(LIVE_WORKERS).sort(asciiCompare);
@@ -44,32 +37,36 @@ export function runPublicationPrivacyGate(projectRoot = PROJECT_ROOT) {
     if (isForbiddenSecretArtifact(displayPath)) {
       throw new Error(`secret-bearing artifact must not be published: ${displayPath}`);
     }
-    if (!SCANNED_EXTENSIONS.has(extname(path)) && ![".gitignore", ".npmrc"].includes(displayPath)) {
-      continue;
-    }
-    const source = readFileSync(path, "utf8");
+    assertPublicationTextPath(displayPath, extname(path));
+    const source = decodePublicationText(displayPath, readFileSync(path));
     assertNoCredentialMaterial(displayPath, source);
+    assertNoForbiddenPublicationValue(displayPath, source);
     if (displayPath === "README.md" || displayPath.startsWith("docs/")) {
       assertPublishableDocument(displayPath, source);
     }
   }
-  return { files: files.length, templates: expectedTemplates.length };
+  return { files: files.length, scanned: files.length, templates: expectedTemplates.length };
 }
 
 function listRegularFiles(root) {
   const files = [];
-  visit(root, files);
+  visit(root, root, files);
   return files.sort(asciiCompare);
 }
 
-function visit(directory, files) {
+function visit(root, directory, files) {
   for (const name of readdirSync(directory).sort(asciiCompare)) {
-    if (SKIPPED_DIRECTORIES.has(name)) continue;
     const path = resolve(directory, name);
     const stat = lstatSync(path);
+    if (SKIPPED_DIRECTORIES.has(relative(root, path))) {
+      if (!stat.isDirectory() || stat.isSymbolicLink()) {
+        throw new Error(`publication cache exclusion is not a real directory: ${path}`);
+      }
+      continue;
+    }
     if (stat.isSymbolicLink())
       throw new Error(`publication tree contains a symbolic link: ${path}`);
-    if (stat.isDirectory()) visit(path, files);
+    if (stat.isDirectory()) visit(root, path, files);
     else if (stat.isFile()) files.push(path);
     else throw new Error(`publication tree contains a non-regular entry: ${path}`);
   }

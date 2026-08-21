@@ -1,8 +1,10 @@
 import { TextDecoder } from "node:util";
 
 import { MAX_SMOKE_BYTES } from "./bootstrap-live-workers-common.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 export async function smokeBootstrap(hostname, versionId, fetchImpl) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   const checks = [
     ["GET", "/readyz"],
     ["POST", "/v1/admin/activation/provision"],
@@ -50,7 +52,7 @@ export async function smokeBootstrap(hostname, versionId, fetchImpl) {
   };
 }
 
-export async function boundedJsonResponse(response, limit, policy = {}) {
+async function boundedJsonResponse(response, limit, policy = {}) {
   const contentType = response.headers.get("content-type");
   const declared = response.headers.get("content-length");
   if (

@@ -1,3 +1,5 @@
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
+
 /**
  * Build the credential-free Worker config used by the one-time blank-account
  * lifecycle bootstrap. Service bindings are deliberately absent: Cloudflare
@@ -5,6 +7,7 @@
  * has no private authority scripts yet.
  */
 export function buildBootstrapWorkerConfig(finalConfig, role, bootstrapMain) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   requireRecord(finalConfig, "final Worker config");
   if (!["ingress", "private", "worm"].includes(role) || typeof bootstrapMain !== "string") {
     throw new Error("bootstrap Worker role/main is invalid");
@@ -34,10 +37,12 @@ export function buildBootstrapWorkerConfig(finalConfig, role, bootstrapMain) {
 
 /** Canonical bytes are persisted only in a private temporary directory. */
 export function canonicalBootstrapWorkerConfigBytes(config) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   return Buffer.from(`${JSON.stringify(config)}\n`, "utf8");
 }
 
 export function assertBootstrapWorkerConfig(config, role, bootstrapMain) {
+  assertProviderMutationReleased("bootstrap-live-apply");
   requireRecord(config, "bootstrap Worker config");
   const expectedKeys = [
     "$schema",

@@ -15,8 +15,10 @@ import { TextDecoder } from "node:util";
 
 import { ROLE_ORDER, VERSION } from "./provision-worm-rpc-key-constants.mjs";
 import { canonicalBytes, taggedSha256 } from "./provision-worm-rpc-key-crypto.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
-export function reserveResult(path, recover, afterOpen = undefined) {
+export function reserveResult(path, recover, afterOpen) {
+  assertProviderMutationReleased("worm-authority-apply");
   if (path === null) throw new Error("applied authority ceremony requires a HOLD result path");
   const parent = lstatSync(dirname(path));
   if (!parent.isDirectory() || parent.isSymbolicLink() || (parent.mode & 0o022) !== 0) {
@@ -160,6 +162,7 @@ export function restoreRecoveredState(
   restrictions,
   bootstrapProvenance,
 ) {
+  assertProviderMutationReleased("worm-authority-apply");
   const roles = ROLE_ORDER;
   let priorCompleted = [];
   let priorVersionIds = {
@@ -277,9 +280,10 @@ function fsyncParentDirectory(path) {
 }
 
 /** Append one fsynced canonical journal entry without damaging prior entries. */
-export function appendJournalEntry(handle, value, dependencies = {}) {
-  const write = dependencies.writeSync ?? writeSync;
-  const sync = dependencies.fsyncSync ?? fsyncSync;
+export function appendJournalEntry(handle, value, dependencies) {
+  assertProviderMutationReleased("worm-authority-apply");
+  const write = dependencies?.writeSync ?? writeSync;
+  const sync = dependencies?.fsyncSync ?? fsyncSync;
   const bytes = canonicalBytes(value);
   let offset = 0;
   while (offset < bytes.byteLength) {

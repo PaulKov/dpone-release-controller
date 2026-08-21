@@ -1,8 +1,10 @@
 import { basename, resolve } from "node:path";
 
 import { DRY_CONFIGS, LIVE_CONFIGS, PROJECT_ROOT } from "./provision-worm-rpc-key-constants.mjs";
+import { assertProviderMutationReleased } from "./provider-mutation-hold.mjs";
 
 export function parseArguments(arguments_) {
+  assertProviderMutationReleased("worm-authority-apply");
   const values = new Map();
   let apply = false;
   let recover = false;

@@ -1,10 +1,22 @@
-import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 
 import { assertClosedModuleInventory } from "./closed-module-inventory.mjs";
 import { loadLiveWorkerConfig, LIVE_WORKER_IDENTITIES } from "./live-worker-config.mjs";
-import { PROVIDER_MUTATION_ENTRYPOINTS } from "./provider-mutation-hold.mjs";
+import {
+  PROVIDER_MUTATION_BOUNDARIES,
+  PROVIDER_MUTATION_ENTRYPOINTS,
+} from "./provider-mutation-hold.mjs";
+import {
+  PRODUCTION_EFFECT_MODULE_EXPORTS,
+  PRODUCTION_SCRIPT_INVENTORY,
+  PROVIDER_SIMULATION_MODULES,
+  assertProductionGraphExcludesTests,
+  assertProductionScriptInventory,
+  assertProviderBoundarySources,
+  assertProviderPackageScripts,
+  assertProviderSimulationsAreDataOnly,
+} from "./provider-quarantine-policy.mjs";
 import { parseReviewedJsonc } from "./reviewed-jsonc.mjs";
 
 const expectedWorkspace = `allowBuilds:
@@ -22,32 +34,13 @@ if (actualWorkspace !== expectedWorkspace) {
   throw new Error("pnpm-workspace.yaml differs from the reviewed supply-chain policy");
 }
 
-const pnpmCli = process.env.npm_execpath;
-if (pnpmCli === undefined || !/pnpm\.(?:cjs|mjs)$/u.test(pnpmCli)) {
-  throw new Error("config:check must run under the pinned pnpm CLI");
-}
-const inspected = spawnSync(
-  process.execPath,
-  [pnpmCli, "config", "list", "--location", "project", "--json"],
-  { encoding: "utf8" },
-);
-if (inspected.status !== 0) {
-  throw new Error(`pnpm project config inspection failed: ${inspected.stderr.trim()}`);
-}
-const parsedPnpmConfig = JSON.parse(inspected.stdout);
-const requiredPnpmConfig = {
-  allowBuilds: { esbuild: true, workerd: true },
-  blockExoticSubdeps: true,
-  minimumReleaseAge: 1440,
-  minimumReleaseAgeIgnoreMissingTime: false,
-  minimumReleaseAgeStrict: true,
-  trustLockfile: false,
-  trustPolicy: "no-downgrade",
-};
-for (const [key, value] of Object.entries(requiredPnpmConfig)) {
-  if (JSON.stringify(parsedPnpmConfig[key]) !== JSON.stringify(value)) {
-    throw new Error(`pnpm ignored or changed project setting ${key}`);
-  }
+const expectedNpmrc = `engine-strict=true
+save-exact=true
+strict-peer-dependencies=true
+`;
+const actualNpmrc = readFileSync(new URL("../.npmrc", import.meta.url), "utf8");
+if (actualNpmrc !== expectedNpmrc) {
+  throw new Error(".npmrc differs from the reviewed package-manager policy");
 }
 
 const frozenFixtures = new Map([
@@ -179,52 +172,47 @@ for (const filename of Object.keys(LIVE_WORKER_IDENTITIES)) {
 }
 
 const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-if (
-  packageJson.packageManager !== "pnpm@11.19.0" ||
-  packageJson.engines?.node !== ">=22.0.0" ||
-  packageJson.scripts?.["authority-keys:provision"] !== "node scripts/provision-worm-rpc-key.mjs" ||
-  packageJson.scripts?.["bootstrap:live"] !== "node scripts/bootstrap-live-workers.mjs" ||
-  packageJson.scripts?.["cloudflare-observer-token:verify"] !==
-    "node scripts/provision-cloudflare-deployment-observer-token.mjs" ||
-  packageJson.scripts?.["test:bootstrap"] !== "node scripts/test-bootstrap-live-workers.mjs" ||
-  packageJson.scripts?.["test:cloudflare-observer-token"] !==
-    "node scripts/test-cloudflare-deployment-observer-token.mjs" ||
-  packageJson.scripts?.["privacy:check"] !== "node scripts/check-publication-privacy.mjs" ||
-  packageJson.scripts?.["test:module-inventory"] !==
-    "node scripts/test-closed-module-inventory.mjs" ||
-  packageJson.scripts?.["test:mutation-hold"] !== "node scripts/test-provider-mutation-hold.mjs" ||
-  packageJson.scripts?.["test:privacy"] !== "node scripts/test-publication-privacy.mjs" ||
-  packageJson.scripts?.["version:upload"] !== "node scripts/upload-version.mjs" ||
-  packageJson.scripts?.["version:deploy"] !== "node scripts/deploy-version.mjs" ||
-  packageJson.scripts?.["worm-rpc-key:provision"] !== "node scripts/provision-worm-rpc-key.mjs" ||
-  Object.values(packageJson.scripts ?? {}).some((command) =>
-    /(?:^|\s)wrangler\s+deploy(?:\s|$)/u.test(command),
-  )
-) {
-  throw new Error("production rollout must use pinned explicit immutable version scripts");
-}
+assertProviderPackageScripts(packageJson);
 
-const providerMutationBoundaryModules = new Map([
-  ["bootstrap-live-apply", ["bootstrap-live-workers.mjs"]],
-  ["github-app-key-apply", ["provision-github-app-key.mjs"]],
-  ["version-deploy", ["deploy-version.mjs"]],
-  ["version-upload", ["upload-version.mjs"]],
-  ["worm-authority-apply", ["provision-worm-rpc-key.mjs", "provision-worm-rpc-key-ceremony.mjs"]],
-]);
-if (
-  JSON.stringify([...providerMutationBoundaryModules.keys()].sort()) !==
-  JSON.stringify([...PROVIDER_MUTATION_ENTRYPOINTS].sort())
-) {
-  throw new Error("provider mutation HOLD inventory differs from executable boundaries");
-}
-for (const [entrypoint, modules] of providerMutationBoundaryModules) {
-  for (const filename of modules) {
-    const source = readFileSync(new URL(`./${filename}`, import.meta.url), "utf8");
-    if (!source.includes(`assertProviderMutationReleased("${entrypoint}")`)) {
-      throw new Error(`provider mutation boundary lacks the shared HOLD: ${filename}`);
-    }
-  }
-}
+const productionEffectModuleExports = Object.entries(PRODUCTION_EFFECT_MODULE_EXPORTS);
+const productionEffectSources = new Map(
+  productionEffectModuleExports.map(([filename]) => [
+    filename,
+    readFileSync(new URL(`./${filename}`, import.meta.url), "utf8"),
+  ]),
+);
+productionEffectSources.set(
+  "provider-mutation-hold.mjs",
+  readFileSync(new URL("./provider-mutation-hold.mjs", import.meta.url), "utf8"),
+);
+assertProviderBoundarySources(
+  PROVIDER_MUTATION_BOUNDARIES,
+  PROVIDER_MUTATION_ENTRYPOINTS,
+  productionEffectSources,
+);
+
+const scriptNames = readdirSync(new URL(".", import.meta.url));
+const productionScriptSources = new Map(
+  PRODUCTION_SCRIPT_INVENTORY.map((filename) => [
+    filename,
+    readFileSync(new URL(`./${filename}`, import.meta.url), "utf8"),
+  ]),
+);
+assertProductionScriptInventory(scriptNames, productionScriptSources);
+assertProductionGraphExcludesTests(productionScriptSources);
+
+const actualProviderSimulationModules = scriptNames.filter((filename) =>
+  /^test-[a-z0-9-]+-(?:engine|simulation)\.mjs$/u.test(filename),
+);
+assertProviderSimulationsAreDataOnly(
+  actualProviderSimulationModules,
+  new Map(
+    PROVIDER_SIMULATION_MODULES.map((filename) => [
+      filename,
+      readFileSync(new URL(`./${filename}`, import.meta.url), "utf8"),
+    ]),
+  ),
+);
 
 const bootstrapProvisionerModules = [
   "bootstrap-live-workers.mjs",
