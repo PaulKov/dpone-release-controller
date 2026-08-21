@@ -60,6 +60,14 @@ explicit `--write` mode only in the reviewed contract change that owns the
 generated output. All five producers below reject a missing mode and reject
 unexpected files in their managed namespace; invoke the receipt-vector module
 explicitly as shown.
+
+Normative language-neutral sources live under [`contracts/`](contracts/README.md).
+Production registry modules validate those sources before projecting public
+schemas and conformance fixtures. Production modules are forbidden from
+importing `tests`, so test helpers cannot silently redefine release authority.
+Protocol-byte changes start in `contracts/`; generated `docs/` and
+`tests/fixtures/` files must never be edited as independent authorities.
+
 These are the exact regeneration commands:
 
 ```console

@@ -16,6 +16,7 @@ from scripts.release_generator_support import (
 
 from tools.evidence.release_canonical import canonical_json_bytes
 from tools.evidence.release_receipt_envelope_v2 import payload_sha256, receipt_id
+from tools.evidence.release_receipt_reference_vectors import positive_envelope
 
 OUTPUT = (
     Path(__file__).resolve().parents[2]
@@ -86,11 +87,9 @@ def golden_document() -> dict[str, Any]:
 
 
 def _golden_envelope() -> dict[str, Any]:
-    # Receipt fixtures are the checked language-neutral source for every closed
-    # schema branch, including the full seq0 service-authority genesis.
-    from tests.release_receipt_fixtures import envelope_for, request_payload
+    """Return the production-owned, semantically verified positive vector."""
 
-    return envelope_for(request_payload())
+    return positive_envelope()
 
 
 def golden_bytes() -> bytes:
