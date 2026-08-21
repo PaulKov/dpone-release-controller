@@ -97,11 +97,17 @@ EXPECTED_EMERGENCY_QUARANTINE_JOB = """  emergency-quarantine:
 
 
 def exact_workflow_job(text: str, job_id: str) -> str:
-    """Return one active top-level job block, rejecting duplicate YAML keys."""
+    """Return one top-level job block, rejecting plain or quoted duplicate IDs."""
 
     lines = text.splitlines(keepends=True)
-    marker = f"  {job_id}:\n"
-    starts = [index for index, line in enumerate(lines) if line == marker]
+    escaped_job_id = re.escape(job_id)
+    job_id_declaration = re.compile(
+        rf"^  (?:{escaped_job_id}|'(?:{escaped_job_id})'|\"(?:{escaped_job_id})\")"
+        r"\s*:[^\n]*(?:\n)?$"
+    )
+    starts = [
+        index for index, line in enumerate(lines) if job_id_declaration.fullmatch(line)
+    ]
     if len(starts) != 1:
         raise AssertionError(
             f"expected exactly one active {job_id!r} job, found {len(starts)}"
@@ -109,7 +115,10 @@ def exact_workflow_job(text: str, job_id: str) -> str:
 
     start = starts[0]
     end = len(lines)
-    top_level_job = re.compile(r"^  [A-Za-z0-9_-]+:\s*(?:#.*)?\n$")
+    top_level_job = re.compile(
+        r"^  (?:[A-Za-z0-9_-]+|'[A-Za-z0-9_-]+'|\"[A-Za-z0-9_-]+\")"
+        r"\s*:[^\n]*(?:\n)?$"
+    )
     for index in range(start + 1, len(lines)):
         if top_level_job.fullmatch(lines[index]):
             end = index
@@ -171,7 +180,7 @@ class WorkflowQuarantineTests(unittest.TestCase):
         self.assertIn("persist-credentials: false", text)
 
     def test_required_quarantine_check_is_one_exact_active_job(self) -> None:
-        """Prevent comments, duplicate keys, skips, or partial needs from spoofing it."""
+        """Prevent comments, duplicate job IDs, skips, or partial needs from spoofing it."""
 
         text = CI_WORKFLOW.read_text(encoding="utf-8")
 
@@ -184,8 +193,10 @@ class WorkflowQuarantineTests(unittest.TestCase):
             1,
         )
 
-    def test_required_check_extractor_rejects_comments_and_duplicate_jobs(self) -> None:
-        """Treat commented markers as absent and duplicate YAML job keys as invalid."""
+    def test_required_check_extractor_rejects_comments_and_duplicate_job_ids(
+        self,
+    ) -> None:
+        """Ignore comments and reject common active aliases of the protected job ID."""
 
         commented = EXPECTED_EMERGENCY_QUARANTINE_JOB.replace(
             "  emergency-quarantine:\n",
@@ -195,9 +206,21 @@ class WorkflowQuarantineTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "found 0"):
             exact_workflow_job(commented, "emergency-quarantine")
 
-        duplicated = EXPECTED_EMERGENCY_QUARANTINE_JOB * 2
-        with self.assertRaisesRegex(AssertionError, "found 2"):
-            exact_workflow_job(duplicated, "emergency-quarantine")
+        duplicate_declarations = (
+            "  emergency-quarantine: # duplicate\n",
+            "  emergency-quarantine:   \n",
+            "  'emergency-quarantine': {}\n",
+            '  "emergency-quarantine" : {}\n',
+        )
+        for declaration in duplicate_declarations:
+            with (
+                self.subTest(declaration=declaration.rstrip()),
+                self.assertRaisesRegex(AssertionError, "found 2"),
+            ):
+                exact_workflow_job(
+                    EXPECTED_EMERGENCY_QUARANTINE_JOB + declaration,
+                    "emergency-quarantine",
+                )
 
 
 class LegacyWriterRemovalTests(unittest.TestCase):
