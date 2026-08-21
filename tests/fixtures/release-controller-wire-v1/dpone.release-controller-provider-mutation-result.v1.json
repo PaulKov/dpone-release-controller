@@ -1,0 +1,1 @@
+{"operation":"ATTESTATION_CREATE","provider_request_sha256":"sha256:1111111111111111111111111111111111111111111111111111111111111111","release_identity_id":"sha256:3d52af3a2bc6eb185a48465c8680d988a57f7fecf668313673ded1aaed3a59ab","schema":"dpone.release-controller-provider-mutation-result.v1","schema_version":1,"status":"MUTATION_SUBMITTED_UNVERIFIED","tag":"v0.74.0"}

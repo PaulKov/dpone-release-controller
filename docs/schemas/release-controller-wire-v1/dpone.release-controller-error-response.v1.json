@@ -1,0 +1,32 @@
+{
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-controller-error-response.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "pattern": "^[A-Z][A-Z0-9_]{1,63}$",
+      "type": "string"
+    },
+    "request_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{7,127}$",
+      "type": "string"
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "dpone.release-controller-error-response.v1"
+    },
+    "schema_version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "code",
+    "request_id",
+    "retryable"
+  ],
+  "type": "object"
+}

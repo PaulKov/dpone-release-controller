@@ -1,0 +1,68 @@
+{
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-controller-pypi-materialization-proof.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "candidate_inventory_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "distribution_file_count": {
+      "const": 8
+    },
+    "distribution_inventory_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "distribution_total_bytes": {
+      "maximum": 536870912,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "file_count": {
+      "const": 25
+    },
+    "raw_zip_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "raw_zip_size_bytes": {
+      "maximum": 805306368,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "release_identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "schema": {
+      "const": "dpone.release-controller-pypi-materialization-proof.v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "tag": {
+      "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "candidate_id",
+    "candidate_inventory_sha256",
+    "distribution_file_count",
+    "distribution_inventory_sha256",
+    "distribution_total_bytes",
+    "file_count",
+    "raw_zip_sha256",
+    "raw_zip_size_bytes",
+    "release_identity_id",
+    "tag"
+  ],
+  "type": "object"
+}

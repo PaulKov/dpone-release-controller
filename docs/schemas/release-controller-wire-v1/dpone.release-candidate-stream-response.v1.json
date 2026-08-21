@@ -1,0 +1,8 @@
+{
+  "$comment": "Binary stream semantics and provider headers are enforced by tools.evidence.release_candidate_stream_response.open_candidate_stream.",
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-candidate-stream-response.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contentEncoding": "base64",
+  "contentMediaType": "application/vnd.dpone.release-candidate-artifact.v1+zip",
+  "type": "string"
+}

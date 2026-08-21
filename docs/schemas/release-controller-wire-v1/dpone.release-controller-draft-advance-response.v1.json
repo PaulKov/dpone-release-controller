@@ -1,0 +1,54 @@
+{
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-controller-draft-advance-response.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "advance_ordinal": {
+      "maximum": 256,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "durable_state_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "release_identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "retry_after_seconds": {
+      "maximum": 5,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "schema": {
+      "const": "dpone.release-controller-draft-advance-response.v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "enum": [
+        "COMPLETE",
+        "HOLD",
+        "IN_PROGRESS",
+        "WAITING"
+      ]
+    },
+    "tag": {
+      "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "advance_ordinal",
+    "durable_state_sha256",
+    "release_identity_id",
+    "retry_after_seconds",
+    "status",
+    "tag"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,153 @@
+{
+  "candidate_id": "sha256:a18fee06340ffe2d024cf56b45da23b17bc3fc4f377943deca3e7c5c0d084c47",
+  "candidate_inventory_sha256": "sha256:28338ec2f2e8577cb5d9ab23f17a2a366ee13609d795aa24b94835cd4670ad4d",
+  "manifest_sha256": "sha256:fb905217122fe40104944929ccb77cdd24f50ff926231ca4b2c706441d55e6fe",
+  "members": [
+    {
+      "path": "dist/apache_airflow_providers_dpone-0.74.0-py3-none-any.whl",
+      "sha256": "sha256:1574f857096729bc6391bdcdf4af6c4e1e43d10d870f492833c08d8a1675ed97",
+      "size_bytes": 65
+    },
+    {
+      "path": "dist/apache_airflow_providers_dpone-0.74.0.tar.gz",
+      "sha256": "sha256:8e54f453d7e95d43822f26449c93787bc50c34cf139d1c2bd078ac43482e91ea",
+      "size_bytes": 55
+    },
+    {
+      "path": "dist/dpone-0.74.0-py3-none-any.whl",
+      "sha256": "sha256:3a96d049faee56490b99dd47a35c9a61cdb8ec4c8358f8d56d27a3556843ca20",
+      "size_bytes": 40
+    },
+    {
+      "path": "dist/dpone-0.74.0.tar.gz",
+      "sha256": "sha256:76d49a2745cc78d76b9a8501ef63e34389d98af1c7c7c7cc269cb82cf677cad7",
+      "size_bytes": 30
+    },
+    {
+      "path": "dist/dpone_airflow_pack-0.74.0-py3-none-any.whl",
+      "sha256": "sha256:0e7a631d3ae644008a306ced2f0dafb661ce00634e828aeb3d9996378e455df6",
+      "size_bytes": 53
+    },
+    {
+      "path": "dist/dpone_airflow_pack-0.74.0.tar.gz",
+      "sha256": "sha256:0405c321c46982259b021fd4187e206ea99524641e18f18d0b1ed98f493fd381",
+      "size_bytes": 43
+    },
+    {
+      "path": "dist/dpone_native_accel-0.74.0-py3-none-any.whl",
+      "sha256": "sha256:f2a13601d2e31aa5143486642cb27b89fb359eecd6160e698d508ba26a46a194",
+      "size_bytes": 53
+    },
+    {
+      "path": "dist/dpone_native_accel-0.74.0.tar.gz",
+      "sha256": "sha256:f4d6cbfd3ccaf553a923dc5ad329286828b3ce7e98659eb075e9107ae5952116",
+      "size_bytes": 43
+    },
+    {
+      "path": "evidence/candidate/candidate-inventory.json",
+      "sha256": "sha256:28338ec2f2e8577cb5d9ab23f17a2a366ee13609d795aa24b94835cd4670ad4d",
+      "size_bytes": 2496
+    },
+    {
+      "path": "evidence/candidate/candidate-versions.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/candidate/package-archive-gate.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/candidate/package-smoke.txt",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/candidate/pip-check.txt",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/preflight/exact_commit_checks.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/preflight/exact_commit_merge_receipt.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/preflight/release_candidate_evidence_verification.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/preflight/release_identity.json",
+      "sha256": "sha256:ee9ab52ba3f259c951990bd78551cfe15f1836ed52d7ad131c60c44776fd4232",
+      "size_bytes": 401
+    },
+    {
+      "path": "evidence/preflight/workflow_context.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/supply-chain/unsigned-provenance.intoto.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/supply-chain/unsigned-sbom.cyclonedx.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/supply-chain/unsigned-sbom.spdx.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "evidence/supply-chain/unsigned-supply-chain-diagnostic.json",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    },
+    {
+      "path": "release-candidate-sha256sums.txt",
+      "sha256": "sha256:4d6252bed3f894868493afd8e6a89acfcd0a24a1de1a83d45e2b5cdc4dc2d7d2",
+      "size_bytes": 830
+    },
+    {
+      "path": "release_notes.md",
+      "sha256": "sha256:d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c",
+      "size_bytes": 11
+    }
+  ],
+  "peeled_commit_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "policy": {
+    "path": ".agents/policy/github-branch-protection.yml",
+    "sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "release": "v0.74.0",
+  "release_authority_id": "sha256:954e42f29d3dd0320ad0f907934ee7963ae20c941acd0e1412b3d2e0db20e11f",
+  "release_identity_id": "sha256:3d52af3a2bc6eb185a48465c8680d988a57f7fecf668313673ded1aaed3a59ab",
+  "repository": {
+    "name_with_owner": "PaulKov/dpone",
+    "repository_id": 1255975556
+  },
+  "schema": "dpone.release-candidate-handoff.v2",
+  "schema_version": 2,
+  "supplemental_unsigned_members": [
+    "evidence/supply-chain/unsigned-provenance.intoto.json",
+    "evidence/supply-chain/unsigned-sbom.cyclonedx.json",
+    "evidence/supply-chain/unsigned-sbom.spdx.json",
+    "evidence/supply-chain/unsigned-supply-chain-diagnostic.json"
+  ],
+  "tag_object_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "workflow": {
+    "path": ".github/workflows/release.yml",
+    "run_attempt": 1,
+    "run_id": 123456
+  }
+}
