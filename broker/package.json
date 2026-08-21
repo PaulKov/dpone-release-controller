@@ -1,0 +1,55 @@
+{
+  "name": "@dpone/release-authority-broker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fail-closed release authority ledger and capability broker for dpone",
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "authority-keys:provision": "node scripts/provision-worm-rpc-key.mjs",
+    "bootstrap:live": "node scripts/bootstrap-live-workers.mjs",
+    "cloudflare-observer-token:verify": "node scripts/provision-cloudflare-deployment-observer-token.mjs",
+    "check": "pnpm run config:check && pnpm run privacy:check && pnpm run module-size:check && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "config:check": "node scripts/verify-project-config.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "github-app-key:provision": "node scripts/provision-github-app-key.mjs",
+    "lint": "eslint . --max-warnings=0",
+    "module-size:check": "node scripts/check-module-size.mjs",
+    "privacy:check": "node scripts/check-publication-privacy.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm run test:module-size && pnpm run test:module-inventory && pnpm run test:privacy && pnpm run test:mutation-hold && pnpm run test:bootstrap && pnpm run test:cloudflare-observer-token && pnpm run test:deployment && pnpm run test:github-app-key && pnpm run test:worm-rpc-key && pnpm run test:unit && pnpm run test:candidate-stream",
+    "test:bootstrap": "node scripts/test-bootstrap-live-workers.mjs",
+    "test:candidate-stream": "node scripts/test-candidate-stream-boundary.mjs",
+    "test:cloudflare-observer-token": "node scripts/test-cloudflare-deployment-observer-token.mjs",
+    "test:deployment": "node scripts/test-deployment-tooling.mjs",
+    "test:github-app-key": "node scripts/test-github-app-key-provision.mjs",
+    "test:module-size": "node scripts/test-module-size.mjs",
+    "test:module-inventory": "node scripts/test-closed-module-inventory.mjs",
+    "test:mutation-hold": "node scripts/test-provider-mutation-hold.mjs",
+    "test:privacy": "node scripts/test-publication-privacy.mjs",
+    "test:worm-rpc-key": "node scripts/test-worm-rpc-key-provision.mjs",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "version:deploy": "node scripts/deploy-version.mjs",
+    "version:upload": "node scripts/upload-version.mjs",
+    "worm-rpc-key:provision": "node scripts/provision-worm-rpc-key.mjs"
+  },
+  "dependencies": {
+    "jose": "6.2.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.21.3",
+    "@cloudflare/workers-types": "5.20260814.1",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.8.1",
+    "prettier": "3.6.2",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.10",
+    "wrangler": "4.123.0"
+  }
+}

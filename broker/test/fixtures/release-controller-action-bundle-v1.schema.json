@@ -1,0 +1,299 @@
+{
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/release/release-controller-action-bundle-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "commit_sha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "members": {
+      "items": false,
+      "maxItems": 6,
+      "minItems": 6,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "git_blob_sha": {
+                  "pattern": "^[0-9a-f]{40}$",
+                  "type": "string"
+                },
+                "mode": {
+                  "const": "100644"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "mode",
+                "size_bytes",
+                "git_blob_sha",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "actions/broker-call/action.yml"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "git_blob_sha": {
+                  "pattern": "^[0-9a-f]{40}$",
+                  "type": "string"
+                },
+                "mode": {
+                  "const": "100644"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "mode",
+                "size_bytes",
+                "git_blob_sha",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "actions/broker-call/dist/index.js"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "git_blob_sha": {
+                  "pattern": "^[0-9a-f]{40}$",
+                  "type": "string"
+                },
+                "mode": {
+                  "const": "100644"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "mode",
+                "size_bytes",
+                "git_blob_sha",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "actions/lease-sentinel/action.yml"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "git_blob_sha": {
+                  "pattern": "^[0-9a-f]{40}$",
+                  "type": "string"
+                },
+                "mode": {
+                  "const": "100644"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "mode",
+                "size_bytes",
+                "git_blob_sha",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "actions/lease-sentinel/dist/index.js"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "git_blob_sha": {
+                  "pattern": "^[0-9a-f]{40}$",
+                  "type": "string"
+                },
+                "mode": {
+                  "const": "100644"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "mode",
+                "size_bytes",
+                "git_blob_sha",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "actions/runtime-closure/action.yml"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "git_blob_sha": {
+                  "pattern": "^[0-9a-f]{40}$",
+                  "type": "string"
+                },
+                "mode": {
+                  "const": "100644"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "mode",
+                "size_bytes",
+                "git_blob_sha",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "actions/runtime-closure/dist/index.js"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "type": "array"
+    },
+    "repository": {
+      "const": "PaulKov/dpone-release-controller"
+    },
+    "repository_id": {
+      "const": 1305993853
+    },
+    "schema": {
+      "const": "dpone.release-controller-action-bundle.v1"
+    },
+    "schema_version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "repository",
+    "repository_id",
+    "commit_sha",
+    "members"
+  ],
+  "title": "dpone release controller Commit-A executable inventory v1",
+  "type": "object"
+}

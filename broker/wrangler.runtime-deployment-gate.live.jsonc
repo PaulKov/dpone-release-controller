@@ -1,0 +1,17 @@
+// PUBLICATION REVIEW TEMPLATE: provider identifiers are synthetic and cannot authorize deployment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "account_id": "00000000000000000000000000000000",
+  "name": "dpone-release-runtime-deployment-gate",
+  "main": "src/private/fail-closed-worker.ts",
+  "compatibility_date": "2026-08-15",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 0,
+    "traces": { "destinations": [], "enabled": false, "head_sampling_rate": 0, "persist": false },
+  },
+  "vars": { "OPERATING_MODE": "live", "SERVICE_NAME": "dpone-release-runtime-deployment-gate" },
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+}

@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paulkov.github.io/dpone/schemas/release/release-candidate-handoff-v2.schema.json",
+  "title": "dpone release candidate handoff v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "repository",
+    "release",
+    "tag_object_sha",
+    "peeled_commit_sha",
+    "policy",
+    "workflow",
+    "release_identity_id",
+    "release_authority_id",
+    "candidate_inventory_sha256",
+    "candidate_id",
+    "supplemental_unsigned_members",
+    "members",
+    "manifest_sha256"
+  ],
+  "properties": {
+    "schema": { "const": "dpone.release-candidate-handoff.v2" },
+    "schema_version": { "const": 2 },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name_with_owner", "repository_id"],
+      "properties": {
+        "name_with_owner": { "const": "PaulKov/dpone" },
+        "repository_id": { "const": 1255975556 }
+      }
+    },
+    "release": { "type": "string", "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "tag_object_sha": { "$ref": "#/$defs/fullSha" },
+    "peeled_commit_sha": { "$ref": "#/$defs/fullSha" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "const": ".agents/policy/github-branch-protection.yml" },
+        "sha256": { "$ref": "#/$defs/sha256Id" }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "run_id", "run_attempt"],
+      "properties": {
+        "path": { "const": ".github/workflows/release.yml" },
+        "run_id": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "run_attempt": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
+      }
+    },
+    "release_identity_id": { "$ref": "#/$defs/sha256Id" },
+    "release_authority_id": { "$ref": "#/$defs/sha256Id" },
+    "candidate_inventory_sha256": { "$ref": "#/$defs/sha256Id" },
+    "candidate_id": { "$ref": "#/$defs/sha256Id" },
+    "supplemental_unsigned_members": {
+      "const": [
+        "evidence/supply-chain/unsigned-provenance.intoto.json",
+        "evidence/supply-chain/unsigned-sbom.cyclonedx.json",
+        "evidence/supply-chain/unsigned-sbom.spdx.json",
+        "evidence/supply-chain/unsigned-supply-chain-diagnostic.json"
+      ]
+    },
+    "members": {
+      "type": "array",
+      "minItems": 24,
+      "maxItems": 24,
+      "uniqueItems": true,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/distributionMember" },
+            {
+              "properties": {
+                "path": {
+                  "pattern": "^dist/apache_airflow_providers_dpone-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)-py3-none-any\\.whl$"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/distributionMember" },
+            {
+              "properties": {
+                "path": {
+                  "pattern": "^dist/apache_airflow_providers_dpone-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.tar\\.gz$"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/distributionMember" },
+            {
+              "properties": {
+                "path": {
+                  "pattern": "^dist/dpone-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)-py3-none-any\\.whl$"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/distributionMember" },
+            {
+              "properties": {
+                "path": {
+                  "pattern": "^dist/dpone-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.tar\\.gz$"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/distributionMember" },
+            {
+              "properties": {
+                "path": {
+                  "pattern": "^dist/dpone_airflow_pack-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)-py3-none-any\\.whl$"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/distributionMember" },
+            {
+              "properties": {
+                "path": {
+                  "pattern": "^dist/dpone_airflow_pack-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.tar\\.gz$"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/distributionMember" },
+            {
+              "properties": {
+                "path": {
+                  "pattern": "^dist/dpone_native_accel-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)-py3-none-any\\.whl$"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/distributionMember" },
+            {
+              "properties": {
+                "path": {
+                  "pattern": "^dist/dpone_native_accel-(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.tar\\.gz$"
+                }
+              }
+            }
+          ]
+        },
+        { "$ref": "#/$defs/candidateInventoryMember" },
+        { "$ref": "#/$defs/candidateVersionsMember" },
+        { "$ref": "#/$defs/packageArchiveGateMember" },
+        { "$ref": "#/$defs/packageSmokeMember" },
+        { "$ref": "#/$defs/pipCheckMember" },
+        { "$ref": "#/$defs/exactCommitChecksMember" },
+        { "$ref": "#/$defs/exactCommitMergeReceiptMember" },
+        { "$ref": "#/$defs/releaseCandidateVerificationMember" },
+        { "$ref": "#/$defs/releaseIdentityMember" },
+        { "$ref": "#/$defs/workflowContextMember" },
+        { "$ref": "#/$defs/unsignedProvenanceMember" },
+        { "$ref": "#/$defs/unsignedCycloneDxMember" },
+        { "$ref": "#/$defs/unsignedSpdxMember" },
+        { "$ref": "#/$defs/unsignedSupplyChainMember" },
+        { "$ref": "#/$defs/checksumsMember" },
+        { "$ref": "#/$defs/releaseNotesMember" }
+      ],
+      "items": false
+    },
+    "manifest_sha256": { "$ref": "#/$defs/sha256Id" }
+  },
+  "$defs": {
+    "fullSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256Id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": { "type": "string" },
+        "size_bytes": { "type": "integer", "minimum": 1, "maximum": 268435456 },
+        "sha256": { "$ref": "#/$defs/sha256Id" }
+      }
+    },
+    "distributionMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "size_bytes": { "maximum": 100000000 } } }
+      ]
+    },
+    "candidateInventoryMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "evidence/candidate/candidate-inventory.json" } } }
+      ]
+    },
+    "candidateVersionsMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "evidence/candidate/candidate-versions.json" } } }
+      ]
+    },
+    "packageArchiveGateMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "evidence/candidate/package-archive-gate.json" } } }
+      ]
+    },
+    "packageSmokeMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "evidence/candidate/package-smoke.txt" } } }
+      ]
+    },
+    "pipCheckMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "evidence/candidate/pip-check.txt" } } }
+      ]
+    },
+    "exactCommitChecksMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "evidence/preflight/exact_commit_checks.json" } } }
+      ]
+    },
+    "exactCommitMergeReceiptMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        {
+          "properties": {
+            "path": { "const": "evidence/preflight/exact_commit_merge_receipt.json" }
+          }
+        }
+      ]
+    },
+    "releaseCandidateVerificationMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        {
+          "properties": {
+            "path": {
+              "const": "evidence/preflight/release_candidate_evidence_verification.json"
+            }
+          }
+        }
+      ]
+    },
+    "releaseIdentityMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "evidence/preflight/release_identity.json" } } }
+      ]
+    },
+    "workflowContextMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "evidence/preflight/workflow_context.json" } } }
+      ]
+    },
+    "unsignedProvenanceMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        {
+          "properties": {
+            "path": { "const": "evidence/supply-chain/unsigned-provenance.intoto.json" }
+          }
+        }
+      ]
+    },
+    "unsignedCycloneDxMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        {
+          "properties": {
+            "path": { "const": "evidence/supply-chain/unsigned-sbom.cyclonedx.json" }
+          }
+        }
+      ]
+    },
+    "unsignedSpdxMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        {
+          "properties": {
+            "path": { "const": "evidence/supply-chain/unsigned-sbom.spdx.json" }
+          }
+        }
+      ]
+    },
+    "unsignedSupplyChainMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        {
+          "properties": {
+            "path": {
+              "const": "evidence/supply-chain/unsigned-supply-chain-diagnostic.json"
+            }
+          }
+        }
+      ]
+    },
+    "checksumsMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "release-candidate-sha256sums.txt" } } }
+      ]
+    },
+    "releaseNotesMember": {
+      "allOf": [
+        { "$ref": "#/$defs/member" },
+        { "properties": { "path": { "const": "release_notes.md" } } }
+      ]
+    }
+  }
+}
