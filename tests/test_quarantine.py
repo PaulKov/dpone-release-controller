@@ -155,13 +155,19 @@ class LegacyWriterRemovalTests(unittest.TestCase):
                 continue
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
             for node in ast.walk(tree):
-                imported: tuple[str, ...] = ()
+                imported: set[str] = set()
                 if isinstance(node, ast.Import):
-                    imported = tuple(alias.name for alias in node.names)
+                    imported.update(alias.name for alias in node.names)
                 elif isinstance(node, ast.ImportFrom) and node.module is not None:
-                    imported = (node.module,)
+                    imported.add(node.module)
+                    imported.update(
+                        f"{node.module}.{alias.name}" for alias in node.names
+                    )
                 for name in imported:
-                    if name in FORBIDDEN_PROVIDER_IMPORTS:
+                    if any(
+                        name == forbidden or name.startswith(f"{forbidden}.")
+                        for forbidden in FORBIDDEN_PROVIDER_IMPORTS
+                    ):
                         violations.append(f"{path.name}:{node.lineno}:{name}")
         self.assertEqual(violations, [])
 
@@ -177,7 +183,13 @@ class LegacyWriterRemovalTests(unittest.TestCase):
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
             for node in ast.walk(tree):
                 imported: tuple[str, ...] = ()
-                if isinstance(node, ast.ImportFrom):
+                if isinstance(node, ast.Import):
+                    imported = tuple(
+                        alias.name.rsplit(".", 1)[-1]
+                        for alias in node.names
+                        if alias.name.startswith("tools.evidence.release_")
+                    )
+                elif isinstance(node, ast.ImportFrom):
                     if node.module == "tools.evidence":
                         imported = tuple(
                             alias.name
