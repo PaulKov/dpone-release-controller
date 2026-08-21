@@ -84,6 +84,17 @@ goldens, sidecar commitment ceremony, public receipt projection, and
 authenticity boundary are byte-frozen, the controller keeps closure generation
 and every effect-bearing route unavailable.
 
+The proposed content-pinned GitHub Artifact Attestation boundary is specified
+in [`public-authenticity-anchor.md`](public-authenticity-anchor.md). It closes
+the archive subject, repository, workflow, source-ref/source-commit certificate
+claims, and Sigstore bundle verification contract. The annotated tag object,
+its peeled commit, protection and no-bypass evidence remain a separate A0
+proof. The boundary stays inactive until a real archive and bundle,
+out-of-band trusted root, reviewed verifier version/digest, OS-level no-network
+execution record, independent environment approval, and A0 admission are
+reviewed together. Merely landing that verifier does not freeze public closure
+bytes or authorize an attestation-producing workflow.
+
 If a future public closure is approved, it must never contain the broker's raw
 receipt chain. It may carry only a frozen, allowlisted public projection and
 aggregate commitments as untrusted transport. No runtime acceptance path
