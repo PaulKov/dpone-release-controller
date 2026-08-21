@@ -22,6 +22,8 @@ from tests.release_receipt_fixtures import (
 )
 from tools.evidence import release_receipt_contract as contract
 from tools.evidence import release_broker_record_envelope as broker_envelope
+from tools.evidence import release_receipt_reference_vectors as reference_vectors
+from tools.evidence import release_receipt_schema_registry as schema_registry
 from tools.evidence.release_receipt_envelope_v2 import (
     decode,
     encode,
@@ -38,6 +40,7 @@ SCHEMA_PATH = Path("docs/schemas/release/release-receipt-envelope-v2.schema.json
 class ReleaseReceiptV2EnvelopeTests(unittest.TestCase):
     def test_checked_schema_is_current_and_accepts_every_closed_branch(self) -> None:
         expected = schema_bytes()
+        self.assertEqual(expected, schema_registry.schema_bytes())
         self.assertEqual(SCHEMA_PATH.read_bytes(), expected)
         schema = json.loads(expected)
         Draft202012Validator.check_schema(schema)
@@ -86,6 +89,7 @@ class ReleaseReceiptV2EnvelopeTests(unittest.TestCase):
     def test_domain_separated_golden_request_ids_are_stable(self) -> None:
         document = golden_document()
         envelope = document["positive"]["envelope"]
+        self.assertEqual(envelope, reference_vectors.positive_envelope())
         self.assertEqual(
             envelope["payload_sha256"],
             "sha256:fcc83af875038be56f080370e4ece056c2be14acd8609aa1c6f850d9f9ff53cb",

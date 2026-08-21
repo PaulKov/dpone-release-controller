@@ -13,6 +13,7 @@ from tools.evidence.release_canonical import canonical_json_bytes
 from tools.evidence.release_controller_wire_catalog import BY_SCHEMA
 from tools.evidence.release_controller_wire_codecs import WireCodecError
 from tools.evidence.release_controller_schema_registry import DELEGATED, REGISTRY
+from tools.evidence import release_controller_wire_vectors as wire_vectors
 
 GOLDEN_ROOT = Path("tests/fixtures/release-controller-wire-v1")
 
@@ -76,7 +77,13 @@ class ReleaseControllerWireCodecTests(unittest.TestCase):
     ) -> None:
         for codec in DELEGATED:
             with self.subTest(schema_id=codec.schema_id):
+                codec.verify_golden(wire_vectors.REFERENCE_ROOT)
                 codec.verify_golden(GOLDEN_ROOT)
+
+    def test_delegated_conformance_projection_matches_normative_sources(self) -> None:
+        for name, expected in wire_vectors.reference_files().items():
+            with self.subTest(name=name):
+                self.assertEqual((GOLDEN_ROOT / name).read_bytes(), expected)
 
     def test_delegated_body_header_and_size_tampering_fail_closed(self) -> None:
         for codec in DELEGATED:

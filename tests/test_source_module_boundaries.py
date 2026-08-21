@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import unittest
 from pathlib import Path
 
@@ -62,6 +63,29 @@ class SourceModuleBoundaryTests(unittest.TestCase):
             violations,
             [],
             "Python module boundary violations:\n" + "\n".join(violations),
+        )
+
+    def test_production_modules_never_import_test_authority(self) -> None:
+        violations: list[str] = []
+        for directory in ("scripts", "tools"):
+            for path in sorted((REPOSITORY_ROOT / directory).rglob("*.py")):
+                tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+                for node in ast.walk(tree):
+                    imported: tuple[str, ...] = ()
+                    if isinstance(node, ast.Import):
+                        imported = tuple(alias.name for alias in node.names)
+                    elif isinstance(node, ast.ImportFrom) and node.module is not None:
+                        imported = (node.module,)
+                    if any(
+                        name == "tests" or name.startswith("tests.")
+                        for name in imported
+                    ):
+                        relative = path.relative_to(REPOSITORY_ROOT).as_posix()
+                        violations.append(f"{relative}:{node.lineno}")
+        self.assertEqual(
+            violations,
+            [],
+            "Production authority must not import tests:\n" + "\n".join(violations),
         )
 
 
