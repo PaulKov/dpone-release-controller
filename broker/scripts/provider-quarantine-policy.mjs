@@ -145,7 +145,7 @@ export function assertProviderPackageScripts(packageJson) {
     "test:module-size": "node scripts/test-module-size.mjs",
     "test:mutation-hold": "node scripts/test-provider-mutation-hold.mjs",
     "test:privacy": "node scripts/test-publication-privacy.mjs",
-    "test:unit": "vitest run",
+    "test:unit": "vitest run --maxWorkers=1",
     "test:watch": "vitest",
     "test:worm-rpc-key": "node scripts/test-worm-rpc-key-provision.mjs",
     typecheck: "tsc --noEmit",
