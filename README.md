@@ -31,12 +31,19 @@ PyPI, Backblaze B2, the target repository, or a release evidence stream.
 
 ## Self-service verification
 
-The checks use only the Python standard library:
+The emergency quarantine assertions remain standard-library-only. The complete
+offline conformance suite additionally uses the exact locked development tools
+from `pyproject.toml` and `uv.lock`. Run it with uv 0.11.28 on Python 3.11 and
+3.12:
 
 ```console
-$ python3 -B -m unittest discover -s tests -v
-$ python3 -B -m compileall -q tests tools
-$ python3 -m json.tool github-app-manifest.json >/dev/null
+$ uv sync --frozen
+$ uv run --frozen ruff check .
+$ uv run --frozen ruff format --check .
+$ uv run --frozen python -B -m compileall -q scripts tests tools
+$ uv run --frozen python -B -m unittest discover -s tests -v
+$ for producer in scripts/generate_*.py; do uv run --frozen python -B "${producer}" --check; done
+$ uv run --frozen python -B -m tools.evidence.release_receipt_vectors --check
 ```
 
 The tombstone help path is read-only. Any other invocation exits with status 2:

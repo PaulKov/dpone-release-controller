@@ -27,6 +27,8 @@ EXPECTED_WORKFLOWS = frozenset({"ci.yml", "controller-quarantine.yml"})
 EXPECTED_ACTIONS = frozenset(
     {
         "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78",
     }
 )
 RETIRED_PROVIDER_MODULES = frozenset(
