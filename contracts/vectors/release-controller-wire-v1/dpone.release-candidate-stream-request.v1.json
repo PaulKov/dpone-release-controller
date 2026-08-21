@@ -1,0 +1,1 @@
+{"candidate_artifact_digest":"sha256:4444444444444444444444444444444444444444444444444444444444444444","candidate_artifact_id":9300000001,"candidate_run_attempt":1,"candidate_run_id":31900000001,"expected_peeled_commit_sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","schema":"dpone.release-candidate-stream-request.v1","schema_version":1,"tag":"v0.74.0"}

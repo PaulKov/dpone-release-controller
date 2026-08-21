@@ -1,23 +1,17 @@
 {
-  "name": "dpone-release-controller",
+  "name": "dpone-release-controller-quarantined",
   "url": "https://github.com/PaulKov/dpone-release-controller",
   "hook_attributes": {
-    "url": "https://example.com/github/hooks/unused-scaffold",
+    "url": "https://example.invalid/quarantined",
     "active": false
   },
   "redirect_url": "https://github.com/PaulKov/dpone-release-controller",
-  "callback_urls": [
-    "https://github.com/PaulKov/dpone-release-controller"
-  ],
+  "callback_urls": [],
   "setup_url": "https://github.com/PaulKov/dpone-release-controller",
-  "description": "Quarantined read-only inspection manifest. Not release authority and not activated.",
+  "description": "Quarantined inventory manifest. No release, administration, or write authority.",
   "public": false,
   "default_events": [],
   "default_permissions": {
-    "metadata": "read",
-    "contents": "read",
-    "actions": "read",
-    "checks": "read",
-    "statuses": "read"
+    "metadata": "read"
   }
 }

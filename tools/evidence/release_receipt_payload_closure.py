@@ -222,7 +222,7 @@ def validate_closed_check(payload: Mapping[str, Any]) -> contract.PayloadSemanti
         check_status="completed",
         check_conclusion="success",
         output_marker_schema=_MARKER_SCHEMA,
-        output_title=marker_contract.OUTPUT_TITLE,
+        output_title=marker_contract.HISTORICAL_WIRE_OUTPUT_TITLE,
         provider_api_version=_API_VERSION,
     )
     _artifact_name(payload)
