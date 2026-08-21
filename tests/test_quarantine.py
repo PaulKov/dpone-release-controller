@@ -135,6 +135,19 @@ class WorkflowQuarantineTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("persist-credentials: false", text)
 
+    def test_required_quarantine_check_aggregates_all_ci_authorities(self) -> None:
+        """Keep the stable check fail-closed across controller and broker CI."""
+
+        text = CI_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("    name: Validate emergency quarantine\n", text)
+        self.assertIn("    if: ${{ always() }}\n", text)
+        self.assertIn("    needs:\n      - contract\n      - broker\n", text)
+        self.assertIn("          BROKER_RESULT: ${{ needs.broker.result }}\n", text)
+        self.assertIn("          CONTRACT_RESULT: ${{ needs.contract.result }}\n", text)
+        self.assertIn('          test "${BROKER_RESULT}" = "success"\n', text)
+        self.assertIn('          test "${CONTRACT_RESULT}" = "success"\n', text)
+
 
 class LegacyWriterRemovalTests(unittest.TestCase):
     """Prove that current source cannot load the retired writer graph."""
