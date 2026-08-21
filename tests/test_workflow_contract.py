@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -45,6 +46,36 @@ class WorkflowContractTests(unittest.TestCase):
         parsed = parse_restricted_workflow(CI_WORKFLOW.read_text(encoding="utf-8"))
 
         self.assertEqual(parsed, EXPECTED_CI_WORKFLOW)
+
+    def test_broker_ci_job_is_pinned_read_only_and_provider_inert(self) -> None:
+        parsed = parse_restricted_workflow(CI_WORKFLOW.read_text(encoding="utf-8"))
+        job = parsed["jobs"]["broker"]
+
+        self.assertEqual(job["permissions"], {"contents": "read"})
+        self.assertNotIn("environment", job)
+        self.assertEqual(job["defaults"], {"run": {"working-directory": "broker"}})
+
+        for step in job["steps"]:
+            action = step.get("uses")
+            if action is not None:
+                self.assertRegex(action, re.compile(r"^[^@]+@[0-9a-f]{40}$"))
+
+        commands = "\n".join(step.get("run", "") for step in job["steps"]).lower()
+        for forbidden in (
+            "--apply",
+            "wrangler ",
+            "version:deploy",
+            "version:upload",
+            "github-app-key:provision",
+            "worm-rpc-key:provision",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, commands)
+
+        serialized = json.dumps(job, sort_keys=True).lower()
+        for forbidden in ("secrets.", "id-token", "packages: write"):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, serialized)
 
     def test_restricted_parser_rejects_ambiguous_yaml_features(self) -> None:
         invalid_documents = {

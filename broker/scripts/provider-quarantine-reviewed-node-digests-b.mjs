@@ -105,7 +105,7 @@ export const REVIEWED_LOCAL_NODE_DIGESTS_B = Object.freeze({
   "provider-quarantine-policy.mjs#assertProviderBoundarySources":
     "5c5a7719ab50624b3602bf4b9c0864eb85b386b5742d2e5ac7729b495f6e4c51",
   "provider-quarantine-policy.mjs#assertProviderPackageScripts":
-    "68e5346e03fc5a3197a2210ab6107c1db10a29d4d27603c8440076bee5ba1c7f",
+    "6da7e48fe8f2710f6c281d34e3a6cb5ac9b50fb81fa71cd6b9c3c1a31f1f5f80",
   "provider-quarantine-policy.mjs#assertProviderSimulationsAreDataOnly":
     "167fb725840be9820959f6a7649459a98d56c8b44c87076f64dd4ffd91b90881",
   "provider-quarantine-policy.mjs#assertSupportedExportSyntax":

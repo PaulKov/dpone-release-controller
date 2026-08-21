@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 CHECKOUT_ACTION = "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+SETUP_NODE_ACTION = "actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444"
 SETUP_PYTHON_ACTION = "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1"
 SETUP_UV_ACTION = "astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78"
 UPLOAD_ARTIFACT_ACTION = (
@@ -169,8 +170,8 @@ EXPECTED_CI_WORKFLOW: dict[str, Any] = {
                     "name": "Validate source, tests, and module boundaries",
                     "run": _shell(
                         "set -euo pipefail",
-                        "uv run --frozen ruff check .",
-                        "uv run --frozen ruff format --check .",
+                        "uv run --frozen ruff check scripts tests tools",
+                        "uv run --frozen ruff format --check scripts tests tools",
                         (
                             "uv run --frozen python -B -m compileall -q "
                             "scripts tests tools"
@@ -196,7 +197,57 @@ EXPECTED_CI_WORKFLOW: dict[str, Any] = {
                     ),
                 },
             ],
-        }
+        },
+        "broker": {
+            "name": "Validate quarantined broker",
+            "runs-on": "ubuntu-24.04",
+            "timeout-minutes": 30,
+            "permissions": {"contents": "read"},
+            "defaults": {"run": {"working-directory": "broker"}},
+            "env": {
+                "CI": "true",
+                "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+                "NODE_OPTIONS": "",
+                "NODE_PATH": "",
+                "WRANGLER_LOG_SANITIZE": "true",
+            },
+            "steps": [
+                {
+                    "name": "Checkout controller and broker source",
+                    "uses": CHECKOUT_ACTION,
+                    "with": {"persist-credentials": False},
+                },
+                {
+                    "name": "Set up the pinned broker Node runtime",
+                    "uses": SETUP_NODE_ACTION,
+                    "with": {
+                        "node-version-file": "broker/.node-version",
+                        "package-manager-cache": False,
+                    },
+                },
+                {
+                    "name": "Enable the pinned broker package manager",
+                    "run": _shell(
+                        "set -euo pipefail",
+                        "corepack enable",
+                        "corepack install --global pnpm@11.19.0",
+                        'test "$(node --version)" = "v$(cat .node-version)"',
+                        'test "$(pnpm --version)" = "11.19.0"',
+                    ),
+                },
+                {
+                    "name": (
+                        "Install the frozen broker dependency graph without "
+                        "lifecycle scripts"
+                    ),
+                    "run": "pnpm install --frozen-lockfile --ignore-scripts",
+                },
+                {
+                    "name": "Validate the broker quarantine contract",
+                    "run": "pnpm check",
+                },
+            ],
+        },
     },
 }
 

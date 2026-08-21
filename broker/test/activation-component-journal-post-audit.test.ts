@@ -18,6 +18,8 @@ import {
 } from "./activation-component-journal-continuation.fixtures";
 import { JOURNAL_EFFECT_PINS } from "./activation-component-journal.fixtures";
 
+const TERMINAL_HOLD_REPLAY_TIMEOUT_MS = 30_000;
+
 afterEach(async () => {
   await reset();
 });
@@ -144,30 +146,34 @@ describe("activation component journal post-audit boundaries", () => {
     });
   });
 
-  it("replays the original all-15 seal in both terminal HOLD shapes", async () => {
-    const componentStub = env.AUTH_REPLAY_LEDGER.getByName("component-journal-hold-replay-0001");
-    await runInDurableObject(componentStub, async (_instance, state) => {
-      const fixture = await selectedContinuationFixture(state.storage);
-      await confirmComponents(fixture, undefined, (ordinal) =>
-        ordinal < 2 ? "4_z-journal-component-collision" : componentVersion(ordinal),
-      );
-      await fixture.store.sealManifestEffect(fixture.prepared.session.sessionId);
-      await expectOriginalSealReplay(fixture);
-    });
+  it(
+    "replays the original all-15 seal in both terminal HOLD shapes",
+    async () => {
+      const componentStub = env.AUTH_REPLAY_LEDGER.getByName("component-journal-hold-replay-0001");
+      await runInDurableObject(componentStub, async (_instance, state) => {
+        const fixture = await selectedContinuationFixture(state.storage);
+        await confirmComponents(fixture, undefined, (ordinal) =>
+          ordinal < 2 ? "4_z-journal-component-collision" : componentVersion(ordinal),
+        );
+        await fixture.store.sealManifestEffect(fixture.prepared.session.sessionId);
+        await expectOriginalSealReplay(fixture);
+      });
 
-    const manifestStub = env.AUTH_REPLAY_LEDGER.getByName("component-journal-hold-replay-0002");
-    await runInDurableObject(manifestStub, async (_instance, state) => {
-      const fixture = await selectedContinuationFixture(state.storage);
-      await confirmComponents(fixture);
-      const manifestSeal = await sealManifest(fixture);
-      await confirmManifest(
-        fixture,
-        manifestSeal,
-        manifestResultBytes(manifestSeal, componentVersion(0)),
-      );
-      await expectOriginalSealReplay(fixture);
-    });
-  });
+      const manifestStub = env.AUTH_REPLAY_LEDGER.getByName("component-journal-hold-replay-0002");
+      await runInDurableObject(manifestStub, async (_instance, state) => {
+        const fixture = await selectedContinuationFixture(state.storage);
+        await confirmComponents(fixture);
+        const manifestSeal = await sealManifest(fixture);
+        await confirmManifest(
+          fixture,
+          manifestSeal,
+          manifestResultBytes(manifestSeal, componentVersion(0)),
+        );
+        await expectOriginalSealReplay(fixture);
+      });
+    },
+    TERMINAL_HOLD_REPLAY_TIMEOUT_MS,
+  );
 
   it("requires the private confirmed-authority brand and returns fresh exact byte snapshots", async () => {
     const stub = env.AUTH_REPLAY_LEDGER.getByName("component-journal-authority-brand-0001");

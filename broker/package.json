@@ -32,7 +32,7 @@
     "test:mutation-hold": "node scripts/test-provider-mutation-hold.mjs",
     "test:privacy": "node scripts/test-publication-privacy.mjs",
     "test:worm-rpc-key": "node scripts/test-worm-rpc-key-provision.mjs",
-    "test:unit": "vitest run",
+    "test:unit": "vitest run --maxWorkers=1",
     "test:watch": "vitest",
     "version:deploy": "node scripts/deploy-version.mjs",
     "version:upload": "node scripts/upload-version.mjs",
