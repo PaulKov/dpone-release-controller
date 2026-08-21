@@ -1,0 +1,30 @@
+{
+  "body": {
+    "byte_length": 4,
+    "hex": "504b0304",
+    "sha256": "sha256:8dcc7e601606217f3b754766511182a916b17e9a26a94c9d887104eba92e9bb2"
+  },
+  "forbidden_response_headers_absent": [
+    "content-encoding",
+    "content-range",
+    "location",
+    "set-cookie",
+    "transfer-encoding"
+  ],
+  "headers": {
+    "cache-control": "private, no-store, max-age=0",
+    "content-length": "4",
+    "content-type": "application/vnd.dpone.release-candidate-artifact.v1+zip",
+    "x-content-type-options": "nosniff",
+    "x-dpone-candidate-reader-service-identity": "cloudflare-worker:account/candidate-reader-private@candidate-reader-version-0001",
+    "x-dpone-candidate-reader-service-version-id": "candidate-reader-version-0001",
+    "x-dpone-provider-observation-sha256": "sha256:e349309789bc1c5079bbcfa96f91172e6d8a2025e337e9c28b26475beb90a4a5",
+    "x-dpone-request-id": "request-candidate-0001",
+    "x-dpone-response-schema": "dpone.release-candidate-stream-response.v1"
+  },
+  "required_opaque_headers": ["x-dpone-provider-observation"],
+  "schema": "dpone.release-candidate-stream-http-boundary.v1",
+  "schema_version": 1,
+  "status": 200,
+  "transport": "wrangler-dev-local-http"
+}

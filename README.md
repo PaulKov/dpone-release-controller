@@ -61,6 +61,29 @@ Generators consume those production-owned sources; implementation modules do
 not import fixtures from `tests/`. Generated public schemas remain descriptive
 artifacts while the runtime and public-closure gates are held.
 
+The recovered broker is isolated under `broker/` and remains on the same
+provider-mutation HOLD. Its self-service validation uses the exact runtime from
+`broker/.node-version`, pnpm 11.19.0, the frozen lockfile, and disabled package
+lifecycle scripts:
+
+```console
+$ cd broker
+$ test "$(node --version)" = "v$(cat .node-version)"
+$ corepack enable
+$ corepack install --global pnpm@11.19.0
+$ pnpm install --frozen-lockfile --ignore-scripts
+$ CI=true pnpm check
+```
+
+These commands validate only local source and declarative simulations. They do
+not authorize any `--apply`, upload, deployment, provisioning, provider, or
+control-plane network action. The package-manager setup and frozen dependency
+install may download pinned artifacts from their public registries; those
+downloads require no provider credentials. Run the local gate from a
+credential-free shell. CI runs the same broker gate with read-only repository
+permissions, empty Node injection variables, no credentials persistence, and
+no package-manager cache.
+
 ## Required operational quarantine evidence
 
 The code patch is necessary but cannot change provider state. Before declaring

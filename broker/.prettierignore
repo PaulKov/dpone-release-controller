@@ -1,0 +1,17 @@
+node_modules
+pnpm-lock.yaml
+.wrangler
+coverage
+docs/schemas/release/github-ruleset-projection-v1.schema.json
+test/fixtures/github-ruleset-projection-v1-golden.json
+test/fixtures/release-candidate-handoff-v2-golden.json
+test/fixtures/release-candidate-handoff-v2.schema.json
+test/fixtures/release-candidate-stream-v1.json
+test/fixtures/release-controller-action-bundle-v1.schema.json
+test/fixtures/release-controller-closure-manifest-v1.schema.json
+test/fixtures/release-controller-route-profile-v1.json
+test/fixtures/release-evidence-v2.schema.json
+test/fixtures/release-receipt-envelope-v2.schema.json
+test/fixtures/release-runtime-closure-provider-observation-v1.schema.json
+test/fixtures/release-runtime-closure-request-v1.schema.json
+test/fixtures/release-runtime-closure-stream-response-v1.schema.json

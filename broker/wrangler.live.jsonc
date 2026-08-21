@@ -1,0 +1,62 @@
+// PUBLICATION REVIEW TEMPLATE: provider identifiers are synthetic and cannot authorize deployment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "account_id": "00000000000000000000000000000000",
+  "name": "dpone-release-authority-broker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-15",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 0,
+    "traces": { "destinations": [], "enabled": false, "head_sampling_rate": 0, "persist": false },
+  },
+  "vars": {
+    "ADMIN_ACCESS_APPLICATION_ID": "123e4567-e89b-42d3-a456-426614174000",
+    "ADMIN_ACCESS_AUDIENCE": "review-template-audience-0001",
+    "ADMIN_ACCESS_ISSUER": "https://review-template.cloudflareaccess.com",
+    "ADMIN_ACCESS_POLICY_ID": "123e4567-e89b-42d3-a456-426614174002",
+    "ADMIN_HOSTNAME": "release-authority.invalid",
+    "ADMIN_MTLS_CERT_SHA256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "BROKER_SERVICE_NAME": "dpone-release-authority-broker",
+    "CF_ACCOUNT_ID": "00000000000000000000000000000000",
+    "OPERATING_MODE": "live",
+  },
+  "routes": [{ "custom_domain": true, "pattern": "release-authority.invalid" }],
+  "services": [
+    { "binding": "ATTESTATION_MUTATOR", "service": "dpone-release-attestation-mutator" },
+    { "binding": "CANDIDATE_READER", "service": "dpone-release-candidate-reader" },
+    { "binding": "CLOSED_PROJECTOR", "service": "dpone-release-closed-projector" },
+    {
+      "binding": "CLOUDFLARE_DEPLOYMENT_OBSERVER",
+      "service": "dpone-release-cloudflare-deployment-observer",
+    },
+    { "binding": "CONTROLLER_RUN_READER", "service": "dpone-release-controller-run-reader" },
+    { "binding": "GOVERNANCE_READER", "service": "dpone-release-governance-reader" },
+    { "binding": "PYPI_DEPLOYMENT_GATE", "service": "dpone-release-pypi-deployment-gate" },
+    { "binding": "PYPI_READER", "service": "dpone-release-pypi-reader" },
+    { "binding": "RELEASE_MUTATOR", "service": "dpone-release-mutator" },
+    { "binding": "RUNTIME_DEPLOYMENT_GATE", "service": "dpone-release-runtime-deployment-gate" },
+    { "binding": "TENANT_SCANNER", "service": "dpone-release-tenant-scanner" },
+    { "binding": "WORM_MIRROR", "service": "dpone-release-worm-mirror" },
+    { "binding": "WORM_VERSION_OBSERVER", "service": "dpone-release-worm-version-observer" },
+  ],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "durable_objects": {
+    "bindings": [
+      { "name": "ACTIVATION_REGISTRY", "class_name": "ActivationRegistry" },
+      { "name": "AUTH_REPLAY_LEDGER", "class_name": "AuthReplayLedger" },
+      {
+        "name": "GLOBAL_ACTIVATED_AUTHORITY_HEAD",
+        "class_name": "GlobalActivatedAuthorityHead",
+      },
+      { "name": "RELEASE_LEDGERS", "class_name": "ReleaseLedger" },
+    ],
+  },
+  "migrations": [
+    { "new_sqlite_classes": ["AuthReplayLedger", "ReleaseLedger"], "tag": "v1" },
+    { "new_sqlite_classes": ["ActivationRegistry"], "tag": "v2" },
+    { "new_sqlite_classes": ["GlobalActivatedAuthorityHead"], "tag": "v3" },
+  ],
+}

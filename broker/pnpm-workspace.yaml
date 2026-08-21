@@ -1,0 +1,9 @@
+allowBuilds:
+  esbuild: true
+  workerd: true
+blockExoticSubdeps: true
+minimumReleaseAge: 1440
+minimumReleaseAgeIgnoreMissingTime: false
+minimumReleaseAgeStrict: true
+trustLockfile: false
+trustPolicy: no-downgrade
