@@ -1,0 +1,890 @@
+{
+  "attempt": {
+    "attempt_id": "sha256:7a91bc8a4891c0e99458d70bb9ddb6cff9e96a1318c54a02427bdbdc36d1a1b8",
+    "queue_entry_id": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+  },
+  "committer": {
+    "activated_authority_head_generation": 1,
+    "activated_authority_head_record_id": "sha256:a75c8a8b952339cc491097ed8043437660d644c00f56cf800ff54cede261f1d0",
+    "activated_authority_head_record_sha256": "sha256:64c19060502a13ca71eeb5b3a827bbc83230836df2d40315b54b5258b4244a78",
+    "activation_digest": "sha256:0e446a81711c79b3749f0a28af199df455ba389e1288a8d17b51ba307a948784",
+    "activation_provisioned_digest": "sha256:12f26d1b6dbbfbbfdc1f08fd74a266672f5196ccefd2a1d94dbcb03cc461ac95",
+    "activation_provisioned_record_id": "sha256:aa508c2187fca56f397ff75adc52b94e02f38122cdd48bd42105106e5e0f8e14",
+    "activation_record_id": "sha256:16a36e86f6fed5d465ff332511a0ce1a863b55d364b25a7cdaa25db19abf9648",
+    "cloudflare_account_id": "00000000000000000000000000000000",
+    "deployment_observation_record_id": "sha256:1bf3408be0c405750272000e039b5c151d07bf9167829861a05be6612d611f25",
+    "deployment_observation_record_sha256": "sha256:0b42463b6485a3f729c428a1bd2f094c411ef9c99b7839b7bc94095d352f0c1a",
+    "expected_service_authorities_sha256": "sha256:71df993aea227b6931fdf9b89391844bf5cb49bdb79444cfd8eaf31d99a8c951",
+    "kind": "release_authority_broker",
+    "service_authority_activation_record_id": "sha256:52667fad1bfe057aecf679b29b74073b447aae29b485d7a0b671eefbed672958",
+    "service_authority_activation_record_sha256": "sha256:c04e4b086cd41b1b3bd8c9713438beb8f5055bb2f32817cac72bca6fe225c8c3",
+    "service_authority_inventory_sha256": "sha256:c1ee819fdb3c3b6e8d40f1ee4bd73e5cde943e6558a23084555223e71f64d54a",
+    "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-authority-broker@00000000-0000-4000-8000-000000000001",
+    "source_sha256": "sha256:c3f53f0deede8ce31cb56a6b3658914e9b77edcab0ec3567978c4d5c8f6b4fa4",
+    "worker_script": "dpone-release-authority-broker",
+    "worker_version_id": "00000000-0000-4000-8000-000000000001"
+  },
+  "payload": {
+    "activated_authority_head": {
+      "activated_service_authorities_record_id": "sha256:52667fad1bfe057aecf679b29b74073b447aae29b485d7a0b671eefbed672958",
+      "activated_service_authorities_record_sha256": "sha256:c04e4b086cd41b1b3bd8c9713438beb8f5055bb2f32817cac72bca6fe225c8c3",
+      "activated_service_authorities_sha256": "sha256:c1ee819fdb3c3b6e8d40f1ee4bd73e5cde943e6558a23084555223e71f64d54a",
+      "committed_at": "2026-08-14T23:59:12Z",
+      "expected_service_authorities_sha256": "sha256:71df993aea227b6931fdf9b89391844bf5cb49bdb79444cfd8eaf31d99a8c951",
+      "generation": 1,
+      "ingress_worker_version_id": "00000000-0000-4000-8000-000000000001",
+      "previous": {
+        "kind": "GENESIS"
+      },
+      "schema": "dpone.activated-service-authority-head.v1",
+      "schema_version": 1
+    },
+    "activated_authority_head_record_id": "sha256:a75c8a8b952339cc491097ed8043437660d644c00f56cf800ff54cede261f1d0",
+    "activated_authority_head_record_sha256": "sha256:64c19060502a13ca71eeb5b3a827bbc83230836df2d40315b54b5258b4244a78",
+    "kind": "REQUEST_ENQUEUED",
+    "max_pending_attempts": 32,
+    "pending_count": 1,
+    "queue_sequence": 0,
+    "service_authority_activation_record": {
+      "activated_service_authorities": {
+        "account_id": "00000000000000000000000000000000",
+        "authorities": [
+          {
+            "authority_role": "attestation_mutator",
+            "binding": "ATTESTATION_MUTATOR",
+            "configuration_sha256": "sha256:4f6fc3067497b60e669810fd8ffeb63390954d5c415c0f1cc1e7b48ff4568bc1",
+            "deployment_id": "00000000-0000-4000-8000-8444c0ef659f",
+            "deployment_observation_record_id": "sha256:d2f2fa759df85a3162c91d5edc2229298cb8bfd0e5ae8a24eb326bfe715f815c",
+            "deployment_observation_record_sha256": "sha256:25a9b32976fe0740190282db632e370a7df374371dcbd4023fb7cb683358ca26",
+            "deployment_observation_sha256": "sha256:1d8ba3e4ece61087c4d69aeddf32125a79d746a8dad5902780cdc10f0badda1e",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-86e197dce3a4"
+              }
+            ],
+            "service": "dpone-release-attestation-mutator",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-attestation-mutator@00000000-0000-4000-8000-86e197dce3a4",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:07f1474a896306140e36ff5a4f9825117be2f33c86c592f9c5f8fd09ae95ddc0",
+            "version_resource_projection_sha256": "sha256:d6c4f95e701f31bb2cf0fa19bd3304475f359bd5588dc51bbdb4bab33e4d619c",
+            "worker_version_id": "00000000-0000-4000-8000-86e197dce3a4"
+          },
+          {
+            "authority_role": "candidate_reader",
+            "binding": "CANDIDATE_READER",
+            "configuration_sha256": "sha256:a5912add59d2e3cef1b5d63770f25a61618d6a2fae4d8e8d72bf59975af89337",
+            "deployment_id": "00000000-0000-4000-8000-5a0fbe582b04",
+            "deployment_observation_record_id": "sha256:3b513f4ce45f602a63f25e6ba2329bbc3d5ee947e389da05ff6c5efd5a39bac9",
+            "deployment_observation_record_sha256": "sha256:0db3609ff294674a9117c464e2385e6ceb39279c56a04db151e208730a04dffe",
+            "deployment_observation_sha256": "sha256:a3c08f6001b7347a6f712418112e12e4d856d952153f931347df4f1e22ed0566",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-74b5d353843c"
+              }
+            ],
+            "service": "dpone-release-candidate-reader",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-candidate-reader@00000000-0000-4000-8000-74b5d353843c",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:6a28a8e7cddc6340236a2dcdce052717889e56a82488ee1c8faf8e2be6e3af0e",
+            "version_resource_projection_sha256": "sha256:33fb7f64a897333f69550c0bfe6b1057e2866592d1209cdccf93ea006c9ae372",
+            "worker_version_id": "00000000-0000-4000-8000-74b5d353843c"
+          },
+          {
+            "authority_role": "closed_projector",
+            "binding": "CLOSED_PROJECTOR",
+            "configuration_sha256": "sha256:d08a373e2e4ce04532f4c1a75b3986beeac17b2d9fe1413a6782fc6a409c2bba",
+            "deployment_id": "00000000-0000-4000-8000-51680378e7b7",
+            "deployment_observation_record_id": "sha256:0ecf116f9b315a41e6f0ebd83bcffa8f24a2297e3a815f093ce5be131bec0786",
+            "deployment_observation_record_sha256": "sha256:ae1d8d84f71a1d768ff534929ba1cafd8fe4fac10444df7907c30ca4731e75b3",
+            "deployment_observation_sha256": "sha256:8fd02145e375ba537826cdae675d18705464ed78b92772cd4fb8aeb65b0b265c",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-329b95c833ce"
+              }
+            ],
+            "service": "dpone-release-closed-projector",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-closed-projector@00000000-0000-4000-8000-329b95c833ce",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:ef794bcb17027a551c404a77846a034163626934379a5f304ce5ef87cf12babc",
+            "version_resource_projection_sha256": "sha256:94fd022d35242dc7f712aba70d78fe34fc3677bc787fdfc4e74b85fd2a3ed2c0",
+            "worker_version_id": "00000000-0000-4000-8000-329b95c833ce"
+          },
+          {
+            "authority_role": "cloudflare_deployment_observer",
+            "binding": "CLOUDFLARE_DEPLOYMENT_OBSERVER",
+            "configuration_sha256": "sha256:a809c8b1bbbff626e0e08dbbe3571d4b13965bb181a71f044d8c9593a3e19c32",
+            "deployment_id": "00000000-0000-4000-8000-3a2329f17347",
+            "deployment_observation_record_id": "sha256:7c07dc8cbb4e88628f844abeb356437547d3d13ce733e13e16a75e9aa9a35793",
+            "deployment_observation_record_sha256": "sha256:b1d79f0245c3894bcb85c31215f061c444519f8f1ed632c99b3be4071be38483",
+            "deployment_observation_sha256": "sha256:faca7846cb5a2b8bffef46dc07da0dce3f1c01462354334fc22ae3db1d66972e",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-51de5b272803"
+              }
+            ],
+            "service": "dpone-release-cloudflare-deployment-observer",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-cloudflare-deployment-observer@00000000-0000-4000-8000-51de5b272803",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:486a8b2fca2b86a32e3c39c5a99b41803a052458915c08ee55ecf346cb845659",
+            "version_resource_projection_sha256": "sha256:7507c0ed14fe213f0c6cc421d6766187d8ff3f7137cc63e5bc4f25de59de0b75",
+            "worker_version_id": "00000000-0000-4000-8000-51de5b272803"
+          },
+          {
+            "authority_role": "controller_run_reader",
+            "binding": "CONTROLLER_RUN_READER",
+            "configuration_sha256": "sha256:eb1fba2406ba00e7d02676babe0b718b845b20bb3a55c4b250157a532cb8edd2",
+            "deployment_id": "00000000-0000-4000-8000-37210807ba19",
+            "deployment_observation_record_id": "sha256:672fff73075ff74aed211b7b282f4e9de2c61f08b5abc9034eff79481c1da433",
+            "deployment_observation_record_sha256": "sha256:e583dd42a7904e22583887f60c2a17a9129580fcb167a68a7fafc39658d2541c",
+            "deployment_observation_sha256": "sha256:9640207c763d9bdc1020ecc3f86b5a60ce6eaa41d4fb150997bf5287579656d5",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-95b8841f41a6"
+              }
+            ],
+            "service": "dpone-release-controller-run-reader",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-controller-run-reader@00000000-0000-4000-8000-95b8841f41a6",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:e318b556e72011fae252d74fb39d5031111a5ac662762eea767b280b8719360b",
+            "version_resource_projection_sha256": "sha256:d9e5dfba763ffed77797dd60032bb6565ae736ff4c5047f0eafe03c9cf717ef1",
+            "worker_version_id": "00000000-0000-4000-8000-95b8841f41a6"
+          },
+          {
+            "authority_role": "governance_reader",
+            "binding": "GOVERNANCE_READER",
+            "configuration_sha256": "sha256:f9e14812600815e912415ae5247a348b6807b292d76aaf8dc9fed74f6045eb8b",
+            "deployment_id": "00000000-0000-4000-8000-0ce9a499d548",
+            "deployment_observation_record_id": "sha256:e58f0c0d5d90a4b09f900a3d0e3ec20c0a335b369e766a55def5f6bbf3605501",
+            "deployment_observation_record_sha256": "sha256:7379a07fa11174af56928f746bcf8627e8edc13d2b346f95db2058b4e2d75315",
+            "deployment_observation_sha256": "sha256:d4ead9ee365d90a46795a305aaa1999bcf148627df2b63628bbc25b881f9cf43",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-cfb80df12fe7"
+              }
+            ],
+            "service": "dpone-release-governance-reader",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-governance-reader@00000000-0000-4000-8000-cfb80df12fe7",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:f76bbe63c54f0f8a7f9ced899ebede37c8e72dd69a644b479783f54be0a0f54f",
+            "version_resource_projection_sha256": "sha256:88c173a3e84e9a8d714209d1d91b81f9aeec5187057b242f8764c39fcefb0b4c",
+            "worker_version_id": "00000000-0000-4000-8000-cfb80df12fe7"
+          },
+          {
+            "authority_role": "pypi_deployment_gate",
+            "binding": "PYPI_DEPLOYMENT_GATE",
+            "configuration_sha256": "sha256:708cc320c05312059e76b4e28fc1999be15282230234319da811b0f6444b5a14",
+            "deployment_id": "00000000-0000-4000-8000-f70b3928c02e",
+            "deployment_observation_record_id": "sha256:e651d02478f10390fc5280b6f3c794c00ebf3825c2190777b0fd7b4b26611ea5",
+            "deployment_observation_record_sha256": "sha256:8c5a4df9f21c7ead32a1d14f9aafbe2f415fe8244e2afd86f47e50a9ff241b40",
+            "deployment_observation_sha256": "sha256:adc2bb44acf78418859b6eebd193dded3e04307a5b9db96bb229b385689d8493",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-77d471f077e1"
+              }
+            ],
+            "service": "dpone-release-pypi-deployment-gate",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-pypi-deployment-gate@00000000-0000-4000-8000-77d471f077e1",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:881d4030e9c6851e19a61be81623644868638b637845db4382969dd12e9ee820",
+            "version_resource_projection_sha256": "sha256:95610771a55dcc070775c60fc344637c146d0cfef10b17cfb774d9cbdd578765",
+            "worker_version_id": "00000000-0000-4000-8000-77d471f077e1"
+          },
+          {
+            "authority_role": "pypi_reader",
+            "binding": "PYPI_READER",
+            "configuration_sha256": "sha256:f11cd60fbf3828bae11ffef51eca7f42d2c6a05daf363aaf4c5888185a6256b3",
+            "deployment_id": "00000000-0000-4000-8000-3e4226959d46",
+            "deployment_observation_record_id": "sha256:c1b18d7d850ab852d18cec2a33a0436a2c456f91907749f3069a860cfc02493d",
+            "deployment_observation_record_sha256": "sha256:f510632de7a6ad8e8938739b59e199cfa95b78cf542f9adb4efe946af25a20bd",
+            "deployment_observation_sha256": "sha256:d64af022a40d453dd1eacc7717cab0c36f5b46c2b69ceb69f239e91624e367c8",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-ae44f1a00bea"
+              }
+            ],
+            "service": "dpone-release-pypi-reader",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-pypi-reader@00000000-0000-4000-8000-ae44f1a00bea",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:f5ca676763618003993982dde962dbdda51b3ac0ad8bfa8fc1c1d42faa486f51",
+            "version_resource_projection_sha256": "sha256:91fba053c628d1bbaaba893bf10fd3c76f22499115a94ad7e799985ecf89eb33",
+            "worker_version_id": "00000000-0000-4000-8000-ae44f1a00bea"
+          },
+          {
+            "authority_role": "release_authority_ingress",
+            "binding": "INGRESS",
+            "configuration_sha256": "sha256:b64161393ddf704f361004fe5a94cbc7725c11fac35e0a3dd8356173198dbdfe",
+            "deployment_id": "00000000-0000-4000-8000-c0332337891a",
+            "deployment_observation_record_id": "sha256:1bf3408be0c405750272000e039b5c151d07bf9167829861a05be6612d611f25",
+            "deployment_observation_record_sha256": "sha256:0b42463b6485a3f729c428a1bd2f094c411ef9c99b7839b7bc94095d352f0c1a",
+            "deployment_observation_sha256": "sha256:5b9bb2fe8f339a08583b058d8e4df8245494957947436f1bbb3665186c2bb55b",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-000000000001"
+              }
+            ],
+            "service": "dpone-release-authority-broker",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-authority-broker@00000000-0000-4000-8000-000000000001",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:c3f53f0deede8ce31cb56a6b3658914e9b77edcab0ec3567978c4d5c8f6b4fa4",
+            "version_resource_projection_sha256": "sha256:69acfc3573097d9a5fbb3fa696ab9ffedacc4b5b30419c3ef47af8c87bc8f560",
+            "worker_version_id": "00000000-0000-4000-8000-000000000001"
+          },
+          {
+            "authority_role": "release_mutator",
+            "binding": "RELEASE_MUTATOR",
+            "configuration_sha256": "sha256:b5d49cf6518e758dff24d4015201b2047c47ac8c7b471747b3b4ffbbef08fc06",
+            "deployment_id": "00000000-0000-4000-8000-be45b02d240b",
+            "deployment_observation_record_id": "sha256:22ad4a1f685be6fbc45980dce1311aea0a9c21195fbbdca12804519b7d7b43b1",
+            "deployment_observation_record_sha256": "sha256:159bcc4196edb63e638a4e43c0cc5bb6bdca37e7138c5567a1c67ae8aedc25c4",
+            "deployment_observation_sha256": "sha256:a9c6400ef9bc5f03562d2ff5ad599b531ecbbaf49ca729a779d9346d8144b51a",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-d90b731a518e"
+              }
+            ],
+            "service": "dpone-release-mutator",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-mutator@00000000-0000-4000-8000-d90b731a518e",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:d171e00bf71da7df09e94066bea723492d7027a6d848227ab0f630bf3d351281",
+            "version_resource_projection_sha256": "sha256:8cf4ce037f928fe200a5abe78ed41532cae02ced6d67dbcd4b52993cd1503e1b",
+            "worker_version_id": "00000000-0000-4000-8000-d90b731a518e"
+          },
+          {
+            "authority_role": "runtime_deployment_gate",
+            "binding": "RUNTIME_DEPLOYMENT_GATE",
+            "configuration_sha256": "sha256:99cfa6b1866a432561e7b9dcc895090da0f05bb2c443df77664c070f7c0afcce",
+            "deployment_id": "00000000-0000-4000-8000-4e2c7945167a",
+            "deployment_observation_record_id": "sha256:3ec0f1c3e86f7c391edf8db200095bb00a05a0658a31963b23b52e941a6a95dc",
+            "deployment_observation_record_sha256": "sha256:ee059fb7d3fdc497ae87da8f864f7bf3e02857778af97a34c4cd774d46bcb713",
+            "deployment_observation_sha256": "sha256:adb35a22982f13c09fd7a81a1a8ce46514144d2e0d9bfb02ed3c7c4c7cfb1e7c",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-f7ea3d05af2b"
+              }
+            ],
+            "service": "dpone-release-runtime-deployment-gate",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-runtime-deployment-gate@00000000-0000-4000-8000-f7ea3d05af2b",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:70565d8626d4866cf4fe8e9db5655586cb4628ff2f5a5d580576d2cf93cb233d",
+            "version_resource_projection_sha256": "sha256:d3c37e1570ec16d0c79d44825c3fb345686560031a04ae6520c8b80eb0d8cbb9",
+            "worker_version_id": "00000000-0000-4000-8000-f7ea3d05af2b"
+          },
+          {
+            "authority_role": "tenant_scanner",
+            "binding": "TENANT_SCANNER",
+            "configuration_sha256": "sha256:43b004b7a98621f7893ca8365b55cb469203b473c94351bed374d8fc4dc397e9",
+            "deployment_id": "00000000-0000-4000-8000-404162f7ab75",
+            "deployment_observation_record_id": "sha256:f2627f10c7fa21603b4fb59c21ee10a99fede1d9d78be9c720a33cf329f2e147",
+            "deployment_observation_record_sha256": "sha256:f29c3f331091b31c505d9984df70786d7e29ad873d49c846dc0baa6eb1b1ff15",
+            "deployment_observation_sha256": "sha256:f700ebabb289ee0f77c5adb8b29241f724f3db6df986985b4afc2334fe05bb6e",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-7b3755ec9107"
+              }
+            ],
+            "service": "dpone-release-tenant-scanner",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-tenant-scanner@00000000-0000-4000-8000-7b3755ec9107",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:77b540a3abfdf436be41a168f951e7b8216fcec418f9e13c2179ecda387362a3",
+            "version_resource_projection_sha256": "sha256:2e4983f2bcf17a411cd10b2ac608657de33b03d4401aa05ac7674eed5aa39ccb",
+            "worker_version_id": "00000000-0000-4000-8000-7b3755ec9107"
+          },
+          {
+            "authority_role": "worm_mirror",
+            "binding": "WORM_MIRROR",
+            "configuration_sha256": "sha256:5a5cd00b873b0805c23574675defe36e7d184a6fc4edcbc5dc0e374595a44f7e",
+            "deployment_id": "00000000-0000-4000-8000-db30b6f69a6e",
+            "deployment_observation_record_id": "sha256:3fabbfdee31d6917a291398494913f127ea5e2f540459efb06db2e2dab51cfcd",
+            "deployment_observation_record_sha256": "sha256:d95b54dd38771ebf7472a9a04d6a6d96d6bdcb348f21233e8cac1bd3067c95c9",
+            "deployment_observation_sha256": "sha256:4e21238b482fcace246288e91410a7abdf0bf7099586b24fb80fac978c575b41",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-c11127fdfa51"
+              }
+            ],
+            "service": "dpone-release-worm-mirror",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-worm-mirror@00000000-0000-4000-8000-c11127fdfa51",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:b9931b4a28ac7394b134f60d028880fb41cbd265e7ec3f54d762d8b7e5cc5b43",
+            "version_resource_projection_sha256": "sha256:e0f344bd4131fb0a471fe68a4503c4e4179157da6af9e4de3d5fa01274e83844",
+            "worker_version_id": "00000000-0000-4000-8000-c11127fdfa51"
+          },
+          {
+            "authority_role": "worm_version_observer",
+            "binding": "WORM_VERSION_OBSERVER",
+            "configuration_sha256": "sha256:359e079f3d40b1c0c1af4460838c47f1f725eaab428ed60eefede61144ae4847",
+            "deployment_id": "00000000-0000-4000-8000-921e52e0e38e",
+            "deployment_observation_record_id": "sha256:390a623a8ea872caab7dc0954280040e7db794ab622d99c49343ed550b4635b4",
+            "deployment_observation_record_sha256": "sha256:feedb3be92092e72e2008b51345d3fb5de5b277df04df9de4b0b361dd8901d9c",
+            "deployment_observation_sha256": "sha256:5483af449130a5d6e8368b589616c500eefdc98c21cba1e9f120e4b7c52e13f1",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-8f44ec08e796"
+              }
+            ],
+            "service": "dpone-release-worm-version-observer",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-worm-version-observer@00000000-0000-4000-8000-8f44ec08e796",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:957266f4612f92d0b9f09b6a782972bc54d7942d291a6c2a7febbfcff4bdcaa8",
+            "version_resource_projection_sha256": "sha256:3906ad4a2f359f6b531ba18755b85fe024b6e0ee5d1e3942189a78ad1070acf7",
+            "worker_version_id": "00000000-0000-4000-8000-8f44ec08e796"
+          }
+        ],
+        "ingress_promotion": {
+          "post_promotion_deployment_id": "00000000-0000-4000-8000-c0332337891a",
+          "post_promotion_deployment_observation_record_id": "sha256:1bf3408be0c405750272000e039b5c151d07bf9167829861a05be6612d611f25",
+          "post_promotion_deployment_observation_record_sha256": "sha256:0b42463b6485a3f729c428a1bd2f094c411ef9c99b7839b7bc94095d352f0c1a",
+          "post_promotion_deployment_observation_sha256": "sha256:5b9bb2fe8f339a08583b058d8e4df8245494957947436f1bbb3665186c2bb55b",
+          "post_promotion_deployment_versions": [
+            {
+              "percentage": 100,
+              "worker_version_id": "00000000-0000-4000-8000-000000000001"
+            }
+          ],
+          "pre_promotion_deployment_id": "00000000-0000-4000-8000-9a340ae62c6f",
+          "pre_promotion_deployment_observation_record_id": "sha256:08b55a30dc6b1793f46abdb3bb67f60e2d1bcf98303764b27e3c1381575b48f3",
+          "pre_promotion_deployment_observation_record_sha256": "sha256:1422e22e4553fec28035804bd2329a13482fc8e32bc79ae25c07c8f8661a850d",
+          "pre_promotion_deployment_observation_sha256": "sha256:77a339338c5b407ecabc81ca82d6eb950b5b83028fd23b6403398fd7722eeed6",
+          "pre_promotion_deployment_versions": [
+            {
+              "percentage": 0,
+              "worker_version_id": "00000000-0000-4000-8000-000000000001"
+            },
+            {
+              "percentage": 100,
+              "worker_version_id": "00000000-0000-4000-8000-000000000002"
+            }
+          ]
+        },
+        "receipt_role_bindings": [
+          {
+            "service_authority_role": "attestation_mutator",
+            "service_role": "attestation_mutator"
+          },
+          {
+            "service_authority_role": "governance_reader",
+            "service_role": "attestation_reader"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "cancellation_observer"
+          },
+          {
+            "service_authority_role": "closed_projector",
+            "service_role": "closed_check_mutator"
+          },
+          {
+            "service_authority_role": "controller_run_reader",
+            "service_role": "controller_run_reader"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "draft_ledger_orchestrator"
+          },
+          {
+            "service_authority_role": "release_mutator",
+            "service_role": "github_draft_mutator"
+          },
+          {
+            "service_authority_role": "governance_reader",
+            "service_role": "github_governance_reader"
+          },
+          {
+            "service_authority_role": "release_mutator",
+            "service_role": "github_release_mutator"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "lease_orchestrator"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "ledger_orchestrator"
+          },
+          {
+            "service_authority_role": "pypi_deployment_gate",
+            "service_role": "pypi_deployment_gate"
+          },
+          {
+            "service_authority_role": "pypi_reader",
+            "service_role": "pypi_reader"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "recovery_observer"
+          },
+          {
+            "service_authority_role": "tenant_scanner",
+            "service_role": "tenant_scanner"
+          }
+        ],
+        "schema": "dpone.release-service-authority-inventory.v1",
+        "schema_version": 1
+      },
+      "activated_service_authorities_sha256": "sha256:c1ee819fdb3c3b6e8d40f1ee4bd73e5cde943e6558a23084555223e71f64d54a",
+      "broker_accepted_at": "2026-08-14T23:59:11Z",
+      "expected_service_authorities": {
+        "account_id": "00000000000000000000000000000000",
+        "authorities": [
+          {
+            "authority_role": "attestation_mutator",
+            "binding": "ATTESTATION_MUTATOR",
+            "configuration_sha256": "sha256:4f6fc3067497b60e669810fd8ffeb63390954d5c415c0f1cc1e7b48ff4568bc1",
+            "deployment_id": "00000000-0000-4000-8000-8444c0ef659f",
+            "deployment_observation_record_id": "sha256:9c0d4a8d39d4b7333eafcf1f1391cb2bcb26fa2c94e4c355880a00f6b0e89c31",
+            "deployment_observation_record_sha256": "sha256:7b1e16a838e75d048a713ab8517f80ad2f20dad9edfb79270c8981c9839e9641",
+            "deployment_observation_sha256": "sha256:1d8ba3e4ece61087c4d69aeddf32125a79d746a8dad5902780cdc10f0badda1e",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-86e197dce3a4"
+              }
+            ],
+            "service": "dpone-release-attestation-mutator",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-attestation-mutator@00000000-0000-4000-8000-86e197dce3a4",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:07f1474a896306140e36ff5a4f9825117be2f33c86c592f9c5f8fd09ae95ddc0",
+            "version_resource_projection_sha256": "sha256:d6c4f95e701f31bb2cf0fa19bd3304475f359bd5588dc51bbdb4bab33e4d619c",
+            "worker_version_id": "00000000-0000-4000-8000-86e197dce3a4"
+          },
+          {
+            "authority_role": "candidate_reader",
+            "binding": "CANDIDATE_READER",
+            "configuration_sha256": "sha256:a5912add59d2e3cef1b5d63770f25a61618d6a2fae4d8e8d72bf59975af89337",
+            "deployment_id": "00000000-0000-4000-8000-5a0fbe582b04",
+            "deployment_observation_record_id": "sha256:aefb0840a926b36d85a4deadcf3e451e44ed78590eee56d8796cbf016f80c26e",
+            "deployment_observation_record_sha256": "sha256:fa2ae5dc56583cfd02de35c0785b8a601ce8cb9c6ba325ff079c48484af30537",
+            "deployment_observation_sha256": "sha256:a3c08f6001b7347a6f712418112e12e4d856d952153f931347df4f1e22ed0566",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-74b5d353843c"
+              }
+            ],
+            "service": "dpone-release-candidate-reader",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-candidate-reader@00000000-0000-4000-8000-74b5d353843c",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:6a28a8e7cddc6340236a2dcdce052717889e56a82488ee1c8faf8e2be6e3af0e",
+            "version_resource_projection_sha256": "sha256:33fb7f64a897333f69550c0bfe6b1057e2866592d1209cdccf93ea006c9ae372",
+            "worker_version_id": "00000000-0000-4000-8000-74b5d353843c"
+          },
+          {
+            "authority_role": "closed_projector",
+            "binding": "CLOSED_PROJECTOR",
+            "configuration_sha256": "sha256:d08a373e2e4ce04532f4c1a75b3986beeac17b2d9fe1413a6782fc6a409c2bba",
+            "deployment_id": "00000000-0000-4000-8000-51680378e7b7",
+            "deployment_observation_record_id": "sha256:0e5d59ce00514845e968ebe314d194a564e26dc27b4ce4bb6651c4456592c31a",
+            "deployment_observation_record_sha256": "sha256:084868974e92cda4d1f9679601a0fdb48a5ed82e40d44c891d26050cfef0340b",
+            "deployment_observation_sha256": "sha256:8fd02145e375ba537826cdae675d18705464ed78b92772cd4fb8aeb65b0b265c",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-329b95c833ce"
+              }
+            ],
+            "service": "dpone-release-closed-projector",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-closed-projector@00000000-0000-4000-8000-329b95c833ce",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:ef794bcb17027a551c404a77846a034163626934379a5f304ce5ef87cf12babc",
+            "version_resource_projection_sha256": "sha256:94fd022d35242dc7f712aba70d78fe34fc3677bc787fdfc4e74b85fd2a3ed2c0",
+            "worker_version_id": "00000000-0000-4000-8000-329b95c833ce"
+          },
+          {
+            "authority_role": "cloudflare_deployment_observer",
+            "binding": "CLOUDFLARE_DEPLOYMENT_OBSERVER",
+            "configuration_sha256": "sha256:a809c8b1bbbff626e0e08dbbe3571d4b13965bb181a71f044d8c9593a3e19c32",
+            "deployment_id": "00000000-0000-4000-8000-3a2329f17347",
+            "deployment_observation_record_id": "sha256:d969f111452f14bc4b9e0bb4ae6fe20886e567aba34ce8d8e840fe5904316999",
+            "deployment_observation_record_sha256": "sha256:1b139500d8627b9eca356bc0c8f9eb7070ff5fea1eb8e588f047a777ee71961d",
+            "deployment_observation_sha256": "sha256:faca7846cb5a2b8bffef46dc07da0dce3f1c01462354334fc22ae3db1d66972e",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-51de5b272803"
+              }
+            ],
+            "service": "dpone-release-cloudflare-deployment-observer",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-cloudflare-deployment-observer@00000000-0000-4000-8000-51de5b272803",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:486a8b2fca2b86a32e3c39c5a99b41803a052458915c08ee55ecf346cb845659",
+            "version_resource_projection_sha256": "sha256:7507c0ed14fe213f0c6cc421d6766187d8ff3f7137cc63e5bc4f25de59de0b75",
+            "worker_version_id": "00000000-0000-4000-8000-51de5b272803"
+          },
+          {
+            "authority_role": "controller_run_reader",
+            "binding": "CONTROLLER_RUN_READER",
+            "configuration_sha256": "sha256:eb1fba2406ba00e7d02676babe0b718b845b20bb3a55c4b250157a532cb8edd2",
+            "deployment_id": "00000000-0000-4000-8000-37210807ba19",
+            "deployment_observation_record_id": "sha256:33b1e06093b48a3c8cba93854292d1433b23a95fed6de3c78cdfae657b49eb8a",
+            "deployment_observation_record_sha256": "sha256:91658f251d7214071a84d4e190949875e5c926e0c645c339ee02ac00bef4af48",
+            "deployment_observation_sha256": "sha256:9640207c763d9bdc1020ecc3f86b5a60ce6eaa41d4fb150997bf5287579656d5",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-95b8841f41a6"
+              }
+            ],
+            "service": "dpone-release-controller-run-reader",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-controller-run-reader@00000000-0000-4000-8000-95b8841f41a6",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:e318b556e72011fae252d74fb39d5031111a5ac662762eea767b280b8719360b",
+            "version_resource_projection_sha256": "sha256:d9e5dfba763ffed77797dd60032bb6565ae736ff4c5047f0eafe03c9cf717ef1",
+            "worker_version_id": "00000000-0000-4000-8000-95b8841f41a6"
+          },
+          {
+            "authority_role": "governance_reader",
+            "binding": "GOVERNANCE_READER",
+            "configuration_sha256": "sha256:f9e14812600815e912415ae5247a348b6807b292d76aaf8dc9fed74f6045eb8b",
+            "deployment_id": "00000000-0000-4000-8000-0ce9a499d548",
+            "deployment_observation_record_id": "sha256:4b5dadf5ae966cd80849815092ea1df15a3395b721a04925ccebe3c348fa0b34",
+            "deployment_observation_record_sha256": "sha256:2029e07e22eb219bd092410c89d7113c8eb6331bd135bb449f50c513d466fd35",
+            "deployment_observation_sha256": "sha256:d4ead9ee365d90a46795a305aaa1999bcf148627df2b63628bbc25b881f9cf43",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-cfb80df12fe7"
+              }
+            ],
+            "service": "dpone-release-governance-reader",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-governance-reader@00000000-0000-4000-8000-cfb80df12fe7",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:f76bbe63c54f0f8a7f9ced899ebede37c8e72dd69a644b479783f54be0a0f54f",
+            "version_resource_projection_sha256": "sha256:88c173a3e84e9a8d714209d1d91b81f9aeec5187057b242f8764c39fcefb0b4c",
+            "worker_version_id": "00000000-0000-4000-8000-cfb80df12fe7"
+          },
+          {
+            "authority_role": "pypi_deployment_gate",
+            "binding": "PYPI_DEPLOYMENT_GATE",
+            "configuration_sha256": "sha256:708cc320c05312059e76b4e28fc1999be15282230234319da811b0f6444b5a14",
+            "deployment_id": "00000000-0000-4000-8000-f70b3928c02e",
+            "deployment_observation_record_id": "sha256:2da4550314941ee678ccaca001dd3ac34dd73f0d40c2eb112cd23adf1f703963",
+            "deployment_observation_record_sha256": "sha256:2fea14f5032af0f51027b410b6be510ec77f23d6508fb2766dc1987598f9fc7a",
+            "deployment_observation_sha256": "sha256:adc2bb44acf78418859b6eebd193dded3e04307a5b9db96bb229b385689d8493",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-77d471f077e1"
+              }
+            ],
+            "service": "dpone-release-pypi-deployment-gate",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-pypi-deployment-gate@00000000-0000-4000-8000-77d471f077e1",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:881d4030e9c6851e19a61be81623644868638b637845db4382969dd12e9ee820",
+            "version_resource_projection_sha256": "sha256:95610771a55dcc070775c60fc344637c146d0cfef10b17cfb774d9cbdd578765",
+            "worker_version_id": "00000000-0000-4000-8000-77d471f077e1"
+          },
+          {
+            "authority_role": "pypi_reader",
+            "binding": "PYPI_READER",
+            "configuration_sha256": "sha256:f11cd60fbf3828bae11ffef51eca7f42d2c6a05daf363aaf4c5888185a6256b3",
+            "deployment_id": "00000000-0000-4000-8000-3e4226959d46",
+            "deployment_observation_record_id": "sha256:ad29a7b7baaa2092c9a51bcbe6bf7f228722ec966945fb1b307b3a5cd4b857bf",
+            "deployment_observation_record_sha256": "sha256:f033de36c23168ff649c8af8026de3c91f4000a554a762be83548ba0915d1072",
+            "deployment_observation_sha256": "sha256:d64af022a40d453dd1eacc7717cab0c36f5b46c2b69ceb69f239e91624e367c8",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-ae44f1a00bea"
+              }
+            ],
+            "service": "dpone-release-pypi-reader",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-pypi-reader@00000000-0000-4000-8000-ae44f1a00bea",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:f5ca676763618003993982dde962dbdda51b3ac0ad8bfa8fc1c1d42faa486f51",
+            "version_resource_projection_sha256": "sha256:91fba053c628d1bbaaba893bf10fd3c76f22499115a94ad7e799985ecf89eb33",
+            "worker_version_id": "00000000-0000-4000-8000-ae44f1a00bea"
+          },
+          {
+            "authority_role": "release_authority_ingress",
+            "binding": "INGRESS",
+            "configuration_sha256": "sha256:b64161393ddf704f361004fe5a94cbc7725c11fac35e0a3dd8356173198dbdfe",
+            "deployment_id": "00000000-0000-4000-8000-9a340ae62c6f",
+            "deployment_observation_record_id": "sha256:08b55a30dc6b1793f46abdb3bb67f60e2d1bcf98303764b27e3c1381575b48f3",
+            "deployment_observation_record_sha256": "sha256:1422e22e4553fec28035804bd2329a13482fc8e32bc79ae25c07c8f8661a850d",
+            "deployment_observation_sha256": "sha256:77a339338c5b407ecabc81ca82d6eb950b5b83028fd23b6403398fd7722eeed6",
+            "deployment_versions": [
+              {
+                "percentage": 0,
+                "worker_version_id": "00000000-0000-4000-8000-000000000001"
+              },
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-000000000002"
+              }
+            ],
+            "service": "dpone-release-authority-broker",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-authority-broker@00000000-0000-4000-8000-000000000001",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:c3f53f0deede8ce31cb56a6b3658914e9b77edcab0ec3567978c4d5c8f6b4fa4",
+            "version_resource_projection_sha256": "sha256:69acfc3573097d9a5fbb3fa696ab9ffedacc4b5b30419c3ef47af8c87bc8f560",
+            "worker_version_id": "00000000-0000-4000-8000-000000000001"
+          },
+          {
+            "authority_role": "release_mutator",
+            "binding": "RELEASE_MUTATOR",
+            "configuration_sha256": "sha256:b5d49cf6518e758dff24d4015201b2047c47ac8c7b471747b3b4ffbbef08fc06",
+            "deployment_id": "00000000-0000-4000-8000-be45b02d240b",
+            "deployment_observation_record_id": "sha256:52d4555ec3acd2be160c867dd8076ad4693c3fbf5bfbac77ca264b373e175789",
+            "deployment_observation_record_sha256": "sha256:13631e416a1d76576918d4cb5f8cd5abe6694177e4b49bc932517a44d7919cf4",
+            "deployment_observation_sha256": "sha256:a9c6400ef9bc5f03562d2ff5ad599b531ecbbaf49ca729a779d9346d8144b51a",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-d90b731a518e"
+              }
+            ],
+            "service": "dpone-release-mutator",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-mutator@00000000-0000-4000-8000-d90b731a518e",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:d171e00bf71da7df09e94066bea723492d7027a6d848227ab0f630bf3d351281",
+            "version_resource_projection_sha256": "sha256:8cf4ce037f928fe200a5abe78ed41532cae02ced6d67dbcd4b52993cd1503e1b",
+            "worker_version_id": "00000000-0000-4000-8000-d90b731a518e"
+          },
+          {
+            "authority_role": "runtime_deployment_gate",
+            "binding": "RUNTIME_DEPLOYMENT_GATE",
+            "configuration_sha256": "sha256:99cfa6b1866a432561e7b9dcc895090da0f05bb2c443df77664c070f7c0afcce",
+            "deployment_id": "00000000-0000-4000-8000-4e2c7945167a",
+            "deployment_observation_record_id": "sha256:82b372d9325ab48f4d4214231d37621a5f305eb17bac8d2b7763696707e8de8e",
+            "deployment_observation_record_sha256": "sha256:1a31463fa470a32d361fa419e3dd3c97612afcbe80730b0eed8e683b66ec65c5",
+            "deployment_observation_sha256": "sha256:adb35a22982f13c09fd7a81a1a8ce46514144d2e0d9bfb02ed3c7c4c7cfb1e7c",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-f7ea3d05af2b"
+              }
+            ],
+            "service": "dpone-release-runtime-deployment-gate",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-runtime-deployment-gate@00000000-0000-4000-8000-f7ea3d05af2b",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:70565d8626d4866cf4fe8e9db5655586cb4628ff2f5a5d580576d2cf93cb233d",
+            "version_resource_projection_sha256": "sha256:d3c37e1570ec16d0c79d44825c3fb345686560031a04ae6520c8b80eb0d8cbb9",
+            "worker_version_id": "00000000-0000-4000-8000-f7ea3d05af2b"
+          },
+          {
+            "authority_role": "tenant_scanner",
+            "binding": "TENANT_SCANNER",
+            "configuration_sha256": "sha256:43b004b7a98621f7893ca8365b55cb469203b473c94351bed374d8fc4dc397e9",
+            "deployment_id": "00000000-0000-4000-8000-404162f7ab75",
+            "deployment_observation_record_id": "sha256:05e2d50580f54ce12710a2fe7ce7d4cb9bef06eb46d291b54936fcd7a1383480",
+            "deployment_observation_record_sha256": "sha256:1623a26b8b27612aa1c6320c99be51b44c79569c75fedb9b54644362142ff314",
+            "deployment_observation_sha256": "sha256:f700ebabb289ee0f77c5adb8b29241f724f3db6df986985b4afc2334fe05bb6e",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-7b3755ec9107"
+              }
+            ],
+            "service": "dpone-release-tenant-scanner",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-tenant-scanner@00000000-0000-4000-8000-7b3755ec9107",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:77b540a3abfdf436be41a168f951e7b8216fcec418f9e13c2179ecda387362a3",
+            "version_resource_projection_sha256": "sha256:2e4983f2bcf17a411cd10b2ac608657de33b03d4401aa05ac7674eed5aa39ccb",
+            "worker_version_id": "00000000-0000-4000-8000-7b3755ec9107"
+          },
+          {
+            "authority_role": "worm_mirror",
+            "binding": "WORM_MIRROR",
+            "configuration_sha256": "sha256:5a5cd00b873b0805c23574675defe36e7d184a6fc4edcbc5dc0e374595a44f7e",
+            "deployment_id": "00000000-0000-4000-8000-db30b6f69a6e",
+            "deployment_observation_record_id": "sha256:76ea2468a1f4f1af0a294b0192e5bf005661a988ad6514e541a071f3b77f1c0d",
+            "deployment_observation_record_sha256": "sha256:23e4f1fbe79b0391c4d19c6e3663a674a4fffc7ac674e993b4ec8a42a4e072a6",
+            "deployment_observation_sha256": "sha256:4e21238b482fcace246288e91410a7abdf0bf7099586b24fb80fac978c575b41",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-c11127fdfa51"
+              }
+            ],
+            "service": "dpone-release-worm-mirror",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-worm-mirror@00000000-0000-4000-8000-c11127fdfa51",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:b9931b4a28ac7394b134f60d028880fb41cbd265e7ec3f54d762d8b7e5cc5b43",
+            "version_resource_projection_sha256": "sha256:e0f344bd4131fb0a471fe68a4503c4e4179157da6af9e4de3d5fa01274e83844",
+            "worker_version_id": "00000000-0000-4000-8000-c11127fdfa51"
+          },
+          {
+            "authority_role": "worm_version_observer",
+            "binding": "WORM_VERSION_OBSERVER",
+            "configuration_sha256": "sha256:359e079f3d40b1c0c1af4460838c47f1f725eaab428ed60eefede61144ae4847",
+            "deployment_id": "00000000-0000-4000-8000-921e52e0e38e",
+            "deployment_observation_record_id": "sha256:4598586f9dd5fa83a2efdb95f19cf6bf0cc063ef0c139b987a056e9afcc7ca29",
+            "deployment_observation_record_sha256": "sha256:d0cf81d104a4234f450cf0ce0cae137d5b9e715b90d79eae8905ff72400bb872",
+            "deployment_observation_sha256": "sha256:5483af449130a5d6e8368b589616c500eefdc98c21cba1e9f120e4b7c52e13f1",
+            "deployment_versions": [
+              {
+                "percentage": 100,
+                "worker_version_id": "00000000-0000-4000-8000-8f44ec08e796"
+              }
+            ],
+            "service": "dpone-release-worm-version-observer",
+            "service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-worm-version-observer@00000000-0000-4000-8000-8f44ec08e796",
+            "source_commit_sha": "1111111111111111111111111111111111111111",
+            "source_sha256": "sha256:957266f4612f92d0b9f09b6a782972bc54d7942d291a6c2a7febbfcff4bdcaa8",
+            "version_resource_projection_sha256": "sha256:3906ad4a2f359f6b531ba18755b85fe024b6e0ee5d1e3942189a78ad1070acf7",
+            "worker_version_id": "00000000-0000-4000-8000-8f44ec08e796"
+          }
+        ],
+        "broker_source_commit_sha": "1111111111111111111111111111111111111111",
+        "provider_observation": {
+          "observed_at": "2026-08-14T23:57:50Z",
+          "observer_authority_role": "cloudflare_deployment_observer",
+          "observer_service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-cloudflare-deployment-observer@00000000-0000-4000-8000-51de5b272803",
+          "observer_worker_version_id": "00000000-0000-4000-8000-51de5b272803",
+          "provider_api_version": "cloudflare-v4",
+          "provider_observation_aggregate_sha256": "sha256:5be283f3279f420372114729a28eec5f1cab1a0ccdbf19c697710c581068b40f",
+          "provider_observation_count": 14,
+          "schema": "dpone.service-authority-provider-observation.v1",
+          "schema_version": 1
+        },
+        "receipt_role_bindings": [
+          {
+            "service_authority_role": "attestation_mutator",
+            "service_role": "attestation_mutator"
+          },
+          {
+            "service_authority_role": "governance_reader",
+            "service_role": "attestation_reader"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "cancellation_observer"
+          },
+          {
+            "service_authority_role": "closed_projector",
+            "service_role": "closed_check_mutator"
+          },
+          {
+            "service_authority_role": "controller_run_reader",
+            "service_role": "controller_run_reader"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "draft_ledger_orchestrator"
+          },
+          {
+            "service_authority_role": "release_mutator",
+            "service_role": "github_draft_mutator"
+          },
+          {
+            "service_authority_role": "governance_reader",
+            "service_role": "github_governance_reader"
+          },
+          {
+            "service_authority_role": "release_mutator",
+            "service_role": "github_release_mutator"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "lease_orchestrator"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "ledger_orchestrator"
+          },
+          {
+            "service_authority_role": "pypi_deployment_gate",
+            "service_role": "pypi_deployment_gate"
+          },
+          {
+            "service_authority_role": "pypi_reader",
+            "service_role": "pypi_reader"
+          },
+          {
+            "service_authority_role": "release_authority_ingress",
+            "service_role": "recovery_observer"
+          },
+          {
+            "service_authority_role": "tenant_scanner",
+            "service_role": "tenant_scanner"
+          }
+        ],
+        "schema": "dpone.expected-service-authorities.v1",
+        "schema_version": 1
+      },
+      "expected_service_authorities_sha256": "sha256:71df993aea227b6931fdf9b89391844bf5cb49bdb79444cfd8eaf31d99a8c951",
+      "observed_at": "2026-08-14T23:59:10Z",
+      "previous": {
+        "record_id": "sha256:16a36e86f6fed5d465ff332511a0ce1a863b55d364b25a7cdaa25db19abf9648",
+        "record_sha256": "sha256:0e446a81711c79b3749f0a28af199df455ba389e1288a8d17b51ba307a948784"
+      },
+      "promotion_epoch": {
+        "completed_at": "2026-08-14T23:59:00Z",
+        "maximum_seconds": 300,
+        "started_at": "2026-08-14T23:58:00Z"
+      },
+      "provider_observation_aggregate_sha256": "sha256:b8c5e88c16eed09946d46a158048af6f2c043c1b3683985adbf4bd5f6df8dc8d",
+      "provider_observation_window": {
+        "completed_at": "2026-08-14T23:59:10Z",
+        "maximum_seconds": 30,
+        "observer_authority_role": "cloudflare_deployment_observer",
+        "observer_service_identity": "cloudflare-worker:00000000000000000000000000000000/dpone-release-cloudflare-deployment-observer@00000000-0000-4000-8000-51de5b272803",
+        "observer_worker_version_id": "00000000-0000-4000-8000-51de5b272803",
+        "provider_api_version": "cloudflare-v4",
+        "provider_observation_count": 14,
+        "started_at": "2026-08-14T23:59:00Z"
+      },
+      "provisioned": {
+        "record_id": "sha256:aa508c2187fca56f397ff75adc52b94e02f38122cdd48bd42105106e5e0f8e14",
+        "record_sha256": "sha256:12f26d1b6dbbfbbfdc1f08fd74a266672f5196ccefd2a1d94dbcb03cc461ac95"
+      },
+      "schema": "dpone.service-authority-activation-record.v1",
+      "schema_version": 1
+    },
+    "service_authority_activation_record_id": "sha256:52667fad1bfe057aecf679b29b74073b447aae29b485d7a0b671eefbed672958",
+    "service_authority_activation_record_sha256": "sha256:c04e4b086cd41b1b3bd8c9713438beb8f5055bb2f32817cac72bca6fe225c8c3",
+    "state": "QUEUED"
+  },
+  "payload_sha256": "sha256:fcc83af875038be56f080370e4ece056c2be14acd8609aa1c6f850d9f9ff53cb",
+  "producer": {
+    "actor_id": 1001,
+    "audience": "dpone-release-controller-ledger-write",
+    "check_run_id": 2001,
+    "environment": "release-attest",
+    "job_name": "admit",
+    "kind": "github_actions_job",
+    "oidc_claims_sha256": "sha256:7a6c32ffa6bab4c5e63c9309f7649a805168b0ebf893d253167390bc14720b12",
+    "oidc_jti_sha256": "sha256:7f761f90a7ea3ffcddd4ae971f58eb2ed33f9fa101e668c74dfda6de3ba05af1",
+    "provider_api_version": "2026-03-10",
+    "provider_job_observation_sha256": "sha256:47fb6b7956d60624969de8736624b160da7bac1ecf07acdc7c05a5613e5e7049",
+    "repository_id": 1305993853,
+    "request_id": "request-01HXDPONE",
+    "run_attempt": 2,
+    "run_id": 123456789,
+    "workflow_id": 316322127,
+    "workflow_path": ".github/workflows/release-controller.yml",
+    "workflow_sha": "cccccccccccccccccccccccccccccccccccccccc"
+  },
+  "receipt_id": "sha256:865f8228c2fef3f5086c7f38ba43d6375ed3f328d9ea0bd4130ab4aa4ba01bc3",
+  "receipt_type": "REQUEST_ENQUEUED",
+  "schema": "dpone.release-receipt-envelope.v2",
+  "schema_version": 2,
+  "scope": {
+    "kind": "release",
+    "release_identity_id": "sha256:3d52af3a2bc6eb185a48465c8680d988a57f7fecf668313673ded1aaed3a59ab"
+  },
+  "stream": {
+    "previous": "GENESIS",
+    "release_authority_id": "sha256:ff18819c8188e8714a766fe6e69be7cf08d2b73eea7ff8375510a6e55088259a",
+    "release_identity_id": "sha256:3d52af3a2bc6eb185a48465c8680d988a57f7fecf668313673ded1aaed3a59ab",
+    "sequence": 0
+  },
+  "timestamps": {
+    "committed_at": "2026-08-15T00:00:01Z",
+    "observed_at": "2026-08-15T00:00:00Z"
+  }
+}

@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import tempfile
 from pathlib import Path
 from typing import Sequence
 
@@ -18,6 +17,7 @@ from tools.evidence.release_controller_wire_catalog import JSON_CODECS  # noqa: 
 from tools.evidence.release_controller_schema_registry import (  # noqa: E402
     DELEGATED,
 )
+from tools.evidence import release_controller_wire_vectors as wire_vectors  # noqa: E402
 from scripts.release_generator_support import (  # noqa: E402
     ManagedRoot,
     parse_check_mode,
@@ -44,84 +44,13 @@ def generated_files() -> dict[Path, bytes]:
             json.dumps(codec.schema_document(), indent=2, sort_keys=True) + "\n"
         ).encode()
         result[SCHEMA_ROOT / f"{codec.schema_id}.json"] = schema_bytes
-    result.update(_delegated_goldens())
-    return result
-
-
-def _delegated_goldens() -> dict[Path, bytes]:
-    """Build contextual/binary bytes through their production reference builders."""
-
-    from tests.release_candidate_handoff_test_support import write_candidate
-    from tests.test_release_candidate_provider import (
-        FROZEN_CLOCK,
-        _binding,
-        _observation,
-        _zip_tree,
+    result.update(
+        {
+            GOLDEN_ROOT / name: body
+            for name, body in wire_vectors.reference_files().items()
+        }
     )
-    from tests.test_release_controller_exchange import _receipt
-    from tests.test_release_controller_preflight import _proof_exchange
-    from tools.evidence import release_candidate_stream as candidate_stream
-    from tools.evidence import release_candidate_stream_golden as candidate_golden
-    from tools.evidence import release_candidate_stream_response as candidate_response
-    from tools.evidence import release_controller_activation_proof as activation
-    from tools.evidence import release_controller_exchange as exchange
-    from tools.evidence.release_candidate_handoff import import_provider_candidate
-    from tools.evidence.release_canonical import canonical_json_bytes
-
-    result = {
-        GOLDEN_ROOT / f"{activation.REQUEST_SCHEMA}.json": activation.request_bytes(),
-        GOLDEN_ROOT
-        / f"{activation.RESPONSE_SCHEMA}.json": _proof_exchange().response_bytes,
-        GOLDEN_ROOT
-        / f"{candidate_stream.REQUEST_SCHEMA}.json": candidate_golden.request().encoded(),
-    }
-    with tempfile.TemporaryDirectory() as directory:
-        workspace = Path(directory)
-        producer = workspace / "producer"
-        producer.mkdir()
-        write_candidate(producer)
-        raw_zip = _zip_tree(producer)
-        observation = _observation(raw_zip)
-        imported = import_provider_candidate(
-            _MemorySource(raw_zip),
-            observation,
-            _binding(raw_zip),
-            workspace / "candidate",
-            clock=FROZEN_CLOCK,
-        )
-        request_data = exchange.candidate_admit_request_bytes(imported)
-        request = exchange.parse_candidate_admit_request(
-            request_data, now=FROZEN_CLOCK.now()
-        )
-        response_data = exchange.candidate_admit_response_bytes(
-            _receipt(request), expected=request
-        )
-        result.update(
-            {
-                GOLDEN_ROOT / f"{candidate_stream.RESPONSE_SCHEMA}.zip": raw_zip,
-                GOLDEN_ROOT
-                / f"{candidate_stream.RESPONSE_SCHEMA}.headers.json": canonical_json_bytes(
-                    candidate_response.response_headers(observation)
-                ),
-                GOLDEN_ROOT
-                / f"{exchange.CANDIDATE_ADMIT_REQUEST_SCHEMA}.json": request_data,
-                GOLDEN_ROOT
-                / f"{exchange.CANDIDATE_ADMIT_RESPONSE_SCHEMA}.json": response_data,
-            }
-        )
     return result
-
-
-class _MemorySource:
-    """One-shot deterministic provider archive source for golden generation."""
-
-    def __init__(self, body: bytes) -> None:
-        self.body = body
-
-    def chunks(self, *, maximum_bytes: int):
-        if len(self.body) > maximum_bytes:
-            raise ValueError("golden provider body exceeds requested bound")
-        yield self.body
 
 
 def generate(*, check: bool) -> int:
