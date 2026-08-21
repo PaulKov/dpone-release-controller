@@ -169,8 +169,8 @@ EXPECTED_CI_WORKFLOW: dict[str, Any] = {
                     "name": "Validate source, tests, and module boundaries",
                     "run": _shell(
                         "set -euo pipefail",
-                        "uv run --frozen ruff check .",
-                        "uv run --frozen ruff format --check .",
+                        "uv run --frozen ruff check scripts tests tools",
+                        "uv run --frozen ruff format --check scripts tests tools",
                         (
                             "uv run --frozen python -B -m compileall -q "
                             "scripts tests tools"
