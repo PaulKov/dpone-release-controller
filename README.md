@@ -48,8 +48,8 @@ for source checks. Use Python 3.11 as selected by `.python-version` and uv
 
 ```console
 $ uv sync --frozen
-$ uv run --frozen ruff check .
-$ uv run --frozen ruff format --check .
+$ uv run --frozen ruff check scripts tests tools
+$ uv run --frozen ruff format --check scripts tests tools
 $ uv run --frozen python -B -m compileall -q scripts tests tools
 $ uv run --frozen python -B -m unittest discover -s tests -v
 ```
@@ -72,6 +72,29 @@ $ uv run --frozen python -B -m tools.evidence.release_receipt_vectors --write
 
 The public closure producer intentionally has no write mode while its contract
 is on HOLD; CI invokes its read-only `--check` quarantine assertion.
+
+The recovered broker is isolated under `broker/` and remains on the same
+provider-mutation HOLD. Its self-service validation uses the exact runtime from
+`broker/.node-version`, pnpm 11.19.0, the frozen lockfile, and disabled package
+lifecycle scripts:
+
+```console
+$ cd broker
+$ test "$(node --version)" = "v$(cat .node-version)"
+$ corepack enable
+$ corepack install --global pnpm@11.19.0
+$ pnpm install --frozen-lockfile --ignore-scripts
+$ CI=true pnpm check
+```
+
+These commands validate only local source and declarative simulations. They do
+not authorize any `--apply`, upload, deployment, provisioning, provider, or
+control-plane network action. The package-manager setup and frozen dependency
+install may download pinned artifacts from their public registries; those
+downloads require no provider credentials. Run the local gate from a
+credential-free shell. CI runs the same broker gate with read-only repository
+permissions, empty Node injection variables, no credentials persistence, and
+no package-manager cache.
 
 Exercise the local preflight without credentials or network access:
 
