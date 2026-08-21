@@ -1,0 +1,141 @@
+"""Admission, governance, lease, hygiene, and attestation route slice."""
+
+from __future__ import annotations
+
+from tools.evidence.release_controller_route_builders import job, service
+from tools.evidence.release_controller_route_contract import (
+    ATTEST,
+    CANDIDATE,
+    GOVERNANCE,
+    LEDGER,
+    RouteProfile,
+)
+
+ADMISSION_ROUTES = (
+    RouteProfile(
+        "ACTIVATION_PROOF",
+        "github_actions_job",
+        "admit",
+        "release-attest",
+        LEDGER,
+        "POST",
+        "/v1/activation/proof",
+        None,
+        (),
+    ),
+    job("REQUEST_ENQUEUED", "admit", "release-attest", LEDGER, "QUEUED"),
+    *(
+        job(
+            f"GOVERNANCE_SNAPSHOT:{label}",
+            f"governance-{label.lower()}",
+            "release-attest",
+            GOVERNANCE,
+            f"GOVERNANCE_{label}",
+        )
+        for label in "ABC"
+    ),
+    RouteProfile(
+        "CANDIDATE_SOURCE",
+        "github_actions_job",
+        "candidate-import",
+        "release-attest",
+        CANDIDATE,
+        "POST",
+        "/v1/providers/github/candidate",
+        None,
+        (),
+    ),
+    RouteProfile(
+        "TERMINAL_ASSERT",
+        "github_actions_job",
+        "controller-complete",
+        "release-attest",
+        LEDGER,
+        "POST",
+        "/v1/releases/terminal/assert",
+        None,
+        (),
+    ),
+    job(
+        "CANDIDATE_HANDOFF",
+        "candidate-import",
+        "release-attest",
+        LEDGER,
+        "CANDIDATE_HANDOFF",
+    ),
+    job(
+        "LEASE_ACQUIRED:PRIMARY",
+        "lease-acquire",
+        "release-attest",
+        LEDGER,
+        "LEASE_ACQUIRED",
+    ),
+    job(
+        "LEASE_ACQUIRED:RECOVERY",
+        "recovery-lease-acquire",
+        "release-attest",
+        LEDGER,
+        "LEASE_ACQUIRED",
+    ),
+    job(
+        "LEASE_RENEWED",
+        "lease-renew",
+        "release-attest",
+        LEDGER,
+        "LEASE_RENEWED",
+    ),
+    RouteProfile(
+        "LEASE_EXPIRED",
+        "release_authority_broker_timer",
+        None,
+        None,
+        None,
+        "INTERNAL",
+        "durable-object:lease-expiry-alarm",
+        "LEASE_EXPIRED",
+        ("LEASE_EXPIRED",),
+    ),
+    *(
+        job(
+            f"LEASE_RELEASED:{reason}",
+            "cancel",
+            "release-attest",
+            LEDGER,
+            "LEASE_RELEASED",
+        )
+        for reason in ("CANCELLED", "RECOVERY_REQUIRED")
+    ),
+    service(
+        "LEASE_RELEASED:ABANDONED",
+        "/v1/internal/releases/recovery/hold/finalize",
+        "LEASE_RELEASED",
+    ),
+    job(
+        "TENANT_HYGIENE_VERIFIED",
+        "tenant-hygiene",
+        "release-attest",
+        LEDGER,
+        "TENANT_HYGIENE_VERIFIED",
+    ),
+    job(
+        "MUTATION_INTENT:ATTESTATION_CREATE",
+        "attest-create",
+        "release-attest",
+        ATTEST,
+        "MUTATION_INTENT_RECORDED",
+    ),
+    job(
+        "ATTESTATION_VERIFIED",
+        "attest-verify",
+        "release-attest",
+        ATTEST,
+        "ATTESTED",
+    ),
+    job(
+        "PUBLIC_BUNDLE_VERIFIED",
+        "bundle-verify",
+        "release-attest",
+        LEDGER,
+        "PUBLIC_BUNDLE_VERIFIED",
+    ),
+)
