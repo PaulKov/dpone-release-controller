@@ -79,6 +79,42 @@ FORBIDDEN_WORKFLOW_TEXT = (
     "attest-build-provenance",
     "upload-artifact",
 )
+EXPECTED_EMERGENCY_QUARANTINE_JOB = """  emergency-quarantine:
+    name: Validate emergency quarantine
+    if: ${{ always() }}
+    needs:
+      - contract
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require the complete quarantine contract matrix
+        env:
+          CONTRACT_RESULT: ${{ needs.contract.result }}
+        run: |
+          set -euo pipefail
+          test "${CONTRACT_RESULT}" = "success"
+"""
+
+
+def exact_workflow_job(text: str, job_id: str) -> str:
+    """Return one active top-level job block, rejecting duplicate YAML keys."""
+
+    lines = text.splitlines(keepends=True)
+    marker = f"  {job_id}:\n"
+    starts = [index for index, line in enumerate(lines) if line == marker]
+    if len(starts) != 1:
+        raise AssertionError(
+            f"expected exactly one active {job_id!r} job, found {len(starts)}"
+        )
+
+    start = starts[0]
+    end = len(lines)
+    top_level_job = re.compile(r"^  [A-Za-z0-9_-]+:\s*(?:#.*)?\n$")
+    for index in range(start + 1, len(lines)):
+        if top_level_job.fullmatch(lines[index]):
+            end = index
+            break
+    return "".join(lines[start:end])
 
 
 def load_tombstone() -> object:
@@ -134,16 +170,34 @@ class WorkflowQuarantineTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("persist-credentials: false", text)
 
-    def test_required_quarantine_check_aggregates_the_full_matrix(self) -> None:
-        """Keep the protected-branch check stable without masking CI failures."""
+    def test_required_quarantine_check_is_one_exact_active_job(self) -> None:
+        """Prevent comments, duplicate keys, skips, or partial needs from spoofing it."""
 
         text = CI_WORKFLOW.read_text(encoding="utf-8")
 
-        self.assertIn("    name: Validate emergency quarantine\n", text)
-        self.assertIn("    if: ${{ always() }}\n", text)
-        self.assertIn("    needs:\n      - contract\n", text)
-        self.assertIn("          CONTRACT_RESULT: ${{ needs.contract.result }}\n", text)
-        self.assertIn('          test "${CONTRACT_RESULT}" = "success"\n', text)
+        self.assertEqual(
+            exact_workflow_job(text, "emergency-quarantine"),
+            EXPECTED_EMERGENCY_QUARANTINE_JOB,
+        )
+        self.assertEqual(
+            text.splitlines().count("    name: Validate emergency quarantine"),
+            1,
+        )
+
+    def test_required_check_extractor_rejects_comments_and_duplicate_jobs(self) -> None:
+        """Treat commented markers as absent and duplicate YAML job keys as invalid."""
+
+        commented = EXPECTED_EMERGENCY_QUARANTINE_JOB.replace(
+            "  emergency-quarantine:\n",
+            "  # emergency-quarantine:\n",
+            1,
+        )
+        with self.assertRaisesRegex(AssertionError, "found 0"):
+            exact_workflow_job(commented, "emergency-quarantine")
+
+        duplicated = EXPECTED_EMERGENCY_QUARANTINE_JOB * 2
+        with self.assertRaisesRegex(AssertionError, "found 2"):
+            exact_workflow_job(duplicated, "emergency-quarantine")
 
 
 class LegacyWriterRemovalTests(unittest.TestCase):
