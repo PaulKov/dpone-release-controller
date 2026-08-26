@@ -1,0 +1,117 @@
+name: PyPI release rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact already-tagged dpone version to rehearse
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: pypi-rehearsal-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and seal rehearsal artifacts
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
+    steps:
+      - id: identity
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          printf 'version=%s\n' "${VERSION}" >> "${GITHUB_OUTPUT}"
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: PaulKov/dpone
+          ref: refs/tags/v${{ steps.identity.outputs.version }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          version: "0.11.28"
+      - name: Build closed four-project inventory
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          test "$(git tag --points-at HEAD)" = "v${VERSION}"
+          uv build
+          uv build packages/dpone-native-accel --out-dir dist
+          uv build packages/dpone-airflow-pack --out-dir dist
+          uv build packages/apache-airflow-providers-dpone --out-dir dist
+          uv tool run twine check dist/*
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          expected = {
+              f"{distribution}-{version}{suffix}"
+              for distribution in (
+                  "dpone", "dpone_native_accel", "dpone_airflow_pack",
+                  "apache_airflow_providers_dpone",
+              )
+              for suffix in (".tar.gz", "-py3-none-any.whl")
+          }
+          files = sorted(path for path in Path("dist").iterdir() if path.is_file())
+          if {path.name for path in files} != expected:
+              raise SystemExit("rehearsal inventory is not the exact eight archives")
+          Path("rehearsal-inventory.json").write_text(json.dumps({
+              "schema": "dpone.pypi-rehearsal-inventory.v1",
+              "version": version,
+              "archives": [{"filename": path.name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()} for path in files],
+          }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dpone-pypi-rehearsal-${{ steps.identity.outputs.version }}
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+            rehearsal-inventory.json
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 14
+
+  verify:
+    name: Redownload and install sealed rehearsal artifacts
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: dpone-pypi-rehearsal-${{ needs.build.outputs.version }}
+          path: rehearsal/
+      - name: Reconcile and install exact wheel set
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("rehearsal/rehearsal-inventory.json").read_text(encoding="utf-8"))
+          actual = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in Path("rehearsal").glob("*") if path.is_file() and path.name != "rehearsal-inventory.json"}
+          expected = {item["filename"]: item["sha256"] for item in payload["archives"]}
+          if actual != expected or len(actual) != 8:
+              raise SystemExit("redownloaded rehearsal archive inventory differs")
+          PY
+          python -m venv rehearsal-venv
+          rehearsal-venv/bin/pip install --disable-pip-version-check rehearsal/*.whl
+          rehearsal-venv/bin/pip check
+          rehearsal-venv/bin/dpone --help

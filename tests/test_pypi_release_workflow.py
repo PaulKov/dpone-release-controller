@@ -13,6 +13,9 @@ WORKFLOW = (
 PUBLISHER_CONTRACT = (
     Path(__file__).resolve().parents[1] / "config" / "oidc-pypi-publisher.json"
 )
+REHEARSAL_WORKFLOW = (
+    Path(__file__).resolve().parents[1] / ".github" / "workflows" / "pypi-rehearsal.yml"
+)
 
 
 class PyPIReleaseWorkflowTests(unittest.TestCase):
@@ -83,6 +86,19 @@ class PyPIReleaseWorkflowTests(unittest.TestCase):
                 "apache-airflow-providers-dpone",
             ],
         )
+
+    def test_rehearsal_is_artifact_bound_and_cannot_publish(self) -> None:
+        text = REHEARSAL_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("workflow_dispatch:", text)
+        self.assertIn("ref: refs/tags/v${{ steps.identity.outputs.version }}", text)
+        self.assertIn("dpone.pypi-rehearsal-inventory.v1", text)
+        self.assertIn("redownloaded rehearsal archive inventory differs", text)
+        self.assertIn("rehearsal-venv/bin/pip check", text)
+        self.assertIn("rehearsal-venv/bin/dpone --help", text)
+        self.assertNotIn("id-token: write", text)
+        self.assertNotIn("environment:", text)
+        self.assertNotIn("gh-action-pypi-publish", text)
 
 
 if __name__ == "__main__":
