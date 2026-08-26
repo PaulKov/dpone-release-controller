@@ -1,0 +1,11 @@
+{
+  "schema": "dpone.release-controller.activation.v1",
+  "state": "quarantined",
+  "policy_version": 1,
+  "live_mutation_enabled": false,
+  "target_repository": "PaulKov/dpone",
+  "target_repository_id": 1255975556,
+  "workflow_path": ".github/workflows/controller-quarantine.yml",
+  "activation_marker_sha256": null,
+  "reason": "ADR 0028 policy v2, historical workflow retirement, credential rotation, provider protections, least-privilege credentials, transactional evidence fencing, and recovery closure are not activated."
+}

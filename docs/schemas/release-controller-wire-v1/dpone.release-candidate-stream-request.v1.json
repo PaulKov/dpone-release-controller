@@ -1,0 +1,79 @@
+{
+  "$comment": "Nested semantics, provider headers, and binary member limits are enforced by tools.evidence.release_candidate_stream.parse.",
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-candidate-stream-request.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "candidate_artifact_digest": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "candidate_artifact_id": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "candidate_run_attempt": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "candidate_run_id": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "expected_peeled_commit_sha": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "schema": {
+      "const": "dpone.release-candidate-stream-request.v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "tag": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    }
+  },
+  "required": [
+    "candidate_artifact_digest",
+    "candidate_artifact_id",
+    "candidate_run_attempt",
+    "candidate_run_id",
+    "expected_peeled_commit_sha",
+    "schema",
+    "schema_version",
+    "tag"
+  ],
+  "type": "object"
+}

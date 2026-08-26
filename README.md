@@ -49,6 +49,11 @@ $ python3 -B tools/evidence/release_evidence_cli.py acquire-lease
 The stacked-review boundaries and their dependency direction are documented in
 [`docs/controller-stack.md`](docs/controller-stack.md).
 
+Normative registry and positive-vector sources live under [`contracts/`](contracts/).
+Generators consume those production-owned sources; implementation modules do
+not import fixtures from `tests/`. Generated public schemas remain descriptive
+artifacts while the runtime and public-closure gates are held.
+
 ## Required operational quarantine evidence
 
 The code patch is necessary but cannot change provider state. Before declaring

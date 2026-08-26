@@ -1,0 +1,20 @@
+[project]
+name = "dpone-release-controller"
+version = "0.0.0"
+description = "Quarantined external release-controller contracts and validation tooling"
+requires-python = ">=3.11,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "jsonschema>=4.23,<5",
+  "ruff>=0.15.6,<0.16",
+]
+
+[tool.uv]
+package = false
+default-groups = ["dev"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88

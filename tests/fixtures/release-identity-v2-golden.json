@@ -1,0 +1,48 @@
+{
+  "attempt": {
+    "domain": "dpone.release.attempt.v2",
+    "id": "sha256:e1083019c34b04bc6791a966310da6b87174339ce38a546df22181345a16832c",
+    "payload": {
+      "controller_repository_id": 1305993853,
+      "controller_run_attempt": 2,
+      "controller_run_id": 9876543210,
+      "controller_workflow_id": 316322127,
+      "release_authority_id": "sha256:954e42f29d3dd0320ad0f907934ee7963ae20c941acd0e1412b3d2e0db20e11f"
+    }
+  },
+  "authority": {
+    "domain": "dpone.release.authority.v2",
+    "id": "sha256:954e42f29d3dd0320ad0f907934ee7963ae20c941acd0e1412b3d2e0db20e11f",
+    "payload": {
+      "peeled_commit_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "policy_sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "protected_base_ref": "refs/heads/master",
+      "release_identity_id": "sha256:3d52af3a2bc6eb185a48465c8680d988a57f7fecf668313673ded1aaed3a59ab",
+      "tag_object_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  "candidate": {
+    "domain": "dpone.release.candidate.v2",
+    "id": "sha256:91dca469564b0539b198dd6e9d742f3b887fb2a0df9f896c9c71620dc40db803",
+    "payload": {
+      "candidate_inventory_sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "release_authority_id": "sha256:954e42f29d3dd0320ad0f907934ee7963ae20c941acd0e1412b3d2e0db20e11f"
+    }
+  },
+  "release": {
+    "domain": "dpone.release.identity.v2",
+    "id": "sha256:3d52af3a2bc6eb185a48465c8680d988a57f7fecf668313673ded1aaed3a59ab",
+    "payload": {
+      "projects": [
+        "apache-airflow-providers-dpone",
+        "dpone",
+        "dpone-airflow-pack",
+        "dpone-native-accel"
+      ],
+      "release": "v0.74.0",
+      "repository_id": 1255975556
+    }
+  },
+  "schema": "dpone.release-identity-golden-v1",
+  "schema_version": 1
+}

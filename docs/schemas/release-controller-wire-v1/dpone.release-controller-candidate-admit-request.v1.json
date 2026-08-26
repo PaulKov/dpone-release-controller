@@ -1,0 +1,59 @@
+{
+  "$comment": "Nested semantics, provider headers, and binary member limits are enforced by tools.evidence.release_controller_exchange.parse_candidate_admit_request.",
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/wire/dpone.release-controller-candidate-admit-request.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "candidate": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "evidence": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "provider_observation": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "release_identity_id": {
+      "type": [
+        "array",
+        "boolean",
+        "integer",
+        "object",
+        "string"
+      ]
+    },
+    "schema": {
+      "const": "dpone.release-controller-candidate-admit-request.v1"
+    },
+    "schema_version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "candidate",
+    "evidence",
+    "provider_observation",
+    "release_identity_id",
+    "schema",
+    "schema_version"
+  ],
+  "type": "object"
+}
