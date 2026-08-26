@@ -1,0 +1,116 @@
+name: PyPI release controller
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact dpone version to publish (for example, 0.74.27)
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: pypi-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build exact dpone release artifacts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
+    steps:
+      - name: Validate version syntax
+        id: identity
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          printf 'version=%s\n' "${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Checkout immutable dpone release tag
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: PaulKov/dpone
+          ref: refs/tags/v${{ inputs.version }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Install locked build runtime
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          version: "0.11.28"
+
+      - name: Verify tag and project identity
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          test "$(git tag --points-at HEAD)" = "v${VERSION}"
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+          if project["project"]["name"] != "dpone":
+              raise SystemExit("unexpected project name")
+          if project["project"]["version"] != os.environ["VERSION"]:
+              raise SystemExit("tag and project version differ")
+          PY
+
+      - name: Build and validate all release distributions
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          uv build
+          uv build packages/dpone-native-accel --out-dir dist
+          uv build packages/dpone-airflow-pack --out-dir dist
+          uv tool run twine check dist/*
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          files = sorted(Path("dist").glob("*"))
+          if not files:
+              raise SystemExit("release build produced no distributions")
+          if any(version not in path.name for path in files):
+              raise SystemExit("distribution filename version differs")
+          PY
+
+      - name: Upload immutable release distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dpone-pypi-${{ steps.identity.outputs.version }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+          overwrite: false
+
+  publish:
+    name: Publish exact artifacts to PyPI
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download immutable release distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: dpone-pypi-${{ needs.build.outputs.version }}
+          path: dist/
+
+      - name: Publish through PyPI Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        with:
+          packages-dir: dist/

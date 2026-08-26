@@ -25,7 +25,9 @@ APP_BOOTSTRAP = ROOT / "scripts" / "open-app-manifest.html"
 EVIDENCE_PROTOTYPE = ROOT / "evidence-store.example.json"
 SCAFFOLD_STAMP = ROOT / ".scaffold-stamp"
 
-EXPECTED_WORKFLOWS = frozenset({"ci.yml", "controller-quarantine.yml"})
+EXPECTED_WORKFLOWS = frozenset(
+    {"ci.yml", "controller-quarantine.yml", "pypi-release.yml"}
+)
 EXPECTED_ACTIONS = frozenset(
     {
         "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
@@ -126,7 +128,9 @@ class WorkflowQuarantineTests(unittest.TestCase):
         self.assertEqual(actual, EXPECTED_WORKFLOWS)
         self.assertFalse(LEGACY_WORKFLOW.exists())
 
-    def test_workflows_have_no_dispatch_secret_or_write_authority(self) -> None:
+    def test_quarantine_workflows_have_no_dispatch_secret_or_write_authority(
+        self,
+    ) -> None:
         actions: set[str] = set()
         for workflow in (CI_WORKFLOW, QUARANTINE_WORKFLOW):
             text = workflow.read_text(encoding="utf-8")
@@ -364,9 +368,10 @@ class BootstrapQuarantineTests(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         inventory = (ROOT / "docs" / "live-inventory.md").read_text(encoding="utf-8")
 
-        self.assertIn("provides no proof that provider-side authority", readme)
+        self.assertIn("provider-side authority has been revoked", readme)
         self.assertIn("UNVERIFIED PROVIDER STATE", inventory)
-        self.assertIn("separate RFC and separately reviewed PR", readme)
+        self.assertIn("pypi-release.yml", readme)
+        self.assertIn("must still be revoked or reduced", readme)
 
 
 if __name__ == "__main__":
