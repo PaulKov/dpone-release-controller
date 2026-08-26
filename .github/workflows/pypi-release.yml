@@ -80,7 +80,9 @@ jobs:
 
           version = os.environ["VERSION"]
           filenames = sorted(
-              path.name for path in Path("dist").iterdir() if path.is_file()
+              path.name
+              for path in Path("dist").iterdir()
+              if path.is_file() and path.suffix in {".whl", ".gz"}
           )
           expected = {
               f"{distribution}-{version}{suffix}"
@@ -104,7 +106,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: dpone-pypi-${{ steps.identity.outputs.version }}
-          path: dist/
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
           if-no-files-found: error
           retention-days: 14
           overwrite: false
