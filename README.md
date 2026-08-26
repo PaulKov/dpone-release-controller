@@ -8,13 +8,18 @@ External release-controller repository planned for `PaulKov/dpone`.
 release writer and provides no proof that provider-side authority has been
 revoked. Production release policy remains unchanged in `PaulKov/dpone`.
 
-This quarantine patch deliberately contains no controller prototype, release
-contract, activation switch, or compatibility mode:
+This replacement stack contains a dormant, dependency-closed domain model for
+review. It deliberately contains no executable controller, activation switch,
+provider adapter, or compatibility mode. The domain modules cannot be reached
+from either checked-in workflow or from the permanent CLI tombstone:
 
 - the historical `.github/workflows/release-controller.yml` writer is removed;
 - the only quarantine marker runs on a push to `master`, has no token
   permissions, performs no checkout, and cannot be manually dispatched;
-- every historical evidence/provider module is removed from the current tree;
+- every historical evidence/provider module remains removed from the current
+  tree;
+- the reviewed domain layer is standard-library-only, acyclic, and has no
+  provider or subprocess import;
 - `tools/evidence/release_evidence_cli.py` is a permanent fail-closed tombstone;
 - the bootstrap stamp and evidence-store configuration prototype are removed;
 - the GitHub App manifest requests metadata read access only; and
@@ -30,7 +35,7 @@ The checks use only the Python standard library:
 
 ```console
 $ python3 -B -m unittest discover -s tests -v
-$ python3 -B -m py_compile tools/evidence/release_evidence_cli.py tests/*.py
+$ python3 -B -m compileall -q tests tools
 $ python3 -m json.tool github-app-manifest.json >/dev/null
 ```
 
@@ -40,6 +45,9 @@ The tombstone help path is read-only. Any other invocation exits with status 2:
 $ python3 -B tools/evidence/release_evidence_cli.py --help
 $ python3 -B tools/evidence/release_evidence_cli.py acquire-lease
 ```
+
+The stacked-review boundaries and their dependency direction are documented in
+[`docs/controller-stack.md`](docs/controller-stack.md).
 
 ## Required operational quarantine evidence
 

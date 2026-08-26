@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import importlib.util
 import io
@@ -26,6 +27,37 @@ EXPECTED_WORKFLOWS = frozenset({"ci.yml", "controller-quarantine.yml"})
 EXPECTED_ACTIONS = frozenset(
     {
         "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+    }
+)
+RETIRED_PROVIDER_MODULES = frozenset(
+    {
+        "release_attest_draft.py",
+        "release_authorize.py",
+        "release_draft_inventory.py",
+        "release_evidence_cli_observe.py",
+        "release_evidence_cli_support.py",
+        "release_evidence_store_b2.py",
+        "release_github_api.py",
+        "release_governance_snapshot.py",
+        "release_immutable_inventory.py",
+        "release_lease_service.py",
+        "release_public_bundle.py",
+        "release_pypi_inventory.py",
+        "release_receipt_envelope.py",
+        "release_stage_draft.py",
+        "release_stream_service.py",
+        "release_trusted_publisher_inventory.py",
+    }
+)
+FORBIDDEN_PROVIDER_IMPORTS = frozenset(
+    {
+        "boto3",
+        "http.client",
+        "requests",
+        "socket",
+        "subprocess",
+        "urllib.error",
+        "urllib.request",
     }
 )
 FORBIDDEN_WORKFLOW_TEXT = (
@@ -104,14 +136,82 @@ class WorkflowQuarantineTests(unittest.TestCase):
 class LegacyWriterRemovalTests(unittest.TestCase):
     """Prove that current source cannot load the retired writer graph."""
 
-    def test_only_the_fail_closed_tombstone_remains(self) -> None:
+    def test_retired_provider_graph_stays_removed(self) -> None:
         actual = {
             path.name
             for path in EVIDENCE_DIRECTORY.iterdir()
             if path.is_file() and path.suffix == ".py"
         }
 
-        self.assertEqual(actual, {"release_evidence_cli.py"})
+        self.assertIn("release_evidence_cli.py", actual)
+        self.assertTrue(RETIRED_PROVIDER_MODULES.isdisjoint(actual))
+
+    def test_dormant_model_has_no_provider_or_process_imports(self) -> None:
+        violations: list[str] = []
+        for path in sorted(EVIDENCE_DIRECTORY.glob("release_*.py")):
+            if path == CLI_PATH:
+                continue
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                imported: tuple[str, ...] = ()
+                if isinstance(node, ast.Import):
+                    imported = tuple(alias.name for alias in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.module is not None:
+                    imported = (node.module,)
+                for name in imported:
+                    if name in FORBIDDEN_PROVIDER_IMPORTS:
+                        violations.append(f"{path.name}:{node.lineno}:{name}")
+        self.assertEqual(violations, [])
+
+    def test_dormant_model_dependency_graph_is_closed_and_acyclic(self) -> None:
+        modules = {
+            path.stem: path
+            for path in EVIDENCE_DIRECTORY.glob("release_*.py")
+            if path != CLI_PATH
+        }
+        dependencies: dict[str, set[str]] = {name: set() for name in modules}
+        missing: list[str] = []
+        for name, path in modules.items():
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                imported: tuple[str, ...] = ()
+                if isinstance(node, ast.ImportFrom):
+                    if node.module == "tools.evidence":
+                        imported = tuple(
+                            alias.name
+                            for alias in node.names
+                            if alias.name.startswith("release_")
+                        )
+                    elif node.module and node.module.startswith(
+                        "tools.evidence.release_"
+                    ):
+                        imported = (node.module.rsplit(".", 1)[-1],)
+                for dependency in imported:
+                    if dependency == "release_evidence_cli":
+                        missing.append(f"{name}->{dependency}")
+                    elif dependency.startswith("release_"):
+                        if dependency not in modules:
+                            missing.append(f"{name}->{dependency}")
+                        else:
+                            dependencies[name].add(dependency)
+        self.assertEqual(missing, [])
+
+        temporary: set[str] = set()
+        complete: set[str] = set()
+
+        def visit(name: str) -> None:
+            if name in complete:
+                return
+            if name in temporary:
+                self.fail(f"cyclic dormant-model dependency at {name}")
+            temporary.add(name)
+            for dependency in sorted(dependencies[name]):
+                visit(dependency)
+            temporary.remove(name)
+            complete.add(name)
+
+        for name in sorted(modules):
+            visit(name)
 
     def test_every_non_help_invocation_fails_closed(self) -> None:
         cli = load_tombstone()
