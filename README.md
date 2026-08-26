@@ -43,6 +43,7 @@ $ uv run --frozen ruff format --check .
 $ uv run --frozen python -B -m compileall -q scripts tests tools
 $ uv run --frozen python -B -m unittest discover -s tests -v
 $ for producer in scripts/generate_*.py; do uv run --frozen python -B "${producer}" --check; done
+$ uv run --frozen python -B scripts/canonicalize_release_receipt_schema.py --check
 $ uv run --frozen python -B -m tools.evidence.release_receipt_vectors --check
 ```
 
@@ -56,10 +57,15 @@ $ python3 -B tools/evidence/release_evidence_cli.py acquire-lease
 The stacked-review boundaries and their dependency direction are documented in
 [`docs/controller-stack.md`](docs/controller-stack.md).
 
-Normative registry and positive-vector sources live under [`contracts/`](contracts/).
-Generators consume those production-owned sources; implementation modules do
-not import fixtures from `tests/`. Generated public schemas remain descriptive
-artifacts while the runtime and public-closure gates are held.
+Normative registry manifests and positive-vector sources live under
+[`contracts/`](contracts/). Generators consume production-owned model or vector
+sources; implementation modules do not import fixtures from `tests/`. The
+receipt-envelope JSON Schema is intentionally different: its checked public
+file is the language-neutral structural authority, and the registry binds that
+file's digest and runtime kind inventory. The receipt-schema canonicalizer
+validates and canonicalizes those checked bytes; it does not synthesize schema
+structure from another model. Public schemas remain descriptive artifacts while
+the runtime and public-closure gates are held.
 
 The recovered broker is isolated under `broker/` and remains on the same
 provider-mutation HOLD. Its self-service validation uses the exact runtime from

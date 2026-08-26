@@ -19,7 +19,7 @@ CONFORMANCE_VECTOR = ROOT / "tests/fixtures/release-receipt-v2-golden.json"
 
 
 class ReleaseContractSourceTests(unittest.TestCase):
-    def test_schema_projection_and_runtime_kind_registry_are_exact(self) -> None:
+    def test_checked_schema_and_runtime_kind_registry_are_exact(self) -> None:
         source = release_receipt_schema_registry.SOURCE
         registry_source = release_receipt_schema_registry.REGISTRY_SOURCE
         self.assertTrue(source.is_relative_to(ROOT / "docs/schemas"))
@@ -31,6 +31,17 @@ class ReleaseContractSourceTests(unittest.TestCase):
         self.assertEqual(
             release_receipt_schema_registry.registered_receipt_types(),
             release_receipt_contract.PAYLOAD_KINDS,
+        )
+
+    def test_receipt_schema_registry_declares_checked_source_authority(self) -> None:
+        metadata = load_object(
+            release_receipt_schema_registry.REGISTRY_SOURCE,
+            label="receipt-envelope v2 registry",
+        )
+        self.assertEqual(metadata["projection_mode"], "checked-public-source")
+        self.assertEqual(
+            metadata["document_path"],
+            PUBLIC_SCHEMA.relative_to(ROOT).as_posix(),
         )
 
     def test_receipt_conformance_projection_uses_normative_positive_vector(

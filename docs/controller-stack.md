@@ -13,7 +13,7 @@ only dependency direction is from a later layer to an earlier one.
 | Domain and candidate model | Canonical identifiers, receipt vocabulary, candidate archive/stream contracts, and public-closure HOLD types | None |
 | State and service primitives | Pure operation, route, service, and receipt-state building blocks | None |
 | Controller composition | Compose the pure state machine and wire catalog without a runtime entry point | None |
-| Normative artifacts | Production-owned registries, generators, schemas, and fixed vectors | None |
+| Normative artifacts | Production-owned registries, generators, checked schemas, canonicalizers, and fixed vectors | None |
 | Offline conformance | Python 3.11/3.12 tests, static boundaries, generated-byte checks, and reviewer documentation | None |
 | Dormant public-authenticity adapter | Content-pinned, offline-input verification of a future GitHub Artifact Attestation | None |
 
@@ -34,6 +34,16 @@ Every `tools.evidence.release_*` import must resolve inside the current layer or
 an earlier layer. The quarantine test parses the import graph, rejects missing
 edges, and rejects cycles. Production modules may not import test-owned
 authority.
+
+## Receipt-schema authority
+
+`docs/schemas/release/release-receipt-envelope-v2.schema.json` is the checked,
+language-neutral structural authority. Its production registry records the
+exact path, digest, and runtime receipt-type inventory. The
+`scripts/canonicalize_release_receipt_schema.py` command validates this binding
+and either checks or rewrites canonical JSON bytes; it does not generate fields
+from an independent schema model. Runtime validators remain authoritative for
+semantic constraints that JSON Schema cannot express.
 
 ## Self-service review
 
