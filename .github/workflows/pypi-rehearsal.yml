@@ -112,13 +112,17 @@ jobs:
           from pathlib import Path
 
           payload = json.loads(Path("rehearsal/rehearsal-inventory.json").read_text(encoding="utf-8"))
-          actual = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in Path("rehearsal").glob("*") if path.is_file() and path.name != "rehearsal-inventory.json"}
+          actual = {
+              path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in Path("rehearsal/dist").glob("*")
+              if path.is_file()
+          }
           expected = {item["filename"]: item["sha256"] for item in payload["archives"]}
           if actual != expected or len(actual) != 8:
               raise SystemExit("redownloaded rehearsal archive inventory differs")
           PY
           python -m venv rehearsal-venv
-          rehearsal-venv/bin/pip install --disable-pip-version-check rehearsal/*.whl
+          rehearsal-venv/bin/pip install --disable-pip-version-check rehearsal/dist/*.whl
           rehearsal-venv/bin/pip check
           rehearsal-venv/bin/dpone --help
           python - <<'PY'
