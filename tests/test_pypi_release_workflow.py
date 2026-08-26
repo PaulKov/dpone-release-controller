@@ -93,6 +93,8 @@ class PyPIReleaseWorkflowTests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", text)
         self.assertIn("ref: refs/tags/v${{ steps.identity.outputs.version }}", text)
         self.assertIn("dpone.pypi-rehearsal-inventory.v1", text)
+        self.assertIn("dpone.pypi-rehearsal-receipt.v1", text)
+        self.assertIn("package_archive_gate.py", text)
         self.assertIn("redownloaded rehearsal archive inventory differs", text)
         self.assertIn("rehearsal-venv/bin/pip check", text)
         self.assertIn("rehearsal-venv/bin/dpone --help", text)

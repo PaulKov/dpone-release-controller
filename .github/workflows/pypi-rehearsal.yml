@@ -50,6 +50,7 @@ jobs:
           uv build packages/dpone-airflow-pack --out-dir dist
           uv build packages/apache-airflow-providers-dpone --out-dir dist
           uv tool run twine check dist/*
+          uv run python tools/agent_policy/package_archive_gate.py dist/*.whl dist/*.tar.gz
           python - <<'PY'
           import hashlib
           import json
@@ -115,3 +116,38 @@ jobs:
           rehearsal-venv/bin/pip install --disable-pip-version-check rehearsal/*.whl
           rehearsal-venv/bin/pip check
           rehearsal-venv/bin/dpone --help
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          inventory = json.loads(
+              Path("rehearsal/rehearsal-inventory.json").read_text(encoding="utf-8")
+          )
+          receipt = {
+              "schema": "dpone.pypi-rehearsal-receipt.v1",
+              "status": "PASS",
+              "version": os.environ["VERSION"],
+              "source_artifact": "dpone-pypi-rehearsal-" + os.environ["VERSION"],
+              "archives": inventory["archives"],
+              "checks": [
+                  "artifact-redownload",
+                  "sha256-inventory",
+                  "fresh-wheel-install",
+                  "pip-check",
+                  "dpone-help",
+              ],
+              "github_run_id": os.environ["GITHUB_RUN_ID"],
+              "github_run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+          }
+          Path("rehearsal-receipt.json").write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dpone-pypi-rehearsal-receipt-${{ needs.build.outputs.version }}
+          path: rehearsal-receipt.json
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 14

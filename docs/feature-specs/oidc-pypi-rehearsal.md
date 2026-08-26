@@ -9,7 +9,11 @@
 The controller adds a manual, no-publish rehearsal for an existing annotated
 dpone tag. It checks out the immutable tag, builds exactly four projects and
 eight archives, seals a SHA-256 inventory, redownloads that artifact, and
-performs a fresh wheel installation plus `pip check` and `dpone --help`.
+performs the source archive gate and a fresh wheel installation plus `pip check`
+and `dpone --help`. Only after all those checks pass, it emits a second,
+version-scoped `dpone.pypi-rehearsal-receipt.v1` artifact. That receipt records
+the run identity, exact archive hashes and checks performed; no `PASS` receipt
+is created for a failed rehearsal.
 
 It has no `id-token: write`, no environment, no PyPI endpoint, no token, and
 no mutation outside GitHub Actions artifacts. It proves the build-to-install

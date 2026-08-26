@@ -26,7 +26,12 @@ EVIDENCE_PROTOTYPE = ROOT / "evidence-store.example.json"
 SCAFFOLD_STAMP = ROOT / ".scaffold-stamp"
 
 EXPECTED_WORKFLOWS = frozenset(
-    {"ci.yml", "controller-quarantine.yml", "pypi-release.yml"}
+    {
+        "ci.yml",
+        "controller-quarantine.yml",
+        "pypi-release.yml",
+        "pypi-rehearsal.yml",
+    }
 )
 EXPECTED_ACTIONS = frozenset(
     {
