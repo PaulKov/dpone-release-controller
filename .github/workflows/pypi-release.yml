@@ -79,11 +79,25 @@ jobs:
           from pathlib import Path
 
           version = os.environ["VERSION"]
-          files = sorted(Path("dist").glob("*"))
-          if not files:
+          filenames = sorted(
+              path.name for path in Path("dist").iterdir() if path.is_file()
+          )
+          expected = {
+              f"{distribution}-{version}{suffix}"
+              for distribution in (
+                  "dpone",
+                  "dpone_native_accel",
+                  "dpone_airflow_pack",
+              )
+              for suffix in (".tar.gz", "-py3-none-any.whl")
+          }
+          if not filenames:
               raise SystemExit("release build produced no distributions")
-          if any(version not in path.name for path in files):
-              raise SystemExit("distribution filename version differs")
+          if set(filenames) != expected:
+              raise SystemExit(
+                  "release distribution inventory differs: "
+                  f"expected={sorted(expected)!r} actual={filenames!r}"
+              )
           PY
 
       - name: Upload immutable release distributions
