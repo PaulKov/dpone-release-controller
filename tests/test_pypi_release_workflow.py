@@ -98,6 +98,8 @@ class PyPIReleaseWorkflowTests(unittest.TestCase):
         self.assertIn('path.name.endswith(".tar.gz")', text)
         self.assertIn('path.name.endswith(".whl")', text)
         self.assertIn("redownloaded rehearsal archive inventory differs", text)
+        self.assertIn('Path("rehearsal/dist").glob("*")', text)
+        self.assertIn("rehearsal/dist/*.whl", text)
         self.assertIn("rehearsal-venv/bin/pip check", text)
         self.assertIn("rehearsal-venv/bin/dpone --help", text)
         self.assertNotIn("id-token: write", text)
