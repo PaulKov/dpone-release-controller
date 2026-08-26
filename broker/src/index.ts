@@ -33,6 +33,12 @@ export { ActivationRegistry, AuthReplayLedger, GlobalActivatedAuthorityHead, Rel
 const ADMIN_PROVISION_PATH = "/v1/admin/activation/provision";
 const ADMIN_FINALIZE_PATH = "/v1/admin/activation/finalize";
 const ACTIVATION_PROOF_PATH = "/v1/activation/proof";
+const ACTIVATION_RUNTIME_HOLD_CODE = "BROKER_ACTIVATION_HOLD";
+const ACTIVATION_RUNTIME_PATHS = new Set([
+  ACTIVATION_PROOF_PATH,
+  ADMIN_PROVISION_PATH,
+  ADMIN_FINALIZE_PATH,
+]);
 const PYPI_GATE_WEBHOOK_PATH = "/v1/webhooks/github/deployment-protection-rule";
 const PROTOCOL_GATED_PATHS = new Set([
   CANDIDATE_PUBLIC_PATH,
@@ -52,6 +58,7 @@ export default {
       if (url.search !== "") {
         throw new BrokerError("ROUTE_NOT_FOUND", 404, false);
       }
+      assertActivationRuntimeReleased(url.pathname);
       if (request.method === "GET" && url.pathname === LIVENESS_PATH) {
         return liveness(env);
       }
@@ -80,6 +87,12 @@ export default {
     }
   },
 } satisfies ExportedHandler<Env>;
+
+function assertActivationRuntimeReleased(pathname: string): void {
+  if (ACTIVATION_RUNTIME_PATHS.has(pathname)) {
+    throw new BrokerError(ACTIVATION_RUNTIME_HOLD_CODE, 503, false);
+  }
+}
 
 async function handleAdminActivation(
   request: Request,

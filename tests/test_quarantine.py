@@ -11,6 +11,8 @@ import re
 import unittest
 from pathlib import Path
 
+from tests.workflow_quarantine_support import exact_workflow_job
+
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIRECTORY = ROOT / ".github" / "workflows"
 CI_WORKFLOW = WORKFLOW_DIRECTORY / "ci.yml"
@@ -80,6 +82,24 @@ FORBIDDEN_WORKFLOW_TEXT = (
     "attest-build-provenance",
     "upload-artifact",
 )
+EXPECTED_EMERGENCY_QUARANTINE_JOB = """  emergency-quarantine:
+    name: Validate emergency quarantine
+    if: ${{ always() }}
+    needs:
+      - contract
+      - broker
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require the complete controller and broker quarantine matrix
+        env:
+          BROKER_RESULT: ${{ needs.broker.result }}
+          CONTRACT_RESULT: ${{ needs.contract.result }}
+        run: |
+          set -euo pipefail
+          test "${BROKER_RESULT}" = "success"
+          test "${CONTRACT_RESULT}" = "success"
+"""
 
 
 def load_tombstone() -> object:
@@ -134,6 +154,49 @@ class WorkflowQuarantineTests(unittest.TestCase):
 
         self.assertIn("contents: read", text)
         self.assertIn("persist-credentials: false", text)
+
+    def test_required_quarantine_check_is_one_exact_active_job(self) -> None:
+        """Prevent comments, duplicate job IDs, skips, or partial needs from spoofing it."""
+
+        text = CI_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertEqual(
+            exact_workflow_job(text, "emergency-quarantine"),
+            EXPECTED_EMERGENCY_QUARANTINE_JOB,
+        )
+        self.assertEqual(
+            text.splitlines().count("    name: Validate emergency quarantine"),
+            1,
+        )
+
+    def test_required_check_extractor_rejects_comments_and_duplicate_job_ids(
+        self,
+    ) -> None:
+        """Ignore comments and reject common active aliases of the protected job ID."""
+
+        commented = EXPECTED_EMERGENCY_QUARANTINE_JOB.replace(
+            "  emergency-quarantine:\n",
+            "  # emergency-quarantine:\n",
+            1,
+        )
+        with self.assertRaisesRegex(AssertionError, "found 0"):
+            exact_workflow_job(commented, "emergency-quarantine")
+
+        duplicate_declarations = (
+            "  emergency-quarantine: # duplicate\n",
+            "  emergency-quarantine:   \n",
+            "  'emergency-quarantine': {}\n",
+            '  "emergency-quarantine" : {}\n',
+        )
+        for declaration in duplicate_declarations:
+            with (
+                self.subTest(declaration=declaration.rstrip()),
+                self.assertRaisesRegex(AssertionError, "found 2"),
+            ):
+                exact_workflow_job(
+                    EXPECTED_EMERGENCY_QUARANTINE_JOB + declaration,
+                    "emergency-quarantine",
+                )
 
 
 class LegacyWriterRemovalTests(unittest.TestCase):

@@ -4,8 +4,12 @@
 
 This codec is candidate-only. It is not wired into the ingress routes, replay ledger, activation
 registry, runtime configuration, provider clients, or deployment tooling. The production admin
-handlers continue to use the existing v1 path. Parsing a v2 document returns an explicitly
-`UNTRUSTED` structural value and cannot authorize persistence or an external effect.
+handlers remain in dormant source on the existing v1 paths, behind the composition root's
+unconditional `BROKER_ACTIVATION_HOLD`. After request-ID validation and query rejection, a valid
+query-free request to any held path receives `503` before method dispatch, live-config reads,
+authentication, body parsing, replay, or registry access. An invalid request ID or query-bearing
+alias still receives its earlier canonical `400` or `404`. Parsing a v2 document returns an
+explicitly `UNTRUSTED` structural value and cannot authorize persistence or an external effect.
 
 The split `admin-activation-v2-canonical.ts` leaf owns the raw byte boundary. The semantic codec
 then performs closed schema and route dispatch. Keeping these responsibilities separate makes the
@@ -56,5 +60,7 @@ pnpm exec prettier --check src/admin-activation-v2-canonical.ts \
 node scripts/check-module-size.mjs
 ```
 
-Runtime wiring remains on HOLD until authentication, replay semantics, durable state transitions,
-provider-effect recovery, and the full cutover evidence are independently reviewed together.
+The candidate codec remains unwired. The dormant v1 handlers are source-wired but unreachable
+behind the runtime interlock until authentication, replay semantics, durable state transitions,
+provider-effect recovery, A0/provider evidence, and the full cutover are independently reviewed
+together. A lift requires a separate source change; no runtime setting releases the HOLD.

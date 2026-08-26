@@ -1,6 +1,15 @@
 import { SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 
+import broker from "../src/index";
+import type { Env } from "../src/types";
+
+const HELD_ACTIVATION_PATHS = [
+  "/v1/activation/proof",
+  "/v1/admin/activation/provision",
+  "/v1/admin/activation/finalize",
+] as const;
+
 describe("public router activation boundary", () => {
   it("separates process liveness from fail-closed authority readiness", async () => {
     const live = await SELF.fetch("https://broker.invalid/livez");
@@ -52,6 +61,63 @@ describe("public router activation boundary", () => {
       });
     }
   });
+
+  it.each(HELD_ACTIVATION_PATHS)(
+    "holds %s before activation-authority request or runtime access",
+    async (path) => {
+      let activationAuthorityRead = false;
+      let runtimeAuthorityRead = false;
+      const headers = new Proxy(
+        {
+          get(name: string) {
+            if (name === "x-request-id") return "request-activation-hold-0001";
+            activationAuthorityRead = true;
+            throw new Error(`unexpected header read: ${name}`);
+          },
+        },
+        {
+          get(target, property, receiver) {
+            if (property === "get") return Reflect.get(target, property, receiver);
+            activationAuthorityRead = true;
+            throw new Error(`unexpected Headers access: ${String(property)}`);
+          },
+        },
+      );
+      const envelope = {
+        headers,
+        url: `https://broker.invalid${path}`,
+      };
+      const request = new Proxy(envelope, {
+        get(target, property, receiver) {
+          if (property === "headers" || property === "url") {
+            return Reflect.get(target, property, receiver);
+          }
+          activationAuthorityRead = true;
+          throw new Error(`unexpected Request access: ${String(property)}`);
+        },
+      }) as unknown as Request;
+      const env = new Proxy({} as Env, {
+        get(_target, property) {
+          runtimeAuthorityRead = true;
+          throw new Error(`unexpected runtime authority access: ${String(property)}`);
+        },
+      });
+
+      const response = await broker.fetch(request, env);
+
+      expect(response.status).toBe(503);
+      expect(activationAuthorityRead).toBe(false);
+      expect(runtimeAuthorityRead).toBe(false);
+      expect(Object.fromEntries(response.headers.entries())).toEqual({
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "x-content-type-options": "nosniff",
+      });
+      await expect(response.text()).resolves.toBe(
+        '{"error":{"code":"BROKER_ACTIVATION_HOLD","request_id":"request-activation-hold-0001","retryable":false}}',
+      );
+    },
+  );
 
   it("rejects query-bearing aliases before every recognized route dispatch", async () => {
     for (const [method, path] of [

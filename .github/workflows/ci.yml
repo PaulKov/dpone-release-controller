@@ -99,3 +99,21 @@ jobs:
 
       - name: Validate the broker quarantine contract
         run: pnpm check
+
+  emergency-quarantine:
+    name: Validate emergency quarantine
+    if: ${{ always() }}
+    needs:
+      - contract
+      - broker
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require the complete controller and broker quarantine matrix
+        env:
+          BROKER_RESULT: ${{ needs.broker.result }}
+          CONTRACT_RESULT: ${{ needs.contract.result }}
+        run: |
+          set -euo pipefail
+          test "${BROKER_RESULT}" = "success"
+          test "${CONTRACT_RESULT}" = "success"

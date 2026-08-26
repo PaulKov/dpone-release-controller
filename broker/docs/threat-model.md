@@ -21,6 +21,7 @@
 | Compromised operator                    | mTLS plus Cloudflare Access, request replay consumption, two distinct allowlisted approvals over exact evidence root/A0 nonce                                                                                                                                                                                                                         | Activation remains unprovisioned         |
 | Published control-plane metadata        | Synthetic Wrangler review templates; full-tree exact-UTF-8 scan; reject unclassified types/identifiers and secret artifacts                                                                                                                                                                                                                           | Publication fails before release         |
 | Accidental provider command             | Exact exported mutation-symbol inventory; unconditional import-resolved HOLD at every production engine/helper before option snapshot/parsing/use, injected dependency/provider-port reads or invocation, secrets, temp state, journals, subprocesses, fetches, or clients                                                                            | `PROVIDER_MUTATION_HOLD`                 |
+| Direct deployment of dormant ingress    | Source-owned, unconditional path interlock for activation proof, admin provision, and admin finalize; it runs before method dispatch, live-config reads, authentication, body parsing, replay, or Durable Object access                                                                                                                               | `BROKER_ACTIVATION_HOLD`                 |
 | Static-policy parser bypass             | Builtins-only trusted bootstrap; regular-contained files; exact 21-file byte/import closure before pinned Espree/eslint-scope load; exact exports/effect-data initializers/HOLD AST/call graph; typed ambient, filesystem, and I/O ownership; full simulation Program pins; denied dynamic code, loaders, injected callbacks, and unowned descendants | Preflight fails before production import |
 | Test seam becomes an authority bypass   | Production graph cannot import test modules; exact simulations accept primitive JSON text only and have no callback, filesystem, subprocess, network, or provider capability                                                                                                                                                                          | Static/runtime gate fails                |
 
@@ -31,6 +32,16 @@
 - The historical C5/`CLOSED_CHECK_VERIFIED`/`LEASE_RELEASED` public-closure design is quarantined. The clean controller's terminal internal `CLOSED` state is not public closure authority. Runtime closure remains unavailable until a separately approved new public-projection contract replaces or explicitly retires those old selectors.
 - Complete live GitHub Actions/environment/ruleset/App and B2 provider observations must be captured into A0. Commit-A blob/tree evidence is already independently recomputed; the remaining observations cannot be substituted with operator assertions.
 - The tracked Wrangler live-shaped files are synthetic publication review templates. A reviewed custom Cloudflare hostname, account/zone, Access/mTLS identifiers, GitHub App identifiers, B2 bucket/key observations, and current deployment observations are not present in the publishable candidate.
+- The dormant ingress still contains activation proof and v1 admin handler implementations. The
+  composition root rejects all requests to their three exact paths with
+  `BROKER_ACTIVATION_HOLD` after request-ID/query envelope validation and before any runtime
+  configuration, credential, body, replay ledger, or activation registry access. The HOLD has no
+  environment, flag, or provider-config release mechanism. Lifting it requires a separate reviewed
+  source change bound to A0 and provider evidence.
+- A Cloudflare account administrator remains an external root authority: they can deploy source
+  bytes that are not this reviewed commit or alter provider routing outside repository tooling.
+  Source-level HOLD tests do not prove provider deployment identity, access policy, or operator
+  separation; those require dated provider observations and independent review.
 - Source inspection does not establish whether a historical Worker exists. Only dated, independently retained provider evidence may make that claim.
 - The exact historical receipt fixture remains a config-integrity input only. Its pre-HOLD public-closure variants are not runtime closure authority.
 - The quarantined production mutation implementation is intentionally unreachable and is not
