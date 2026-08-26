@@ -4,16 +4,25 @@ External release-controller repository planned for `PaulKov/dpone`.
 
 ## Status
 
-**EMERGENCY QUARANTINE / NOT ACTIVATED.** The current source tree contains no
-release writer and provides no proof that provider-side authority has been
-revoked. Production release policy remains unchanged in `PaulKov/dpone`.
+**ACTIVATION CANDIDATE / NOT YET DISPATCHED.** The legacy writer remains
+quarantined and this repository still provides no proof that historical
+provider-side authority has been revoked. The sole new publication path is
+[`pypi-release.yml`](.github/workflows/pypi-release.yml): a manually started,
+tag-bound, OIDC-only PyPI publisher. It must not be dispatched until PyPI is
+configured to trust its exact repository, workflow filename, and `pypi`
+environment identity.
 
-This replacement stack contains a dormant, dependency-closed domain model for
-review. It deliberately contains no executable controller, activation switch,
-provider adapter, or compatibility mode. The domain modules cannot be reached
-from either checked-in workflow or from the permanent CLI tombstone:
+The dependency-closed domain model remains isolated from publication. The
+controller exposes no provider adapter, compatibility mode, or broker route.
+Its permanent CLI tombstone cannot publish. The OIDC workflow is intentionally
+separate from those modules and has a smaller authority boundary:
 
 - the historical `.github/workflows/release-controller.yml` writer is removed;
+- `pypi-release.yml` accepts only a semantic version, checks out
+  `PaulKov/dpone` at its matching immutable `v<version>` tag, and passes only
+  built artifacts to its publish job;
+- only that publish job receives `id-token: write`; it has no checkout and no
+  PyPI, GitHub App, or B2 secret;
 - the only quarantine marker runs on a push to `master`, has no token
   permissions, performs no checkout, and cannot be manually dispatched;
 - every historical evidence/provider module remains removed from the current
@@ -114,12 +123,12 @@ every eligible historical re-run, so the controls above are mandatory.
 
 ## Activation boundary
 
-Restoring any writer requires a separate RFC and separately reviewed PR. That
-change must define normative contracts, independent conformance vectors,
-least-privilege credentials, provider preparation and rollback, public
-authenticity, protected human approval, fault recovery, and exact-head rehearsal.
-This quarantine PR cannot be converted into an activation by changing an input,
-repository variable, manifest value, or local flag.
+The OIDC publisher is enabled only when PyPI has a Trusted Publisher bound to
+`PaulKov/dpone-release-controller`, `pypi-release.yml`, and environment
+`pypi`. Its manual input selects a version, never a repository/ref/SHA or
+artifact path. Failed and duplicate uploads fail the run; PyPI artifacts are
+immutable. Historical provider credentials and the legacy writer remain
+outside this new authority path and must still be revoked or reduced.
 
 See [`docs/live-inventory.md`](docs/live-inventory.md) for historical inventory
 that must be re-observed before any future cutover.
