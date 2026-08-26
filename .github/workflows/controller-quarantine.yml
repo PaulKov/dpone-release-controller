@@ -1,0 +1,25 @@
+name: Release controller quarantine marker
+
+on:
+  push:
+    branches:
+      - master
+
+# This workflow is an inert marker, not a release controller. It has no manual
+# dispatch path, checkout, external action, secret, OIDC, or repository token
+# authority. Reintroducing any of those capabilities requires a separate review.
+permissions: {}
+
+jobs:
+  quarantined:
+    name: Confirm controller remains quarantined
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Record the non-authoritative state
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s%s\n' \
+            'QUARANTINED: no release, provider, evidence-store, or ' \
+            'target-repository mutation authority is present.'
