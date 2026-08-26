@@ -42,6 +42,34 @@ PyPI, Backblaze B2, the target repository, or a release evidence stream.
 
 ## Self-service verification
 
+### Retrospective verification of v0.74.27
+
+`v0.74.27` was published before this repository's current post-publication
+verification job existed. Download the retained `dpone-pypi-0.74.27` artifact
+from controller run `32963303606` without changing it, then create a read-only
+receipt. This never republishes packages or changes the tag:
+
+```console
+$ uv run --frozen python -m tools.retro_pypi_verification \
+    --tag v0.74.27 \
+    --commit-sha 62f1631d5088d26ad4da9ab67156e61c0456b866 \
+    --controller-run-id 32963303606 \
+    --artifact-id 9604709818 \
+    --artifact-zip /secure/download/dpone-pypi-0.74.27.zip \
+    --artifact-sha256 4f5d4b3b28b6496f69834118b8f36b26ea100773cc79bdbb4f38bdb0b8b8384a \
+    --output test_artifacts/release/v0.74.27/retro_pypi_verification.json
+```
+
+The verifier obtains its GitHub observations itself through fixed, read-only
+`gh api` endpoints; it has no mutation path. It also creates a temporary venv,
+installs the four retained wheel files, runs `pip check` and `dpone --help`, and
+writes `fresh_install.log` beside the receipt. The result is `PASS` only when
+all of those checks, the annotated tag, successful publisher run, controller
+artifact and the eight public PyPI files agree exactly. `UNVERIFIED` means
+GitHub or PyPI could not be observed after bounded retries; `FAIL` means the
+observed bytes or inventory differ. Neither outcome authorizes a retry of the
+original publish workflow.
+
 The emergency quarantine assertions remain standard-library-only. The complete
 offline conformance suite additionally uses the exact locked development tools
 from `pyproject.toml` and `uv.lock`. Run it with uv 0.11.28 on Python 3.11 and

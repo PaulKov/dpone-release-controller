@@ -1,0 +1,75 @@
+schema_version: 1
+task_id: "R1-RETRO-V07427-PYPI-VERIFICATION"
+title: "Create read-only retrospective PyPI verification receipt"
+goal: "Bind the retained v0.74.27 controller artifact to its exact public PyPI archives without any publishing mutation."
+specification: "docs/feature-specs/v07427-retro-pypi-verification.md"
+base_commit: "595da88a99225a5d72d118ff6d0aa01663d2beed"
+integrator: "root"
+
+acceptance_criteria:
+  - "The verifier accepts only a closed four-project, eight-archive inventory."
+  - "A PASS receipt binds tag, commit, controller run, artifact digest and all public SHA-256 observations."
+  - "Transport exhaustion is UNVERIFIED; semantic mismatch is FAIL; neither can publish or mutate remote state."
+  - "Documentation explains operator invocation and recovery without claiming historical workflow equivalence."
+
+public_contract_impact:
+  level: compatible
+  surfaces:
+    - "developer evidence CLI"
+    - "release evidence JSON artifact"
+  migration_required: false
+
+owned_paths:
+  - "tools/retro_pypi_verification.py"
+  - "tools/retro_pypi_inventory.py"
+  - "tools/retro_pypi_install.py"
+  - "tests/test_retro_pypi_verification.py"
+  - "docs/feature-specs/v07427-retro-pypi-verification.md"
+  - "README.md"
+  - "test_artifacts/agent-policy/r1-retro-v07427-pypi-verification.yml"
+  - "test_artifacts/release/v0.74.27"
+integrator_owned_paths: []
+read_only_paths:
+  - ".github/workflows/pypi-release.yml"
+  - "tests/test_pypi_release_workflow.py"
+  - "config/oidc-pypi-publisher.json"
+forbidden_paths:
+  - "pyproject.toml"
+  - "uv.lock"
+  - "CHANGELOG.md"
+  - "mkdocs.yml"
+  - ".github/workflows"
+  - "broker"
+
+shared_file_owner: "root"
+dependencies: []
+required_checks:
+  focused:
+    - "uv run --frozen python -m unittest tests.test_retro_pypi_verification -v"
+    - "uv run --frozen ruff check tools/retro_pypi_verification.py tests/test_retro_pypi_verification.py"
+    - "uv run --frozen ruff format --check tools/retro_pypi_verification.py tests/test_retro_pypi_verification.py"
+  broad:
+    - "uv run --frozen python -B -m unittest discover -s tests -v"
+  live:
+    - "operator downloads retained artifact and runs the verifier against PyPI"
+
+required_outputs:
+  - "implementation"
+  - "tests"
+  - "documentation_impact"
+  - "completion_report"
+
+completion_statuses:
+  allowed:
+    - "PASS"
+    - "FAIL"
+    - "SKIP"
+    - "N/A"
+    - "UNVERIFIED"
+
+stop_conditions:
+  - "Required edit falls outside owned_paths."
+  - "Approved specification is missing or contradicted."
+  - "Public-contract impact is larger than declared."
+  - "A live check requires unapproved credentials or environment."
+  - "Another writer owns the same semantic contract."

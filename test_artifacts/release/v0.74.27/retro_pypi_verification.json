@@ -1,0 +1,142 @@
+{
+  "artifact": {
+    "archives": [
+      {
+        "filename": "apache_airflow_providers_dpone-0.74.27-py3-none-any.whl",
+        "project": "apache-airflow-providers-dpone",
+        "sha256": "09fc1827d116efae83674002d1cbd4234c2d821c00d5517b72149360298ba351",
+        "size": 5766
+      },
+      {
+        "filename": "apache_airflow_providers_dpone-0.74.27.tar.gz",
+        "project": "apache-airflow-providers-dpone",
+        "sha256": "1aa4e3292e4008eb144748967f7705bc5609c558dbf059de3dc757d751e3f47d",
+        "size": 4053
+      },
+      {
+        "filename": "dpone-0.74.27-py3-none-any.whl",
+        "project": "dpone",
+        "sha256": "bb6a8e28e37fbabe3912ec5b880f2f66a8587a4c36733f9de62d2605a168b382",
+        "size": 6001528
+      },
+      {
+        "filename": "dpone-0.74.27.tar.gz",
+        "project": "dpone",
+        "sha256": "2f73d54ae537c18ac05a2108a3b7a33843a1c062b393ef7ad0d282fa1ea314b0",
+        "size": 3981220
+      },
+      {
+        "filename": "dpone_airflow_pack-0.74.27-py3-none-any.whl",
+        "project": "dpone-airflow-pack",
+        "sha256": "eb68ba1d5f24e8d07623e7d1ad959176316c631f69ed561607523e3b92863361",
+        "size": 337262
+      },
+      {
+        "filename": "dpone_airflow_pack-0.74.27.tar.gz",
+        "project": "dpone-airflow-pack",
+        "sha256": "186f7b3096fb4dd1f2d1dee72054238c0417ddceb90f955673391300b377a14a",
+        "size": 243619
+      },
+      {
+        "filename": "dpone_native_accel-0.74.27-py3-none-any.whl",
+        "project": "dpone-native-accel",
+        "sha256": "2b7a6f46b782cdabb5676defceabf02806ae4391a72da850c04d5b2df262d0f5",
+        "size": 13639
+      },
+      {
+        "filename": "dpone_native_accel-0.74.27.tar.gz",
+        "project": "dpone-native-accel",
+        "sha256": "82341fe41f674e5aa00e622c4f7906527c575fd2cd1402f664341c1461f0ec81",
+        "size": 11046
+      }
+    ],
+    "id": 9604709818,
+    "local_size": 10191895,
+    "name": "dpone-pypi-0.74.27",
+    "provider_size": 10191895,
+    "sha256": "4f5d4b3b28b6496f69834118b8f36b26ea100773cc79bdbb4f38bdb0b8b8384a"
+  },
+  "failures": [],
+  "isolated_install": {
+    "sha256": "1b9a7a6af394fb504f35315a6c8d312c0eee40fec1641f323f2ec47eb9f1d276",
+    "size": 54251,
+    "transcript": "fresh_install.log"
+  },
+  "observed_at": "2026-08-26T16:48:02Z",
+  "projects": [
+    {
+      "files": {
+        "dpone-0.74.27-py3-none-any.whl": {
+          "sha256": "bb6a8e28e37fbabe3912ec5b880f2f66a8587a4c36733f9de62d2605a168b382",
+          "size": 6001528,
+          "yanked": false
+        },
+        "dpone-0.74.27.tar.gz": {
+          "sha256": "2f73d54ae537c18ac05a2108a3b7a33843a1c062b393ef7ad0d282fa1ea314b0",
+          "size": 3981220,
+          "yanked": false
+        }
+      },
+      "project": "dpone",
+      "status": "PASS"
+    },
+    {
+      "files": {
+        "dpone_native_accel-0.74.27-py3-none-any.whl": {
+          "sha256": "2b7a6f46b782cdabb5676defceabf02806ae4391a72da850c04d5b2df262d0f5",
+          "size": 13639,
+          "yanked": false
+        },
+        "dpone_native_accel-0.74.27.tar.gz": {
+          "sha256": "82341fe41f674e5aa00e622c4f7906527c575fd2cd1402f664341c1461f0ec81",
+          "size": 11046,
+          "yanked": false
+        }
+      },
+      "project": "dpone-native-accel",
+      "status": "PASS"
+    },
+    {
+      "files": {
+        "dpone_airflow_pack-0.74.27-py3-none-any.whl": {
+          "sha256": "eb68ba1d5f24e8d07623e7d1ad959176316c631f69ed561607523e3b92863361",
+          "size": 337262,
+          "yanked": false
+        },
+        "dpone_airflow_pack-0.74.27.tar.gz": {
+          "sha256": "186f7b3096fb4dd1f2d1dee72054238c0417ddceb90f955673391300b377a14a",
+          "size": 243619,
+          "yanked": false
+        }
+      },
+      "project": "dpone-airflow-pack",
+      "status": "PASS"
+    },
+    {
+      "files": {
+        "apache_airflow_providers_dpone-0.74.27-py3-none-any.whl": {
+          "sha256": "09fc1827d116efae83674002d1cbd4234c2d821c00d5517b72149360298ba351",
+          "size": 5766,
+          "yanked": false
+        },
+        "apache_airflow_providers_dpone-0.74.27.tar.gz": {
+          "sha256": "1aa4e3292e4008eb144748967f7705bc5609c558dbf059de3dc757d751e3f47d",
+          "size": 4053,
+          "yanked": false
+        }
+      },
+      "project": "apache-airflow-providers-dpone",
+      "status": "PASS"
+    }
+  ],
+  "schema": "dpone.retro-pypi-verification.v1",
+  "status": "PASS",
+  "subject": {
+    "annotated_tag_sha": "8c16171b62cbbb2db1325b85d403512f08911f0a",
+    "commit_sha": "62f1631d5088d26ad4da9ab67156e61c0456b866",
+    "controller_run_id": 32963303606,
+    "controller_workflow_path": ".github/workflows/pypi-release.yml",
+    "tag": "v0.74.27",
+    "version": "0.74.27"
+  }
+}
