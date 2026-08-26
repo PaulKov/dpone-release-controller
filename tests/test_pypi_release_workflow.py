@@ -95,6 +95,8 @@ class PyPIReleaseWorkflowTests(unittest.TestCase):
         self.assertIn("dpone.pypi-rehearsal-inventory.v1", text)
         self.assertIn("dpone.pypi-rehearsal-receipt.v1", text)
         self.assertIn("package_archive_gate.py", text)
+        self.assertIn('path.name.endswith(".tar.gz")', text)
+        self.assertIn('path.name.endswith(".whl")', text)
         self.assertIn("redownloaded rehearsal archive inventory differs", text)
         self.assertIn("rehearsal-venv/bin/pip check", text)
         self.assertIn("rehearsal-venv/bin/dpone --help", text)
