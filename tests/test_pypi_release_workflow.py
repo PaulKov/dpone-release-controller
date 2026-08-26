@@ -25,6 +25,8 @@ class PyPIReleaseWorkflowTests(unittest.TestCase):
             "id-token: write",
             "pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b",
             "packages-dir: dist/",
+            "packages/apache-airflow-providers-dpone",
+            "apache_airflow_providers_dpone",
             "persist-credentials: false",
             "skip-existing",
         )

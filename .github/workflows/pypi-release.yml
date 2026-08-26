@@ -73,6 +73,7 @@ jobs:
           uv build
           uv build packages/dpone-native-accel --out-dir dist
           uv build packages/dpone-airflow-pack --out-dir dist
+          uv build packages/apache-airflow-providers-dpone --out-dir dist
           uv tool run twine check dist/*
           python - <<'PY'
           import os
@@ -90,6 +91,7 @@ jobs:
                   "dpone",
                   "dpone_native_accel",
                   "dpone_airflow_pack",
+                  "apache_airflow_providers_dpone",
               )
               for suffix in (".tar.gz", "-py3-none-any.whl")
           }

@@ -20,7 +20,7 @@ separate from those modules and has a smaller authority boundary:
 - the historical `.github/workflows/release-controller.yml` writer is removed;
 - `pypi-release.yml` accepts only a semantic version, checks out
   `PaulKov/dpone` at its matching immutable `v<version>` tag, and passes only
-  built artifacts to its publish job;
+  built artifacts (including the formal Airflow provider) to its publish job;
 - only that publish job receives `id-token: write`; it has no checkout and no
   PyPI, GitHub App, or B2 secret;
 - the only quarantine marker runs on a push to `master`, has no token

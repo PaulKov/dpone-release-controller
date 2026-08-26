@@ -10,7 +10,7 @@ quarantine-only release posture for the narrowly scoped PyPI publication path.
 A maintainer enters an exact semantic version in the controller's manual
 workflow. The controller checks out only `refs/tags/v<version>` from
 `PaulKov/dpone`, proves that the checked project version is identical, builds
-the three workspace distributions, and verifies their metadata. A separate
+the four workspace distributions, and verifies their metadata. A separate
 artifact-only job publishes those exact files to PyPI using GitHub OIDC.
 
 ## Non-goals
