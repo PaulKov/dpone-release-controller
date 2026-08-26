@@ -115,6 +115,59 @@ jobs:
           retention-days: 14
           overwrite: false
 
+      - name: Create immutable PyPI verification manifest
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          project_by_distribution = {
+              "dpone": "dpone",
+              "dpone_native_accel": "dpone-native-accel",
+              "dpone_airflow_pack": "dpone-airflow-pack",
+              "apache_airflow_providers_dpone": "apache-airflow-providers-dpone",
+          }
+          version = os.environ["VERSION"]
+          files_by_project = {project: [] for project in project_by_distribution.values()}
+          for distribution, project in project_by_distribution.items():
+              for suffix in (".tar.gz", "-py3-none-any.whl"):
+                  filename = f"{distribution}-{version}{suffix}"
+                  path = Path("dist") / filename
+                  files_by_project[project].append(
+                      {
+                          "filename": filename,
+                          "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                      }
+                  )
+          Path("release-manifest.json").write_text(
+              json.dumps(
+                  {
+                      "schema": "dpone.pypi-release-manifest.v1",
+                      "version": version,
+                      "projects": files_by_project,
+                  },
+                  indent=2,
+                  sort_keys=True,
+              )
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload immutable PyPI verification manifest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dpone-pypi-manifest-${{ steps.identity.outputs.version }}
+          path: release-manifest.json
+          if-no-files-found: error
+          retention-days: 14
+          overwrite: false
+
   publish:
     name: Publish exact artifacts to PyPI
     needs: build
@@ -134,3 +187,72 @@ jobs:
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
         with:
           packages-dir: dist/
+
+  verify-published:
+    name: Verify public PyPI files and hashes
+    needs:
+      - build
+      - publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions: {}
+    steps:
+      - name: Download immutable PyPI verification manifest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: dpone-pypi-manifest-${{ needs.build.outputs.version }}
+          path: verification/
+
+      - name: Verify PyPI serves exactly the published archive hashes
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+          from urllib.error import HTTPError, URLError
+          from urllib.request import urlopen
+
+          manifest = json.loads(
+              (Path("verification") / "release-manifest.json").read_text(encoding="utf-8")
+          )
+          version = os.environ["VERSION"]
+          if manifest.get("schema") != "dpone.pypi-release-manifest.v1":
+              raise SystemExit("unexpected PyPI verification manifest schema")
+          if manifest.get("version") != version:
+              raise SystemExit("PyPI verification manifest version differs")
+
+          expected = {
+              project: {entry["filename"]: entry["sha256"] for entry in entries}
+              for project, entries in manifest["projects"].items()
+          }
+          failures = []
+          for attempt in range(1, 11):
+              failures = []
+              for project, expected_files in expected.items():
+                  try:
+                      with urlopen(
+                          f"https://pypi.org/pypi/{project}/{version}/json", timeout=20
+                      ) as response:
+                          payload = json.load(response)
+                  except (HTTPError, URLError, TimeoutError) as error:
+                      failures.append(f"{project}: PyPI API unavailable: {error}")
+                      continue
+                  actual_files = {
+                      item["filename"]: item["digests"]["sha256"]
+                      for item in payload.get("urls", [])
+                  }
+                  if actual_files != expected_files:
+                      failures.append(
+                          f"{project}: expected={expected_files!r} actual={actual_files!r}"
+                      )
+              if not failures:
+                  break
+              if attempt < 10:
+                  time.sleep(6)
+          if failures:
+              raise SystemExit("public PyPI verification failed: " + "; ".join(failures))
+          PY

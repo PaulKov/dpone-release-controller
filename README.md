@@ -4,13 +4,14 @@ External release-controller repository planned for `PaulKov/dpone`.
 
 ## Status
 
-**ACTIVATION CANDIDATE / NOT YET DISPATCHED.** The legacy writer remains
-quarantined and this repository still provides no proof that historical
-provider-side authority has been revoked. The sole new publication path is
-[`pypi-release.yml`](.github/workflows/pypi-release.yml): a manually started,
-tag-bound, OIDC-only PyPI publisher. It must not be dispatched until PyPI is
-configured to trust its exact repository, workflow filename, and `pypi`
-environment identity.
+**NARROW PYPI PUBLISHER ACTIVE.** The OIDC-only workflow
+[`pypi-release.yml`](.github/workflows/pypi-release.yml) is the active,
+manually started, tag-bound publication authority for the four dpone PyPI
+projects. Its checked-in operating contract is
+[`config/oidc-pypi-publisher.json`](config/oidc-pypi-publisher.json). The
+legacy broker/writer remains quarantined under its separate historical
+activation policy; this does not claim that old provider-side credentials have
+been revoked or provide proof that provider-side authority has been revoked.
 
 The dependency-closed domain model remains isolated from publication. The
 controller exposes no provider adapter, compatibility mode, or broker route.
@@ -20,7 +21,8 @@ separate from those modules and has a smaller authority boundary:
 - the historical `.github/workflows/release-controller.yml` writer is removed;
 - `pypi-release.yml` accepts only a semantic version, checks out
   `PaulKov/dpone` at its matching immutable `v<version>` tag, and passes only
-  built artifacts (including the formal Airflow provider) to its publish job;
+  built artifacts (including the formal Airflow provider) to its publish job,
+  then verifies exact public PyPI archive names and SHA-256 hashes;
 - only that publish job receives `id-token: write`; it has no checkout and no
   PyPI, GitHub App, or B2 secret;
 - the only quarantine marker runs on a push to `master`, has no token
