@@ -1,0 +1,16 @@
+{
+  "schema": "dpone.oidc-pypi-publisher.v1",
+  "state": "active",
+  "workflow_path": ".github/workflows/pypi-release.yml",
+  "environment": "pypi",
+  "target_repository": "PaulKov/dpone",
+  "tag_pattern": "v<semantic-version>",
+  "projects": [
+    "dpone",
+    "dpone-native-accel",
+    "dpone-airflow-pack",
+    "apache-airflow-providers-dpone"
+  ],
+  "trusted_publishing": "GitHub OIDC only",
+  "post_publish_verification": "PyPI version-specific archive filename and SHA-256 equality"
+}

@@ -49,6 +49,7 @@ jobs:
           uv run --frozen python -B -m compileall -q scripts tests tools
           uv run --frozen python -B -m unittest discover -s tests -v
           uv run --frozen python -m json.tool config/release-controller-activation.json >/dev/null
+          uv run --frozen python -m json.tool config/oidc-pypi-publisher.json >/dev/null
 
       - name: Verify generated contracts and checked schema are current
         run: |
