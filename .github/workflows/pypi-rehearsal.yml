@@ -66,7 +66,12 @@ jobs:
               )
               for suffix in (".tar.gz", "-py3-none-any.whl")
           }
-          files = sorted(path for path in Path("dist").iterdir() if path.is_file())
+          files = sorted(
+              path
+              for path in Path("dist").iterdir()
+              if path.is_file()
+              and (path.name.endswith(".tar.gz") or path.name.endswith(".whl"))
+          )
           if {path.name for path in files} != expected:
               raise SystemExit("rehearsal inventory is not the exact eight archives")
           Path("rehearsal-inventory.json").write_text(json.dumps({
