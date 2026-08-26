@@ -11,6 +11,8 @@ import re
 import unittest
 from pathlib import Path
 
+from tests.workflow_quarantine_support import exact_workflow_job
+
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIRECTORY = ROOT / ".github" / "workflows"
 CI_WORKFLOW = WORKFLOW_DIRECTORY / "ci.yml"
@@ -27,6 +29,8 @@ EXPECTED_WORKFLOWS = frozenset({"ci.yml", "controller-quarantine.yml"})
 EXPECTED_ACTIONS = frozenset(
     {
         "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78",
     }
 )
 RETIRED_PROVIDER_MODULES = frozenset(
@@ -77,6 +81,21 @@ FORBIDDEN_WORKFLOW_TEXT = (
     "attest-build-provenance",
     "upload-artifact",
 )
+EXPECTED_EMERGENCY_QUARANTINE_JOB = """  emergency-quarantine:
+    name: Validate emergency quarantine
+    if: ${{ always() }}
+    needs:
+      - contract
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require the complete quarantine contract matrix
+        env:
+          CONTRACT_RESULT: ${{ needs.contract.result }}
+        run: |
+          set -euo pipefail
+          test "${CONTRACT_RESULT}" = "success"
+"""
 
 
 def load_tombstone() -> object:
@@ -132,6 +151,49 @@ class WorkflowQuarantineTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("persist-credentials: false", text)
 
+    def test_required_quarantine_check_is_one_exact_active_job(self) -> None:
+        """Prevent comments, duplicate job IDs, skips, or partial needs from spoofing it."""
+
+        text = CI_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertEqual(
+            exact_workflow_job(text, "emergency-quarantine"),
+            EXPECTED_EMERGENCY_QUARANTINE_JOB,
+        )
+        self.assertEqual(
+            text.splitlines().count("    name: Validate emergency quarantine"),
+            1,
+        )
+
+    def test_required_check_extractor_rejects_comments_and_duplicate_job_ids(
+        self,
+    ) -> None:
+        """Ignore comments and reject common active aliases of the protected job ID."""
+
+        commented = EXPECTED_EMERGENCY_QUARANTINE_JOB.replace(
+            "  emergency-quarantine:\n",
+            "  # emergency-quarantine:\n",
+            1,
+        )
+        with self.assertRaisesRegex(AssertionError, "found 0"):
+            exact_workflow_job(commented, "emergency-quarantine")
+
+        duplicate_declarations = (
+            "  emergency-quarantine: # duplicate\n",
+            "  emergency-quarantine:   \n",
+            "  'emergency-quarantine': {}\n",
+            '  "emergency-quarantine" : {}\n',
+        )
+        for declaration in duplicate_declarations:
+            with (
+                self.subTest(declaration=declaration.rstrip()),
+                self.assertRaisesRegex(AssertionError, "found 2"),
+            ):
+                exact_workflow_job(
+                    EXPECTED_EMERGENCY_QUARANTINE_JOB + declaration,
+                    "emergency-quarantine",
+                )
+
 
 class LegacyWriterRemovalTests(unittest.TestCase):
     """Prove that current source cannot load the retired writer graph."""
@@ -153,13 +215,19 @@ class LegacyWriterRemovalTests(unittest.TestCase):
                 continue
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
             for node in ast.walk(tree):
-                imported: tuple[str, ...] = ()
+                imported: set[str] = set()
                 if isinstance(node, ast.Import):
-                    imported = tuple(alias.name for alias in node.names)
+                    imported.update(alias.name for alias in node.names)
                 elif isinstance(node, ast.ImportFrom) and node.module is not None:
-                    imported = (node.module,)
+                    imported.add(node.module)
+                    imported.update(
+                        f"{node.module}.{alias.name}" for alias in node.names
+                    )
                 for name in imported:
-                    if name in FORBIDDEN_PROVIDER_IMPORTS:
+                    if any(
+                        name == forbidden or name.startswith(f"{forbidden}.")
+                        for forbidden in FORBIDDEN_PROVIDER_IMPORTS
+                    ):
                         violations.append(f"{path.name}:{node.lineno}:{name}")
         self.assertEqual(violations, [])
 
@@ -175,7 +243,13 @@ class LegacyWriterRemovalTests(unittest.TestCase):
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
             for node in ast.walk(tree):
                 imported: tuple[str, ...] = ()
-                if isinstance(node, ast.ImportFrom):
+                if isinstance(node, ast.Import):
+                    imported = tuple(
+                        alias.name.rsplit(".", 1)[-1]
+                        for alias in node.names
+                        if alias.name.startswith("tools.evidence.release_")
+                    )
+                elif isinstance(node, ast.ImportFrom):
                     if node.module == "tools.evidence":
                         imported = tuple(
                             alias.name
