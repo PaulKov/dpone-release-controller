@@ -29,6 +29,7 @@ EXPECTED_WORKFLOWS = frozenset({"ci.yml", "controller-quarantine.yml"})
 EXPECTED_ACTIONS = frozenset(
     {
         "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444",
         "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
         "astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78",
     }
@@ -86,14 +87,17 @@ EXPECTED_EMERGENCY_QUARANTINE_JOB = """  emergency-quarantine:
     if: ${{ always() }}
     needs:
       - contract
+      - broker
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - name: Require the complete quarantine contract matrix
+      - name: Require the complete controller and broker quarantine matrix
         env:
+          BROKER_RESULT: ${{ needs.broker.result }}
           CONTRACT_RESULT: ${{ needs.contract.result }}
         run: |
           set -euo pipefail
+          test "${BROKER_RESULT}" = "success"
           test "${CONTRACT_RESULT}" = "success"
 """
 

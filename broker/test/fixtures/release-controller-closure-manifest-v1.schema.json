@@ -1,0 +1,244 @@
+{
+  "$id": "https://paulkov.github.io/dpone-release-controller/schemas/release/release-controller-closure-manifest-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authorization_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "candidate_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "closed_receipt_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "closed_receipt_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "controller": {
+      "additionalProperties": false,
+      "properties": {
+        "controller_action_bundle_sha256": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "controller_action_commit_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "controller_action_metadata_blob_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "controller_action_metadata_path": {
+          "const": "actions/runtime-closure/action.yml"
+        },
+        "repository_id": {
+          "const": 1305993853
+        },
+        "run_attempt": {
+          "maximum": 9007199254740991,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "run_id": {
+          "maximum": 9007199254740991,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "workflow_id": {
+          "maximum": 9007199254740991,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "workflow_path": {
+          "const": ".github/workflows/release-controller.yml"
+        },
+        "workflow_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repository_id",
+        "workflow_id",
+        "workflow_path",
+        "workflow_sha",
+        "controller_action_commit_sha",
+        "controller_action_metadata_path",
+        "controller_action_metadata_blob_sha",
+        "controller_action_bundle_sha256",
+        "run_id",
+        "run_attempt"
+      ],
+      "type": "object"
+    },
+    "members": {
+      "items": false,
+      "maxItems": 3,
+      "minItems": 3,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "size_bytes",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "closed-receipt-v2.json"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "size_bytes",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "receipt-chain-v2.json"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 16777216,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "size_bytes",
+                "sha256"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "release-evidence-v2.json"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "type": "array"
+    },
+    "peeled_commit_sha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "receipt_chain_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "release_authority_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "release_evidence_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "release_identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "schema": {
+      "const": "dpone.release-controller-closure-manifest.v1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "tag": {
+      "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "type": "string"
+    },
+    "tag_object_sha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "schema_version",
+    "release_identity_id",
+    "release_authority_id",
+    "candidate_id",
+    "authorization_id",
+    "tag",
+    "tag_object_sha",
+    "peeled_commit_sha",
+    "controller",
+    "closed_receipt_id",
+    "closed_receipt_sha256",
+    "receipt_chain_sha256",
+    "release_evidence_sha256",
+    "members"
+  ],
+  "title": "dpone release controller closure manifest v1",
+  "type": "object"
+}

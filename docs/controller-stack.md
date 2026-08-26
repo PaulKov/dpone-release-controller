@@ -15,13 +15,18 @@ only dependency direction is from a later layer to an earlier one.
 | Controller composition | Compose the pure state machine and wire catalog without a runtime entry point | None |
 | Normative artifacts | Production-owned registries, generators, schemas, and fixed vectors | None |
 | Offline conformance | Python 3.11/3.12 tests, static boundaries, generated-byte checks, and reviewer documentation | None |
+| Dormant public-authenticity adapter | Content-pinned, offline-input verification of a future GitHub Artifact Attestation | None |
 
-The current layer is **offline conformance**. It adds the locked Python
-3.11/3.12 matrix, unit and negative tests, privacy canaries, generator drift
-checks, and reviewer documentation. CI remains read-only and the quarantine
-marker remains non-dispatchable. The layer intentionally has no provider
-client, network transport, subprocess call, workflow dispatch, secret, OIDC
-permission, artifact upload, or target-repository route.
+The current layer is the **dormant public-authenticity adapter**, stacked after
+offline conformance. The pure `tools.evidence.release_*` model still has no
+provider client, network transport, subprocess call, workflow dispatch, secret,
+OIDC permission, artifact upload, or target-repository route. The separate
+`tools.public_authenticity` boundary may execute only a caller-supplied,
+content-pinned `gh` binary against content-pinned offline inputs inside a
+closed, bounded process. It has no workflow/runtime wiring or provider
+authority; an OS-level no-network ceremony and real evidence remain future
+HOLD gates. CI remains read-only and the quarantine marker remains
+non-dispatchable.
 
 ## Dependency rule
 

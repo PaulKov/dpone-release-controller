@@ -1,0 +1,12 @@
+{
+  "canonical": "{\"array\":[true,null,42],\"ascii\":\"Привет\",\"nested\":{\"a\":\"😀\",\"z\":0}}",
+  "sha256": "2fb2d0d006b791e4882153a1b5a6d4f05b739778cb07a37de65bef0869f032f6",
+  "value": {
+    "array": [true, null, 42],
+    "ascii": "Привет",
+    "nested": {
+      "a": "😀",
+      "z": 0
+    }
+  }
+}

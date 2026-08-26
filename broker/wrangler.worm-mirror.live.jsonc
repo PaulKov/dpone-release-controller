@@ -1,0 +1,51 @@
+// PUBLICATION REVIEW TEMPLATE: provider identifiers are synthetic and cannot authorize deployment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "account_id": "00000000000000000000000000000000",
+  "name": "dpone-release-worm-mirror",
+  "main": "src/private/worm-mirror-worker.ts",
+  "compatibility_date": "2026-08-15",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 0,
+    "traces": { "destinations": [], "enabled": false, "head_sampling_rate": 0, "persist": false },
+  },
+  "vars": {
+    "B2_BUCKET_ID": "000000000000000000000000",
+    "B2_BUCKET_NAME": "dpone-release-evidence",
+    "CF_ACCOUNT_ID": "00000000000000000000000000000000",
+    "OPERATING_MODE": "live",
+    "SERVICE_NAME": "dpone-release-worm-mirror",
+    "WORM_EXPECTED_B2_OBSERVER_SERVICE_IDENTITY": "INJECTED_BY_AUTHORITY_VERSION_CEREMONY",
+    "WORM_EXPECTED_CALLER_SERVICE_IDENTITY": "INJECTED_BY_WORM_RPC_KEY_CEREMONY",
+    "WORM_EXPECTED_CLOUDFLARE_OBSERVER_SERVICE_IDENTITY": "INJECTED_BY_AUTHORITY_VERSION_CEREMONY",
+  },
+  "services": [
+    { "binding": "WORM_VERSION_OBSERVER", "service": "dpone-release-worm-version-observer" },
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "CloudflareEvidenceBatch",
+        "name": "CLOUDFLARE_EVIDENCE_BATCHES",
+      },
+      {
+        "class_name": "WormExactObjectEffect",
+        "name": "WORM_EXACT_OBJECT_EFFECTS",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "new_sqlite_classes": ["CloudflareEvidenceBatch"],
+      "tag": "v1",
+    },
+    {
+      "new_sqlite_classes": ["WormExactObjectEffect"],
+      "tag": "v2",
+    },
+  ],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+}

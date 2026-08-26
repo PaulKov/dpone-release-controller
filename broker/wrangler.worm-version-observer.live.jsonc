@@ -1,0 +1,21 @@
+// PUBLICATION REVIEW TEMPLATE: provider identifiers are synthetic and cannot authorize deployment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "account_id": "00000000000000000000000000000000",
+  "name": "dpone-release-worm-version-observer",
+  "main": "src/private/worm-version-observer-worker.ts",
+  "compatibility_date": "2026-08-15",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 0,
+    "traces": { "destinations": [], "enabled": false, "head_sampling_rate": 0, "persist": false },
+  },
+  "vars": {
+    "B2_BUCKET_ID": "000000000000000000000000",
+    "B2_BUCKET_NAME": "dpone-release-evidence",
+    "OPERATING_MODE": "live",
+  },
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+}

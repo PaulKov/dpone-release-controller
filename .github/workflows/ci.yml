@@ -44,8 +44,8 @@ jobs:
       - name: Validate source, tests, and module boundaries
         run: |
           set -euo pipefail
-          uv run --frozen ruff check .
-          uv run --frozen ruff format --check .
+          uv run --frozen ruff check scripts tests tools
+          uv run --frozen ruff format --check scripts tests tools
           uv run --frozen python -B -m compileall -q scripts tests tools
           uv run --frozen python -B -m unittest discover -s tests -v
           uv run --frozen python -m json.tool config/release-controller-activation.json >/dev/null
@@ -58,17 +58,61 @@ jobs:
           done
           uv run --frozen python -B -m tools.evidence.release_receipt_vectors --check
 
+  broker:
+    name: Validate quarantined broker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: broker
+    env:
+      CI: "true"
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+      NODE_OPTIONS: ""
+      NODE_PATH: ""
+      WRANGLER_LOG_SANITIZE: "true"
+    steps:
+      - name: Checkout controller and broker source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up the pinned broker Node runtime
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: broker/.node-version
+          package-manager-cache: false
+
+      - name: Enable the pinned broker package manager
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack install --global pnpm@11.19.0
+          test "$(node --version)" = "v$(cat .node-version)"
+          test "$(pnpm --version)" = "11.19.0"
+
+      - name: Install the frozen broker dependency graph without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Validate the broker quarantine contract
+        run: pnpm check
+
   emergency-quarantine:
     name: Validate emergency quarantine
     if: ${{ always() }}
     needs:
       - contract
+      - broker
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - name: Require the complete quarantine contract matrix
+      - name: Require the complete controller and broker quarantine matrix
         env:
+          BROKER_RESULT: ${{ needs.broker.result }}
           CONTRACT_RESULT: ${{ needs.contract.result }}
         run: |
           set -euo pipefail
+          test "${BROKER_RESULT}" = "success"
           test "${CONTRACT_RESULT}" = "success"
