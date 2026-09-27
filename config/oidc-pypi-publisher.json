@@ -9,6 +9,7 @@
     "dpone",
     "dpone-native-accel",
     "dpone-airflow-pack",
+    "dpone-mssql-sqlclient",
     "apache-airflow-providers-dpone"
   ],
   "trusted_publishing": "GitHub OIDC only",
