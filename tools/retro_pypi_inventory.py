@@ -10,13 +10,19 @@ from pathlib import Path
 from typing import Any
 
 PYPI_API = "https://pypi.org/pypi"
-PROJECT_DISTRIBUTIONS = {
+LEGACY_PROJECT_DISTRIBUTIONS = {
     "dpone": "dpone",
     "dpone-native-accel": "dpone_native_accel",
     "dpone-airflow-pack": "dpone_airflow_pack",
     "apache-airflow-providers-dpone": "apache_airflow_providers_dpone",
 }
 DISTRIBUTION_SUFFIXES = (".tar.gz", "-py3-none-any.whl")
+SQLCLIENT_PROJECT = "dpone-mssql-sqlclient"
+CURRENT_PROJECT_DISTRIBUTIONS = {
+    **LEGACY_PROJECT_DISTRIBUTIONS,
+    SQLCLIENT_PROJECT: "dpone_mssql_sqlclient",
+}
+PROJECT_DISTRIBUTIONS = LEGACY_PROJECT_DISTRIBUTIONS
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -77,7 +83,7 @@ def verify_public_inventory(
             "size": entry["size"],
         }
     results = []
-    for project in PROJECT_DISTRIBUTIONS:
+    for project in project_distributions(version):
         payload = require_mapping(
             fetch_json(f"{PYPI_API}/{project}/{version}/json"),
             f"{project} PyPI payload",
@@ -116,13 +122,33 @@ def verify_public_inventory(
 
 
 def expected_archives(version: str) -> dict[str, str]:
-    """Return the closed four-project/two-file inventory for a version."""
+    """Return the version-aware closed release archive inventory."""
 
     return {
         f"{distribution}-{version}{suffix}": project
-        for project, distribution in PROJECT_DISTRIBUTIONS.items()
-        for suffix in DISTRIBUTION_SUFFIXES
+        for project, distribution in project_distributions(version).items()
+        for suffix in distribution_suffixes(project)
     }
+
+
+def project_distributions(version: str) -> dict[str, str]:
+    """Preserve the historical four-project profile before SqlClient shipped."""
+    numbers = tuple(int(part) for part in version.split("."))
+    return (
+        CURRENT_PROJECT_DISTRIBUTIONS
+        if numbers >= (0, 85, 0)
+        else LEGACY_PROJECT_DISTRIBUTIONS
+    )
+
+
+def distribution_suffixes(project: str) -> tuple[str, str]:
+    """Return the exact wheel and sdist suffixes for one project."""
+    wheel = (
+        "-py3-none-manylinux_2_17_x86_64.whl"
+        if project == SQLCLIENT_PROJECT
+        else "-py3-none-any.whl"
+    )
+    return ".tar.gz", wheel
 
 
 def require_mapping(value: object, subject: str) -> dict[str, Any]:

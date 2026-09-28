@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from tools import retro_pypi_verification as verifier
 from tools import retro_pypi_install as installer
+from tools import retro_pypi_inventory as inventory
 
 
 VERSION = "0.74.27"
@@ -48,6 +49,51 @@ class RetroPyPIVerificationTests(unittest.TestCase):
         self.assertEqual(result["artifact"]["sha256"], artifact_digest)
         self.assertEqual(len(result["projects"]), 4)
         self.assertTrue(all(entry["status"] == "PASS" for entry in result["projects"]))
+
+    def test_release_085_profile_contains_five_projects_and_platform_wheel(
+        self,
+    ) -> None:
+        expected = inventory.expected_archives("0.85.0")
+
+        self.assertEqual(len(expected), 10)
+        self.assertEqual(
+            set(expected.values()), set(inventory.CURRENT_PROJECT_DISTRIBUTIONS)
+        )
+        self.assertIn(
+            "dpone_mssql_sqlclient-0.85.0-py3-none-manylinux_2_17_x86_64.whl", expected
+        )
+
+    def test_isolated_install_accepts_five_wheel_release_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifact = root / "artifact.zip"
+            archives = []
+            with zipfile.ZipFile(artifact, "w") as archive:
+                for filename, project in inventory.expected_archives("0.85.0").items():
+                    if not filename.endswith(".whl"):
+                        continue
+                    payload = project.encode()
+                    archive.writestr(filename, payload)
+                    archives.append(
+                        {
+                            "filename": filename,
+                            "sha256": hashlib.sha256(payload).hexdigest(),
+                            "size": len(payload),
+                        }
+                    )
+            with patch.object(
+                installer,
+                "_run",
+                return_value=("No broken requirements found.\nusage: dpone\n", 0),
+            ):
+                evidence = installer.create_isolated_install_evidence(
+                    artifact,
+                    archives,
+                    root / "fresh_install.log",
+                    expected_wheel_count=5,
+                )
+
+        self.assertIn("sha256", evidence)
 
     def test_rejects_extra_archive_before_public_observation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
