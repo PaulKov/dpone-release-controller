@@ -46,6 +46,11 @@ jobs:
         with:
           version: "0.11.28"
 
+      - name: Install locked .NET build runtime
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: "10.0.x"
+
       - name: Verify tag and project identity
         env:
           VERSION: ${{ steps.identity.outputs.version }}
@@ -74,6 +79,7 @@ jobs:
           uv build packages/dpone-native-accel --out-dir dist
           uv build packages/dpone-airflow-pack --out-dir dist
           uv build packages/apache-airflow-providers-dpone --out-dir dist
+          uv build packages/dpone-mssql-sqlclient --out-dir dist
           uv tool run twine check dist/*
           python - <<'PY'
           import os
@@ -91,9 +97,15 @@ jobs:
                   "dpone",
                   "dpone_native_accel",
                   "dpone_airflow_pack",
+                  "dpone_mssql_sqlclient",
                   "apache_airflow_providers_dpone",
               )
-              for suffix in (".tar.gz", "-py3-none-any.whl")
+              for suffix in (
+                  ".tar.gz",
+                  "-py3-none-manylinux_2_17_x86_64.whl"
+                  if distribution == "dpone_mssql_sqlclient"
+                  else "-py3-none-any.whl",
+              )
           }
           if not filenames:
               raise SystemExit("release build produced no distributions")
@@ -130,12 +142,18 @@ jobs:
               "dpone": "dpone",
               "dpone_native_accel": "dpone-native-accel",
               "dpone_airflow_pack": "dpone-airflow-pack",
+              "dpone_mssql_sqlclient": "dpone-mssql-sqlclient",
               "apache_airflow_providers_dpone": "apache-airflow-providers-dpone",
           }
           version = os.environ["VERSION"]
           files_by_project = {project: [] for project in project_by_distribution.values()}
           for distribution, project in project_by_distribution.items():
-              for suffix in (".tar.gz", "-py3-none-any.whl"):
+              for suffix in (
+                  ".tar.gz",
+                  "-py3-none-manylinux_2_17_x86_64.whl"
+                  if distribution == "dpone_mssql_sqlclient"
+                  else "-py3-none-any.whl",
+              ):
                   filename = f"{distribution}-{version}{suffix}"
                   path = Path("dist") / filename
                   files_by_project[project].append(

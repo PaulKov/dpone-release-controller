@@ -33,7 +33,11 @@ class PyPIReleaseWorkflowTests(unittest.TestCase):
             "pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b",
             "packages-dir: dist/",
             "packages/apache-airflow-providers-dpone",
+            "packages/dpone-mssql-sqlclient",
             "apache_airflow_providers_dpone",
+            "dpone_mssql_sqlclient",
+            "manylinux_2_17_x86_64",
+            "actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d",
             "persist-credentials: false",
             "skip-existing",
         )
@@ -83,6 +87,7 @@ class PyPIReleaseWorkflowTests(unittest.TestCase):
                 "dpone",
                 "dpone-native-accel",
                 "dpone-airflow-pack",
+                "dpone-mssql-sqlclient",
                 "apache-airflow-providers-dpone",
             ],
         )

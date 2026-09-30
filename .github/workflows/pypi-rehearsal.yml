@@ -39,7 +39,10 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           version: "0.11.28"
-      - name: Build closed four-project inventory
+      - uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build closed five-project inventory
         env:
           VERSION: ${{ steps.identity.outputs.version }}
         run: |
@@ -49,6 +52,7 @@ jobs:
           uv build packages/dpone-native-accel --out-dir dist
           uv build packages/dpone-airflow-pack --out-dir dist
           uv build packages/apache-airflow-providers-dpone --out-dir dist
+          uv build packages/dpone-mssql-sqlclient --out-dir dist
           uv tool run twine check dist/*
           uv run python tools/agent_policy/package_archive_gate.py dist/*.whl dist/*.tar.gz
           python - <<'PY'
@@ -61,10 +65,15 @@ jobs:
           expected = {
               f"{distribution}-{version}{suffix}"
               for distribution in (
-                  "dpone", "dpone_native_accel", "dpone_airflow_pack",
+                  "dpone", "dpone_native_accel", "dpone_airflow_pack", "dpone_mssql_sqlclient",
                   "apache_airflow_providers_dpone",
               )
-              for suffix in (".tar.gz", "-py3-none-any.whl")
+              for suffix in (
+                  ".tar.gz",
+                  "-py3-none-manylinux_2_17_x86_64.whl"
+                  if distribution == "dpone_mssql_sqlclient"
+                  else "-py3-none-any.whl",
+              )
           }
           files = sorted(
               path
@@ -73,7 +82,7 @@ jobs:
               and (path.name.endswith(".tar.gz") or path.name.endswith(".whl"))
           )
           if {path.name for path in files} != expected:
-              raise SystemExit("rehearsal inventory is not the exact eight archives")
+              raise SystemExit("rehearsal inventory is not the exact ten archives")
           Path("rehearsal-inventory.json").write_text(json.dumps({
               "schema": "dpone.pypi-rehearsal-inventory.v1",
               "version": version,
@@ -118,7 +127,7 @@ jobs:
               if path.is_file()
           }
           expected = {item["filename"]: item["sha256"] for item in payload["archives"]}
-          if actual != expected or len(actual) != 8:
+          if actual != expected or len(actual) != 10:
               raise SystemExit("redownloaded rehearsal archive inventory differs")
           PY
           python -m venv rehearsal-venv

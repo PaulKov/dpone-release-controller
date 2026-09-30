@@ -6,7 +6,7 @@ External release-controller repository planned for `PaulKov/dpone`.
 
 **NARROW PYPI PUBLISHER ACTIVE.** The OIDC-only workflow
 [`pypi-release.yml`](.github/workflows/pypi-release.yml) is the active,
-manually started, tag-bound publication authority for the four dpone PyPI
+manually started, tag-bound publication authority for the five dpone PyPI
 projects. Its checked-in operating contract is
 [`config/oidc-pypi-publisher.json`](config/oidc-pypi-publisher.json). The
 legacy broker/writer remains quarantined under its separate historical
@@ -62,10 +62,10 @@ $ uv run --frozen python -m tools.retro_pypi_verification \
 
 The verifier obtains its GitHub observations itself through fixed, read-only
 `gh api` endpoints; it has no mutation path. It also creates a temporary venv,
-installs the four retained wheel files, runs `pip check` and `dpone --help`, and
+installs the five retained wheel files, runs `pip check` and `dpone --help`, and
 writes `fresh_install.log` beside the receipt. The result is `PASS` only when
 all of those checks, the annotated tag, successful publisher run, controller
-artifact and the eight public PyPI files agree exactly. `UNVERIFIED` means
+artifact and the ten public PyPI files agree exactly. `UNVERIFIED` means
 GitHub or PyPI could not be observed after bounded retries; `FAIL` means the
 observed bytes or inventory differ. Neither outcome authorizes a retry of the
 original publish workflow.

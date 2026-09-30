@@ -16,7 +16,11 @@ class IsolatedInstallFailure(RuntimeError):
 
 
 def create_isolated_install_evidence(
-    artifact_zip: Path, verified_archives: Sequence[object], transcript_path: Path
+    artifact_zip: Path,
+    verified_archives: Sequence[object],
+    transcript_path: Path,
+    *,
+    expected_wheel_count: int = 4,
 ) -> dict[str, object]:
     """Install ZIP wheels in a temporary venv and record its transcript."""
 
@@ -24,7 +28,10 @@ def create_isolated_install_evidence(
     with tempfile.TemporaryDirectory(prefix="dpone-retro-install-") as temporary:
         root = Path(temporary)
         wheels = _extract_verified_wheels(
-            artifact_zip, verified_archives, root / "wheels"
+            artifact_zip,
+            verified_archives,
+            root / "wheels",
+            expected_wheel_count=expected_wheel_count,
         )
         venv = root / "venv"
         commands = (
@@ -66,10 +73,16 @@ def create_isolated_install_evidence(
 
 
 def _extract_verified_wheels(
-    artifact_zip: Path, verified_archives: Sequence[object], destination: Path
+    artifact_zip: Path,
+    verified_archives: Sequence[object],
+    destination: Path,
+    *,
+    expected_wheel_count: int,
 ) -> tuple[Path, ...]:
     destination.mkdir()
-    expected = _expected_wheels(verified_archives)
+    expected = _expected_wheels(
+        verified_archives, expected_wheel_count=expected_wheel_count
+    )
     with zipfile.ZipFile(artifact_zip) as archive:
         members = {member.filename: member for member in archive.infolist()}
         expected_names = {wheel[0] for wheel in expected}
@@ -100,6 +113,8 @@ def _extract_verified_wheels(
 
 def _expected_wheels(
     verified_archives: Sequence[object],
+    *,
+    expected_wheel_count: int,
 ) -> tuple[tuple[str, str, int], ...]:
     wheels = []
     for archive in verified_archives:
@@ -120,9 +135,12 @@ def _expected_wheels(
         ):
             raise IsolatedInstallFailure("verified wheel inventory is malformed")
         wheels.append((filename, sha256, size))
-    if len(wheels) != 4 or len({wheel[0] for wheel in wheels}) != 4:
+    if (
+        len(wheels) != expected_wheel_count
+        or len({wheel[0] for wheel in wheels}) != expected_wheel_count
+    ):
         raise IsolatedInstallFailure(
-            "verified artifact does not contain exactly four wheels"
+            f"verified artifact does not contain exactly {expected_wheel_count} wheels"
         )
     return tuple(sorted(wheels))
 

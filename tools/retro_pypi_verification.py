@@ -22,6 +22,7 @@ from tools.retro_pypi_inventory import (
     DISTRIBUTION_SUFFIXES,  # noqa: F401 - re-exported for verification callers.
     PROJECT_DISTRIBUTIONS,  # noqa: F401 - re-exported for verification callers.
     InventoryFailure,
+    project_distributions,
     read_artifact_inventory,
     require_mapping as _require_mapping,
     verify_public_inventory,
@@ -173,6 +174,7 @@ def main(argv: list[str] | None = None) -> int:
                 request.artifact_zip,
                 receipt["artifact"]["archives"],
                 arguments.output.with_name("fresh_install.log"),
+                expected_wheel_count=len(project_distributions(request.version)),
             )
         except IsolatedInstallFailure as error:
             receipt["status"] = "FAIL"
